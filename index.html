@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1c2321">
+<title>Somar Notas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  :root{
+    --bg:#1c2321;
+    --panel:#232b28;
+    --line:#33403b;
+    --ink:#e8e4d8;
+    --muted:#8a938e;
+    --num:#a3d977;
+    --accent:#e0a458;
+    --wa:#25d366;
+    --danger:#d16a5a;
+    --total-bg:#2a3430;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+  }
+  .mono{font-family:"SF Mono","Roboto Mono",ui-monospace,Menlo,Consolas,monospace;}
+
+  header{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:var(--panel);
+    border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  header .back{
+    background:none;border:none;color:var(--ink);font-size:24px;
+    padding:0;width:32px;height:32px;cursor:pointer;display:none;
+    align-items:center;justify-content:center;
+  }
+  header h1{font-size:17px;font-weight:600;margin:0;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  header .brand{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+  .icon-btn{
+    background:none;border:none;color:var(--ink);font-size:20px;
+    width:38px;height:38px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:active{background:var(--line);}
+  .icon-btn.danger{color:var(--danger);}
+
+  .view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .hidden{display:none !important;}
+
+  #listView{padding:8px 0 90px;}
+  .note-card{
+    display:flex;align-items:center;gap:12px;
+    padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  .note-card:active{background:var(--panel);}
+  .note-card .info{flex:1;min-width:0;}
+  .note-card .title{font-size:16px;font-weight:600;margin-bottom:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .note-card .sub{font-size:13px;color:var(--muted);}
+  .note-card .tot{font-size:18px;font-weight:700;color:var(--num);white-space:nowrap;}
+  .empty{text-align:center;color:var(--muted);padding:70px 30px;}
+  .empty .big{font-size:40px;margin-bottom:14px;opacity:.4;}
+  .empty p{font-size:15px;line-height:1.5;margin:6px 0;}
+
+  .fab{
+    position:fixed;right:18px;bottom:22px;width:58px;height:58px;
+    border-radius:18px;background:var(--accent);color:#1c2321;
+    border:none;font-size:30px;font-weight:400;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;
+    align-items:center;justify-content:center;z-index:20;
+  }
+  .fab:active{transform:scale(.94);}
+
+  #editView{display:flex;flex-direction:column;}
+  #noteTitle{
+    background:var(--panel);border:none;border-bottom:1px solid var(--line);
+    color:var(--ink);font-size:18px;font-weight:600;padding:14px 18px;
+    width:100%;outline:none;flex-shrink:0;
+  }
+  #noteTitle::placeholder{color:var(--muted);font-weight:400;}
+  .editor-wrap{flex:1;display:flex;overflow:hidden;}
+  .gutter{
+    flex-shrink:0;padding:16px 0;text-align:right;color:var(--muted);
+    font-size:15px;line-height:1.7;user-select:none;background:var(--bg);
+    min-width:34px;
+  }
+  .gutter span{display:block;padding:0 8px 0 12px;}
+  #noteBody{
+    flex:1;background:var(--bg);border:none;color:var(--ink);
+    font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;
+    outline:none;white-space:pre;overflow-wrap:normal;
+  }
+  #noteBody::placeholder{color:var(--muted);}
+
+  .icon-btn svg{width:22px;height:22px;}
+  .icon-btn.wa-ico{color:var(--wa);}
+
+  .resumo{
+    flex-shrink:0;background:var(--panel);
+    max-height:34vh;overflow-y:auto;
+    padding:0 20px;
+  }
+  .resumo:not(:empty){padding:12px 20px;border-top:1px solid var(--line);}
+  .resumo .row{
+    display:flex;align-items:baseline;gap:10px;
+    font-size:14.5px;padding:4px 0;
+  }
+  .resumo .row .nm{
+    flex:1;min-width:0;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .resumo .row .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-4px);}
+  .resumo .row .qt{color:var(--num);font-weight:700;white-space:nowrap;}
+
+  .total-bar{
+    flex-shrink:0;background:var(--total-bg);border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 20px;
+  }
+  .total-bar .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+  .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
+
+  .hint{
+    padding:10px 18px;font-size:12.5px;color:var(--muted);
+    background:var(--panel);line-height:1.5;
+  }
+  .hint b{color:var(--num);font-weight:600;}
+
+  .toast{
+    position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+    background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;
+    opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:80%;text-align:center;
+  }
+  .toast.show{opacity:.95;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="back" id="backBtn" aria-label="Voltar">‹</button>
+  <h1 id="headTitle">Somar Notas</h1>
+  <span class="brand" id="brandTag">JL</span>
+  <button class="icon-btn wa-ico hidden" id="hdrShareText" aria-label="Enviar no WhatsApp">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
+  </button>
+  <button class="icon-btn hidden" id="hdrSharePng" aria-label="Enviar imagem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+  </button>
+  <button class="icon-btn danger hidden" id="deleteBtn" aria-label="Excluir nota">🗑</button>
+</header>
+
+<!-- LISTA -->
+<div class="view" id="listView">
+  <div id="notesContainer"></div>
+  <div class="empty hidden" id="emptyState">
+    <div class="big">📝</div>
+    <p>Nenhuma nota ainda.</p>
+    <p>Toque no <b style="color:var(--accent)">+</b> pra criar a primeira.</p>
+  </div>
+</div>
+<button class="fab" id="newBtn" aria-label="Nova nota">+</button>
+
+<!-- EDITOR -->
+<div class="view hidden" id="editView">
+  <input type="text" id="noteTitle" placeholder="Título (ex: Pedido Marquinhos)">
+  <div class="editor-wrap">
+    <div class="gutter mono" id="gutter"><span>1</span></div>
+    <textarea id="noteBody" class="mono" placeholder="500/80 mista
+60/70 mista H
+40/60 mista H"></textarea>
+  </div>
+  <div class="hint">O <b>número no começo</b> de cada linha entra na soma. O resto é o nome do modelo.</div>
+  <div class="resumo" id="resumo"></div>
+  <div class="total-bar">
+    <span class="lbl">Total</span>
+    <span class="val mono" id="totalVal">0</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='somar_notas_v1';
+let notes=[];
+let currentId=null;
+
+function load(){try{notes=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){notes=[];}}
+function save(){localStorage.setItem(KEY,JSON.stringify(notes));}
+
+function lineValue(line){
+  const m=line.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
+  if(!m) return 0;
+  return parseFloat(m[1].replace(',','.'))||0;
+}
+function sumBody(body){return (body||'').split('\n').reduce((a,l)=>a+lineValue(l),0);}
+
+// tira o número da frente e a medida (ex "500/80") -> sobra o nome do modelo
+const STRIP=/^\s*[+-]?\d+(?:[.,]\d+)?(?:\s*\/\s*[+-]?\d+(?:[.,]\d+)?)?\s*/;
+function modelName(line){
+  return line.replace(STRIP,'').trim();
+}
+// agrupa por modelo somando as quantidades, na ordem em que aparecem
+function groupByModel(body){
+  const map=new Map();      // chave minúscula -> {nome, qt}
+  (body||'').split('\n').forEach(l=>{
+    if(!l.trim()) return;
+    const qt=lineValue(l);
+    if(qt===0 && !/\d/.test(l)) return;
+    let nome=modelName(l);
+    if(!nome) nome='(sem nome)';
+    const key=nome.toLowerCase();
+    if(map.has(key)) map.get(key).qt+=qt;
+    else map.set(key,{nome,qt});
+  });
+  return [...map.values()];
+}
+function fmt(n){
+  if(Number.isInteger(n)) return n.toLocaleString('pt-BR');
+  return n.toLocaleString('pt-BR',{maximumFractionDigits:3});
+}
+
+const listView=document.getElementById('listView');
+const editView=document.getElementById('editView');
+const notesContainer=document.getElementById('notesContainer');
+const emptyState=document.getElementById('emptyState');
+
+function renderList(){
+  notesContainer.innerHTML='';
+  emptyState.classList.toggle('hidden',notes.length!==0);
+  const sorted=[...notes].sort((a,b)=>b.updated-a.updated);
+  sorted.forEach(n=>{
+    const tot=sumBody(n.body);
+    const lines=(n.body||'').split('\n').filter(l=>l.trim()).length;
+    const card=document.createElement('div');
+    card.className='note-card';
+    card.innerHTML=`
+      <div class="info">
+        <div class="title">${escapeHtml(n.title||'Sem título')}</div>
+        <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.updated)}</div>
+      </div>
+      <div class="tot mono">${fmt(tot)}</div>`;
+    card.onclick=()=>openNote(n.id);
+    notesContainer.appendChild(card);
+  });
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function dateStr(ts){return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
+
+const noteTitle=document.getElementById('noteTitle');
+const noteBody=document.getElementById('noteBody');
+const gutter=document.getElementById('gutter');
+const totalVal=document.getElementById('totalVal');
+const backBtn=document.getElementById('backBtn');
+const deleteBtn=document.getElementById('deleteBtn');
+const headTitle=document.getElementById('headTitle');
+const brandTag=document.getElementById('brandTag');
+
+function showEditor(show){
+  listView.classList.toggle('hidden',show);
+  document.getElementById('newBtn').classList.toggle('hidden',show);
+  editView.classList.toggle('hidden',!show);
+  backBtn.style.display=show?'flex':'none';
+  deleteBtn.classList.toggle('hidden',!show);
+  document.getElementById('hdrShareText').classList.toggle('hidden',!show);
+  document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
+  brandTag.classList.toggle('hidden',show);
+  headTitle.textContent=show?'Editar':'Somar Notas';
+}
+function newNote(){
+  currentId='n'+Date.now();
+  notes.push({id:currentId,title:'',body:'',updated:Date.now()});
+  noteTitle.value='';noteBody.value='';
+  showEditor(true);refreshEditor();
+  setTimeout(()=>noteTitle.focus(),100);
+}
+function openNote(id){
+  const n=notes.find(x=>x.id===id);if(!n)return;
+  currentId=id;noteTitle.value=n.title||'';noteBody.value=n.body||'';
+  showEditor(true);refreshEditor();
+}
+function closeEditor(){persistCurrent(true);currentId=null;showEditor(false);renderList();}
+function persistCurrent(cleanupEmpty){
+  const n=notes.find(x=>x.id===currentId);if(!n)return;
+  n.title=noteTitle.value.trim();n.body=noteBody.value;n.updated=Date.now();
+  if(cleanupEmpty && !n.title && !n.body.trim()) notes=notes.filter(x=>x.id!==currentId);
+  save();
+}
+function deleteCurrent(){
+  const n=notes.find(x=>x.id===currentId);
+  const nm=n&&n.title?`"${n.title}"`:'esta nota';
+  if(confirm(`Excluir ${nm}? Não dá pra desfazer.`)){
+    notes=notes.filter(x=>x.id!==currentId);save();
+    currentId=null;showEditor(false);renderList();
+  }
+}
+function refreshEditor(){
+  const lines=noteBody.value.split('\n');
+  const nLines=Math.max(lines.length,1);
+  let g='';for(let i=1;i<=nLines;i++) g+=`<span>${i}</span>`;
+  gutter.innerHTML=g;
+  totalVal.textContent=fmt(sumBody(noteBody.value));
+  renderResumo();
+}
+function renderResumo(){
+  const groups=groupByModel(noteBody.value);
+  const box=document.getElementById('resumo');
+  // só mostra se houver mais de um modelo distinto
+  if(groups.length<2){box.innerHTML='';return;}
+  box.innerHTML=groups.map(g=>`
+    <div class="row">
+      <span class="nm">${escapeHtml(g.nome)}</span>
+      <span class="dots"></span>
+      <span class="qt mono">${fmt(g.qt)}</span>
+    </div>`).join('');
+}
+
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function buildText(){
+  const title=noteTitle.value.trim()||'Nota';
+  const raw=noteBody.value.replace(/\n+$/,'');
+  const tot=fmt(sumBody(noteBody.value));
+  const groups=groupByModel(noteBody.value);
+
+  // alinha o número da frente de cada linha do pedido
+  const bodyLines=raw.split('\n');
+  let maxQ=0;
+  bodyLines.forEach(l=>{const m=l.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);if(m)maxQ=Math.max(maxQ,m[1].length);});
+  const body=bodyLines.map(l=>{
+    const m=l.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
+    return m ? m[2].padStart(maxQ)+m[3] : l;
+  }).join('\n');
+
+  // resumo por modelo (quantidade alinhada à direita)
+  let block=body;
+  if(groups.length>1){
+    const maxLen=Math.max(...groups.map(g=>fmt(g.qt).length));
+    const rows=groups.map(g=>`${fmt(g.qt).padStart(maxLen)}  ${g.nome}`).join('\n');
+    block=body+'\n────────\n'+rows;
+  }
+  return `*${title}*\n\n\`\`\`\n${block}\n\`\`\`\n\n*Total: ${tot}*`;
+}
+
+document.getElementById('hdrShareText').onclick=()=>{
+  if(!noteBody.value.trim()){toast('Nota vazia');return;}
+  const url='https://wa.me/?text='+encodeURIComponent(buildText());
+  window.open(url,'_blank');
+};
+
+function makePNG(){
+  const title=noteTitle.value.trim()||'Nota';
+  const lines=noteBody.value.replace(/\n+$/,'').split('\n');
+  const tot=fmt(sumBody(noteBody.value));
+  const groups=groupByModel(noteBody.value);
+  const showGroups=groups.length>1;
+
+  const scale=2;
+  const W=720;
+  const padX=40, padTop=40;
+  const titleSize=34, lineSize=26, lineH=44;
+  const grpH=40;
+  const dateStamp=new Date().toLocaleDateString('pt-BR');
+
+  const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
+
+  const H = padTop + titleSize + 24 + 18   // título
+          + lines.length*lineH + 24        // linhas
+          + 2 + 18                          // divisor após linhas
+          + groupsBlock                     // resumo por modelo
+          + 40                              // divisor + espaço p/ total
+          + 20 + padTop;                    // total
+
+  const c=document.createElement('canvas');
+  c.width=W*scale; c.height=H*scale;
+  const x=c.getContext('2d');
+  x.scale(scale,scale);
+
+  x.fillStyle='#1c2321'; x.fillRect(0,0,W,H);
+
+  let y=padTop;
+  // título + data
+  x.fillStyle='#e8e4d8';
+  x.font=`600 ${titleSize}px -apple-system,Roboto,sans-serif`;
+  x.fillText(title,padX,y+titleSize-6);
+  x.fillStyle='#8a938e';
+  x.font=`400 18px -apple-system,Roboto,sans-serif`;
+  x.textAlign='right';
+  x.fillText(dateStamp,W-padX,y+titleSize-8);
+  x.textAlign='left';
+  y+=titleSize+24;
+
+  x.strokeStyle='#33403b';x.lineWidth=1;
+  x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+  y+=18;
+
+  // linhas do pedido
+  x.font=`400 ${lineSize}px "Roboto Mono",ui-monospace,monospace`;
+  // maior largura do número da frente, p/ alinhar à direita
+  let maxQty=0;
+  lines.forEach(ln=>{
+    const mm=ln.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
+    if(mm) maxQty=Math.max(maxQty,mm[1].length);
+  });
+  lines.forEach((ln,i)=>{
+    const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
+    const ny=y+i*lineH+lineSize;
+    if(m){
+      const qty=m[2].padStart(maxQty,' ');   // alinha à direita
+      x.fillStyle='#a3d977';
+      x.fillText(qty,padX,ny);
+      const numW=x.measureText(qty).width;
+      x.fillStyle='#e8e4d8';
+      x.fillText(m[3],padX+numW,ny);
+    }else{
+      x.fillStyle='#e8e4d8';
+      x.fillText(ln,padX,ny);
+    }
+  });
+  y+=lines.length*lineH+18;
+
+  // divisor após as linhas
+  x.strokeStyle='#33403b';x.lineWidth=1;
+  x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+
+  // resumo por modelo
+  if(showGroups){
+    y+=18;
+    groups.forEach((g,i)=>{
+      const ny=y+i*grpH+26;
+      x.fillStyle='#e8e4d8';
+      x.font=`400 24px -apple-system,Roboto,sans-serif`;
+      x.textAlign='left';
+      x.fillText(g.nome,padX,ny);
+      x.fillStyle='#a3d977';
+      x.font=`700 24px "Roboto Mono",monospace`;
+      x.textAlign='right';
+      x.fillText(fmt(g.qt),W-padX,ny);
+    });
+    x.textAlign='left';
+    y+=groups.length*grpH+24;
+    x.strokeStyle='#33403b';x.lineWidth=2;
+    x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+  }
+
+  y+=40;
+
+  // total
+  x.fillStyle='#8a938e';
+  x.font=`400 22px -apple-system,Roboto,sans-serif`;
+  x.textAlign='left';
+  x.fillText('TOTAL',padX,y);
+  x.fillStyle='#a3d977';
+  x.font=`700 30px "Roboto Mono",monospace`;
+  x.textAlign='right';
+  x.fillText(tot,W-padX,y+3);
+  x.textAlign='left';
+
+  return c;
+}
+
+document.getElementById('hdrSharePng').onclick=async()=>{
+  if(!noteBody.value.trim()){toast('Nota vazia');return;}
+  const canvas=makePNG();
+  const title=(noteTitle.value.trim()||'nota').replace(/[^\w\u00C0-\u017F]+/g,'_');
+  canvas.toBlob(async(blob)=>{
+    if(!blob){toast('Erro ao gerar imagem');return;}
+    const file=new File([blob],`${title}.png`,{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file],title:noteTitle.value.trim()||'Nota'});
+      }catch(e){}
+    }else{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`${title}.png`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+      toast('Imagem baixada — envie pelo WhatsApp');
+    }
+  },'image/png');
+};
+
+document.getElementById('newBtn').onclick=newNote;
+backBtn.onclick=closeEditor;
+deleteBtn.onclick=deleteCurrent;
+noteBody.addEventListener('input',()=>{refreshEditor();persistCurrent(false);});
+noteTitle.addEventListener('input',()=>persistCurrent(false));
+noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
+
+window.addEventListener('popstate',()=>{
+  if(!editView.classList.contains('hidden')){closeEditor();history.pushState(null,'');}
+});
+history.pushState(null,'');
+
+load();renderList();
+
+/* PWA: registra o service worker (instala como app + atualiza sozinho) */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
