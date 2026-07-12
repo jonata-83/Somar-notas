@@ -1,0 +1,8 @@
+{
+  "appId": "br.com.jl.somarnotas",
+  "appName": "Somar Notas",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  }
+}
