@@ -152,6 +152,27 @@
   .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
 
 
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);
+    display:flex;align-items:flex-end;justify-content:center;z-index:60;
+  }
+  .modal{
+    background:var(--panel);width:100%;max-width:480px;
+    border-radius:20px 20px 0 0;padding:22px 20px 28px;
+    border-top:1px solid var(--line);
+  }
+  .modal h2{font-size:18px;margin:0 0 6px;color:var(--ink);}
+  .modal-sub{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px;}
+  .modal-btn{
+    display:block;width:100%;text-align:center;
+    padding:14px;border-radius:12px;border:1px solid var(--line);
+    background:var(--total-bg);color:var(--ink);font-size:15px;font-weight:600;
+    cursor:pointer;margin-bottom:10px;
+  }
+  .modal-btn:active{transform:scale(.98);}
+  .modal-btn.primary{background:var(--num);color:#14290a;border-color:var(--num);}
+  .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
+
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
     background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;
@@ -166,6 +187,9 @@
   <button class="back" id="backBtn" aria-label="Voltar">‹</button>
   <h1 id="headTitle">Somar Notas</h1>
   <span class="brand" id="brandTag">JL</span>
+  <button class="icon-btn" id="backupBtn" aria-label="Backup das notas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  </button>
   <button class="mode-btn hidden" id="modeBtn" aria-label="Alternar somar ou texto">Σ Somar</button>
   <button class="icon-btn wa-ico hidden" id="hdrShareText" aria-label="Enviar no WhatsApp">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
@@ -206,6 +230,19 @@
     <span class="val mono" id="totalVal">0</span>
   </div>
 </div>
+
+<!-- MODAL DE BACKUP -->
+<div class="modal-overlay hidden" id="backupModal">
+  <div class="modal">
+    <h2>Backup das notas</h2>
+    <p class="modal-sub">Guarde uma cópia fora do navegador. Se limpar os dados ou trocar de celular, você recupera tudo.</p>
+    <button class="modal-btn primary" id="exportBtn">⬇ Exportar (salvar arquivo)</button>
+    <button class="modal-btn" id="exportWaBtn">↗ Enviar backup no WhatsApp</button>
+    <button class="modal-btn" id="importBtn">⬆ Importar (abrir arquivo)</button>
+    <button class="modal-btn ghost" id="closeBackup">Fechar</button>
+  </div>
+</div>
+<input type="file" id="importFile" accept="application/json,.json" style="display:none">
 
 <div class="toast" id="toast"></div>
 
@@ -309,6 +346,7 @@ function showEditor(show){
   document.getElementById('hdrShareText').classList.toggle('hidden',!show);
   document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
   modeBtn.classList.toggle('hidden',!show);
+  document.getElementById('backupBtn').classList.toggle('hidden',show);
   brandTag.classList.toggle('hidden',show);
   headTitle.textContent=show?'Editar':'Somar Notas';
 }
@@ -570,6 +608,86 @@ window.addEventListener('popstate',()=>{
   if(!editView.classList.contains('hidden')){closeEditor();history.pushState(null,'');}
 });
 history.pushState(null,'');
+
+/* ---------- BACKUP: exportar / importar ---------- */
+const backupModal=document.getElementById('backupModal');
+document.getElementById('backupBtn').onclick=()=>backupModal.classList.remove('hidden');
+document.getElementById('closeBackup').onclick=()=>backupModal.classList.add('hidden');
+backupModal.onclick=(e)=>{ if(e.target===backupModal) backupModal.classList.add('hidden'); };
+
+function backupData(){
+  return JSON.stringify({app:'somar-notas',v:1,exportado:new Date().toISOString(),notas:notes},null,2);
+}
+function backupFileName(){
+  const d=new Date();
+  const p=n=>String(n).padStart(2,'0');
+  return `somar-notas_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.json`;
+}
+
+// Exportar -> baixa arquivo .json
+document.getElementById('exportBtn').onclick=()=>{
+  if(notes.length===0){toast('Nenhuma nota pra exportar');return;}
+  const blob=new Blob([backupData()],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=backupFileName();
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('Backup salvo — guarde no Drive ou WhatsApp');
+};
+
+// Enviar backup como arquivo no WhatsApp (compartilhar)
+document.getElementById('exportWaBtn').onclick=async()=>{
+  if(notes.length===0){toast('Nenhuma nota pra enviar');return;}
+  const file=new File([backupData()],backupFileName(),{type:'application/json'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'Backup Somar Notas'}); }catch(e){}
+  }else{
+    // fallback: baixa o arquivo
+    document.getElementById('exportBtn').click();
+  }
+};
+
+// Importar <- abre arquivo .json
+const importFile=document.getElementById('importFile');
+document.getElementById('importBtn').onclick=()=>importFile.click();
+importFile.onchange=()=>{
+  const f=importFile.files[0];
+  if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      const lista=Array.isArray(data)?data:data.notas;
+      if(!Array.isArray(lista)) throw new Error('formato');
+      // junta com as existentes, sem duplicar por id
+      const ids=new Set(notes.map(n=>n.id));
+      let novas=0;
+      lista.forEach(n=>{
+        if(!n||!n.id){ n.id='n'+Date.now()+Math.random().toString(36).slice(2,6); }
+        if(ids.has(n.id)){
+          // atualiza a existente se o backup for mais novo
+          const ex=notes.find(x=>x.id===n.id);
+          if((n.updated||0) >= (ex.updated||0)) Object.assign(ex,n);
+        }else{
+          notes.push(n); ids.add(n.id); novas++;
+        }
+      });
+      save();renderList();
+      backupModal.classList.add('hidden');
+      toast(`Importado! ${novas} nota(s) nova(s)`);
+    }catch(err){
+      toast('Arquivo inválido');
+    }
+    importFile.value='';
+  };
+  reader.readAsText(f);
+};
+
+/* pede persistência reforçada (ajuda a não apagar em limpezas automáticas) */
+if(navigator.storage && navigator.storage.persist){
+  navigator.storage.persist().catch(()=>{});
+}
 
 load();renderList();applyResumoState();
 
