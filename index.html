@@ -104,13 +104,34 @@
 
   .icon-btn svg{width:22px;height:22px;}
   .icon-btn.wa-ico{color:var(--wa);}
+  .mode-btn{
+    background:var(--total-bg);border:1px solid var(--line);
+    color:var(--num);font-size:12px;font-weight:700;
+    padding:6px 10px;border-radius:9px;cursor:pointer;white-space:nowrap;
+  }
+  .mode-btn:active{transform:scale(.96);}
+  .mode-btn.texto{color:var(--muted);}
+  /* modo só texto: esconde total e resumo */
+  #editView.text-mode .total-bar,
+  #editView.text-mode .resumo-wrap{display:none;}
 
+  .resumo-wrap{flex-shrink:0;}
+  .resumo-wrap.empty{display:none;}
+  .resumo-header{
+    width:100%;display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);border:none;border-top:1px solid var(--line);
+    color:var(--muted);padding:10px 20px;cursor:pointer;
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  }
+  .resumo-header:active{background:var(--total-bg);}
+  .rh-chevron{font-size:14px;transition:transform .2s;}
+  .resumo-wrap.collapsed .rh-chevron{transform:rotate(-90deg);}
   .resumo{
     flex-shrink:0;background:var(--panel);
     max-height:34vh;overflow-y:auto;
-    padding:0 20px;
+    padding:0 20px 12px;
   }
-  .resumo:not(:empty){padding:12px 20px;border-top:1px solid var(--line);}
+  .resumo-wrap.collapsed .resumo{display:none;}
   .resumo .row{
     display:flex;align-items:baseline;gap:10px;
     font-size:14.5px;padding:4px 0;
@@ -130,11 +151,6 @@
   .total-bar .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
   .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
 
-  .hint{
-    padding:10px 18px;font-size:12.5px;color:var(--muted);
-    background:var(--panel);line-height:1.5;
-  }
-  .hint b{color:var(--num);font-weight:600;}
 
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
@@ -150,6 +166,7 @@
   <button class="back" id="backBtn" aria-label="Voltar">‹</button>
   <h1 id="headTitle">Somar Notas</h1>
   <span class="brand" id="brandTag">JL</span>
+  <button class="mode-btn hidden" id="modeBtn" aria-label="Alternar somar ou texto">Σ Somar</button>
   <button class="icon-btn wa-ico hidden" id="hdrShareText" aria-label="Enviar no WhatsApp">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
   </button>
@@ -172,15 +189,18 @@
 
 <!-- EDITOR -->
 <div class="view hidden" id="editView">
-  <input type="text" id="noteTitle" placeholder="Título (ex: Pedido Marquinhos)">
+  <input type="text" id="noteTitle" placeholder="Título">
   <div class="editor-wrap">
     <div class="gutter mono" id="gutter"><span>1</span></div>
-    <textarea id="noteBody" class="mono" placeholder="500/80 mista
-60/70 mista H
-40/60 mista H"></textarea>
+    <textarea id="noteBody" class="mono" placeholder=""></textarea>
   </div>
-  <div class="hint">O <b>número no começo</b> de cada linha entra na soma. O resto é o nome do modelo.</div>
-  <div class="resumo" id="resumo"></div>
+  <div class="resumo-wrap" id="resumoWrap">
+    <button class="resumo-header" id="resumoHeader">
+      <span class="rh-label">Resumo por modelo</span>
+      <span class="rh-chevron" id="rhChevron">▾</span>
+    </button>
+    <div class="resumo" id="resumo"></div>
+  </div>
   <div class="total-bar">
     <span class="lbl">Total</span>
     <span class="val mono" id="totalVal">0</span>
@@ -239,6 +259,7 @@ function renderList(){
   emptyState.classList.toggle('hidden',notes.length!==0);
   const sorted=[...notes].sort((a,b)=>b.updated-a.updated);
   sorted.forEach(n=>{
+    const isTexto=(n.mode==='texto');
     const tot=sumBody(n.body);
     const lines=(n.body||'').split('\n').filter(l=>l.trim()).length;
     const card=document.createElement('div');
@@ -248,7 +269,7 @@ function renderList(){
         <div class="title">${escapeHtml(n.title||'Sem título')}</div>
         <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.updated)}</div>
       </div>
-      <div class="tot mono">${fmt(tot)}</div>`;
+      ${isTexto?'':`<div class="tot mono">${fmt(tot)}</div>`}`;
     card.onclick=()=>openNote(n.id);
     notesContainer.appendChild(card);
   });
@@ -264,6 +285,20 @@ const backBtn=document.getElementById('backBtn');
 const deleteBtn=document.getElementById('deleteBtn');
 const headTitle=document.getElementById('headTitle');
 const brandTag=document.getElementById('brandTag');
+const modeBtn=document.getElementById('modeBtn');
+
+let currentMode='somar';  // 'somar' ou 'texto'
+function applyMode(mode){
+  currentMode = mode==='texto' ? 'texto' : 'somar';
+  const isTexto = currentMode==='texto';
+  editView.classList.toggle('text-mode',isTexto);
+  modeBtn.classList.toggle('texto',isTexto);
+  modeBtn.textContent = isTexto ? '≡ Texto' : 'Σ Somar';
+}
+modeBtn.onclick=()=>{
+  applyMode(currentMode==='somar'?'texto':'somar');
+  persistCurrent(false);
+};
 
 function showEditor(show){
   listView.classList.toggle('hidden',show);
@@ -273,25 +308,28 @@ function showEditor(show){
   deleteBtn.classList.toggle('hidden',!show);
   document.getElementById('hdrShareText').classList.toggle('hidden',!show);
   document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
+  modeBtn.classList.toggle('hidden',!show);
   brandTag.classList.toggle('hidden',show);
   headTitle.textContent=show?'Editar':'Somar Notas';
 }
 function newNote(){
   currentId='n'+Date.now();
-  notes.push({id:currentId,title:'',body:'',updated:Date.now()});
+  notes.push({id:currentId,title:'',body:'',mode:'somar',updated:Date.now()});
   noteTitle.value='';noteBody.value='';
+  applyMode('somar');
   showEditor(true);refreshEditor();
   setTimeout(()=>noteTitle.focus(),100);
 }
 function openNote(id){
   const n=notes.find(x=>x.id===id);if(!n)return;
   currentId=id;noteTitle.value=n.title||'';noteBody.value=n.body||'';
+  applyMode(n.mode||'somar');
   showEditor(true);refreshEditor();
 }
 function closeEditor(){persistCurrent(true);currentId=null;showEditor(false);renderList();}
 function persistCurrent(cleanupEmpty){
   const n=notes.find(x=>x.id===currentId);if(!n)return;
-  n.title=noteTitle.value.trim();n.body=noteBody.value;n.updated=Date.now();
+  n.title=noteTitle.value.trim();n.body=noteBody.value;n.mode=currentMode;n.updated=Date.now();
   if(cleanupEmpty && !n.title && !n.body.trim()) notes=notes.filter(x=>x.id!==currentId);
   save();
 }
@@ -314,8 +352,10 @@ function refreshEditor(){
 function renderResumo(){
   const groups=groupByModel(noteBody.value);
   const box=document.getElementById('resumo');
+  const wrap=document.getElementById('resumoWrap');
   // só mostra se houver mais de um modelo distinto
-  if(groups.length<2){box.innerHTML='';return;}
+  if(groups.length<2){wrap.classList.add('empty');box.innerHTML='';return;}
+  wrap.classList.remove('empty');
   box.innerHTML=groups.map(g=>`
     <div class="row">
       <span class="nm">${escapeHtml(g.nome)}</span>
@@ -323,6 +363,20 @@ function renderResumo(){
       <span class="qt mono">${fmt(g.qt)}</span>
     </div>`).join('');
 }
+
+/* esconder/mostrar o resumo (lembra a escolha) */
+const RESUMO_KEY='somar_resumo_collapsed';
+function applyResumoState(){
+  const wrap=document.getElementById('resumoWrap');
+  const collapsed=localStorage.getItem(RESUMO_KEY)==='1';
+  wrap.classList.toggle('collapsed',collapsed);
+}
+document.getElementById('resumoHeader').onclick=()=>{
+  const wrap=document.getElementById('resumoWrap');
+  const nowCollapsed=!wrap.classList.contains('collapsed');
+  wrap.classList.toggle('collapsed',nowCollapsed);
+  localStorage.setItem(RESUMO_KEY, nowCollapsed?'1':'0');
+};
 
 let toastTimer;
 function toast(msg){
@@ -335,6 +389,10 @@ function toast(msg){
 function buildText(){
   const title=noteTitle.value.trim()||'Nota';
   const raw=noteBody.value.replace(/\n+$/,'');
+  // modo só texto: título + texto puro
+  if(currentMode==='texto'){
+    return `*${title}*\n\n${raw}`;
+  }
   const tot=fmt(sumBody(noteBody.value));
   const groups=groupByModel(noteBody.value);
 
@@ -366,8 +424,9 @@ document.getElementById('hdrShareText').onclick=()=>{
 function makePNG(){
   const title=noteTitle.value.trim()||'Nota';
   const lines=noteBody.value.replace(/\n+$/,'').split('\n');
+  const isTexto=(currentMode==='texto');
   const tot=fmt(sumBody(noteBody.value));
-  const groups=groupByModel(noteBody.value);
+  const groups=isTexto?[]:groupByModel(noteBody.value);
   const showGroups=groups.length>1;
 
   const scale=2;
@@ -378,13 +437,14 @@ function makePNG(){
   const dateStamp=new Date().toLocaleDateString('pt-BR');
 
   const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
+  const totalBlock = isTexto ? 0 : (2 + 40 + 20);
 
   const H = padTop + titleSize + 24 + 18   // título
           + lines.length*lineH + 24        // linhas
-          + 2 + 18                          // divisor após linhas
+          + (isTexto ? 0 : (2 + 18))        // divisor após linhas
           + groupsBlock                     // resumo por modelo
-          + 40                              // divisor + espaço p/ total
-          + 20 + padTop;                    // total
+          + totalBlock                      // divisor + total
+          + padTop;
 
   const c=document.createElement('canvas');
   c.width=W*scale; c.height=H*scale;
@@ -434,9 +494,11 @@ function makePNG(){
   });
   y+=lines.length*lineH+18;
 
-  // divisor após as linhas
-  x.strokeStyle='#33403b';x.lineWidth=1;
-  x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+  // divisor após as linhas (só no modo somar)
+  if(!isTexto){
+    x.strokeStyle='#33403b';x.lineWidth=1;
+    x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+  }
 
   // resumo por modelo
   if(showGroups){
@@ -458,18 +520,19 @@ function makePNG(){
     x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   }
 
-  y+=40;
-
-  // total
-  x.fillStyle='#8a938e';
-  x.font=`400 22px -apple-system,Roboto,sans-serif`;
-  x.textAlign='left';
-  x.fillText('TOTAL',padX,y);
-  x.fillStyle='#a3d977';
-  x.font=`700 30px "Roboto Mono",monospace`;
-  x.textAlign='right';
-  x.fillText(tot,W-padX,y+3);
-  x.textAlign='left';
+  // total (só no modo somar)
+  if(!isTexto){
+    y+=40;
+    x.fillStyle='#8a938e';
+    x.font=`400 22px -apple-system,Roboto,sans-serif`;
+    x.textAlign='left';
+    x.fillText('TOTAL',padX,y);
+    x.fillStyle='#a3d977';
+    x.font=`700 30px "Roboto Mono",monospace`;
+    x.textAlign='right';
+    x.fillText(tot,W-padX,y+3);
+    x.textAlign='left';
+  }
 
   return c;
 }
@@ -508,7 +571,7 @@ window.addEventListener('popstate',()=>{
 });
 history.pushState(null,'');
 
-load();renderList();
+load();renderList();applyResumoState();
 
 /* PWA: registra o service worker (instala como app + atualiza sozinho) */
 if('serviceWorker' in navigator){
