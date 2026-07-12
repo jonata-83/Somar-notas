@@ -1,3 +1,4 @@
+
 name: Build APK
 
 on:
@@ -31,6 +32,8 @@ jobs:
 
       - name: Preparar icone 1024 (a partir do icon-512)
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
           mkdir -p assets
           convert icon-512.png -resize 1024x1024 assets/icon.png
 
