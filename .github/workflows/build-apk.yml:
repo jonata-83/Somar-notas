@@ -1,0 +1,61 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Montar assets web (www)
+        run: |
+          rm -rf www && mkdir -p www
+          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png native-share.js www/
+          sed -i 's#</body>#<script src="native-share.js"></script>\n</body>#' www/index.html
+
+      - name: Instalar Capacitor
+        run: npm install
+
+      - name: Adicionar plataforma Android
+        run: npx cap add android
+
+      - name: Sincronizar
+        run: npx cap sync android
+
+      - name: Compilar APK (debug)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Renomear APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk somar-notas.apk
+
+      - name: Enviar como artefato do build
+        uses: actions/upload-artifact@v4
+        with:
+          name: somar-notas-apk
+          path: somar-notas.apk
+
+      - name: Publicar em Releases (baixar direto no celular)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-v${{ github.run_number }}
+          name: Somar Notas APK (build ${{ github.run_number }})
+          files: somar-notas.apk
