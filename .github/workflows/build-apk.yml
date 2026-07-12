@@ -29,6 +29,11 @@ jobs:
           cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png native-share.js www/
           sed -i 's#</body>#<script src="native-share.js"></script>\n</body>#' www/index.html
 
+      - name: Preparar icone 1024 (a partir do icon-512)
+        run: |
+          mkdir -p assets
+          convert icon-512.png -resize 1024x1024 assets/icon.png
+
       - name: Instalar Capacitor
         run: npm install
 
@@ -37,6 +42,9 @@ jobs:
 
       - name: Sincronizar
         run: npx cap sync android
+
+      - name: Gerar icones do app
+        run: npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#1c2321' --iconBackgroundColorDark '#1c2321'
 
       - name: Compilar APK (debug)
         run: |
