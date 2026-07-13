@@ -266,15 +266,25 @@ const STRIP=/^\s*[+-]?\d+(?:[.,]\d+)?(?:\s*\/\s*[+-]?\d+(?:[.,]\d+)?)?\s*/;
 function modelName(line){
   return line.replace(STRIP,'').trim();
 }
-// agrupa por modelo somando as quantidades, na ordem em que aparecem
+// agrupa por modelo somando as quantidades, na ordem em que aparecem.
+// Duas formas de nomear o modelo:
+//   1) nome na MESMA linha do número (ex "8/60 Fixa mista")
+//   2) nome numa linha SÓ de texto, acima das quantidades (ex "Fixa mista")
+//      -> vale como cabeçalho: as linhas de baixo somam dentro dele
 function groupByModel(body){
   const map=new Map();      // chave minúscula -> {nome, qt}
+  let cabecalho='';         // último nome de modelo escrito numa linha só de texto
   (body||'').split('\n').forEach(l=>{
     if(!l.trim()) return;
+    const temNumFrente=/^\s*[+-]?\d/.test(l);   // a linha começa com número?
+    if(!temNumFrente){
+      // linha só de texto = nome do modelo (cabeçalho)
+      cabecalho=l.trim();
+      return;
+    }
     const qt=lineValue(l);
-    if(qt===0 && !/\d/.test(l)) return;
-    let nome=modelName(l);
-    if(!nome) nome='(sem nome)';
+    const inline=modelName(l);                  // nome escrito na mesma linha, se houver
+    const nome = inline || cabecalho || '(sem nome)';
     const key=nome.toLowerCase();
     if(map.has(key)) map.get(key).qt+=qt;
     else map.set(key,{nome,qt});
