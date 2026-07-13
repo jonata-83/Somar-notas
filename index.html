@@ -104,6 +104,7 @@
 
   .icon-btn svg{width:22px;height:22px;}
   .icon-btn.wa-ico{color:var(--wa);}
+  .icon-btn.active{color:var(--accent);background:var(--total-bg);}
   .mode-btn{
     background:var(--total-bg);border:1px solid var(--line);
     color:var(--num);font-size:12px;font-weight:700;
@@ -193,6 +194,9 @@
   <button class="mode-btn hidden" id="modeBtn" aria-label="Alternar somar ou texto">Σ Somar</button>
   <button class="icon-btn wa-ico hidden" id="hdrShareText" aria-label="Enviar no WhatsApp">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
+  </button>
+  <button class="icon-btn hidden" id="pngThemeBtn" aria-label="Fundo do PNG">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5z"/><line x1="9" y1="4" x2="9" y2="18"/></svg>
   </button>
   <button class="icon-btn hidden" id="hdrSharePng" aria-label="Enviar imagem">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
@@ -355,6 +359,7 @@ function showEditor(show){
   deleteBtn.classList.toggle('hidden',!show);
   document.getElementById('hdrShareText').classList.toggle('hidden',!show);
   document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
+  document.getElementById('pngThemeBtn').classList.toggle('hidden',!show);
   modeBtn.classList.toggle('hidden',!show);
   document.getElementById('backupBtn').classList.toggle('hidden',show);
   brandTag.classList.toggle('hidden',show);
@@ -469,6 +474,21 @@ document.getElementById('hdrShareText').onclick=()=>{
   window.open(url,'_blank');
 };
 
+/* ---------- Tema do PNG: escuro (padrão) ou caderno ---------- */
+const PNG_THEME_KEY='somar_png_theme';
+let pngTheme = localStorage.getItem(PNG_THEME_KEY)==='caderno' ? 'caderno' : 'escuro';
+const PNG_THEMES = {
+  escuro:  { paper:'#1c2321', ink:'#e8e4d8', num:'#a3d977', line:'#33403b', muted:'#8a938e', rule:null,      margin:null },
+  caderno: { paper:'#faf6ea', ink:'#26303f', num:'#1b4f9c', line:'#cbbfa4', muted:'#8a7f66', rule:'#aecbe6', margin:'#e2a0a0' }
+};
+function pngThemeRefresh(){
+  const b=document.getElementById('pngThemeBtn');
+  if(!b) return;
+  const caderno = pngTheme==='caderno';
+  b.classList.toggle('active', caderno);
+  b.setAttribute('aria-label', caderno ? 'Fundo do PNG: caderno (toque p/ escuro)' : 'Fundo do PNG: escuro (toque p/ caderno)');
+}
+
 function makePNG(){
   const title=noteTitle.value.trim()||'Nota';
   const lines=noteBody.value.replace(/\n+$/,'').split('\n');
@@ -476,6 +496,7 @@ function makePNG(){
   const tot=fmt(sumBody(noteBody.value));
   const groups=isTexto?[]:groupByModel(noteBody.value);
   const showGroups=groups.length>1;
+  const P = PNG_THEMES[pngTheme] || PNG_THEMES.escuro;
 
   const scale=2;
   const W=720;
@@ -499,52 +520,80 @@ function makePNG(){
   const x=c.getContext('2d');
   x.scale(scale,scale);
 
-  x.fillStyle='#1c2321'; x.fillRect(0,0,W,H);
+  // fundo (papel)
+  x.fillStyle=P.paper; x.fillRect(0,0,W,H);
+  // linhas do caderno (pautado) + margem vermelha
+  if(P.rule){
+    const bodyTop = padTop + titleSize + 24 + 18;      // onde começam as linhas do pedido
+    const ruleStart = bodyTop + lineSize + 8;           // logo abaixo da 1ª linha
+    x.strokeStyle=P.rule; x.lineWidth=1;
+    for(let ry=ruleStart; ry<H-14; ry+=lineH){
+      x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke();
+    }
+    if(P.margin){
+      x.strokeStyle=P.margin; x.lineWidth=2;
+      x.beginPath(); x.moveTo(26,0); x.lineTo(26,H); x.stroke();
+    }
+  }
 
   let y=padTop;
   // título + data
-  x.fillStyle='#e8e4d8';
+  x.fillStyle=P.ink;
   x.font=`600 ${titleSize}px -apple-system,Roboto,sans-serif`;
   x.fillText(title,padX,y+titleSize-6);
-  x.fillStyle='#8a938e';
+  x.fillStyle=P.muted;
   x.font=`400 18px -apple-system,Roboto,sans-serif`;
   x.textAlign='right';
   x.fillText(dateStamp,W-padX,y+titleSize-8);
   x.textAlign='left';
   y+=titleSize+24;
 
-  x.strokeStyle='#33403b';x.lineWidth=1;
+  x.strokeStyle=P.line;x.lineWidth=1;
   x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   y+=18;
 
   // linhas do pedido
   x.font=`400 ${lineSize}px "Roboto Mono",ui-monospace,monospace`;
-  // maior largura do número da frente, p/ alinhar à direita
-  let maxQty=0;
-  lines.forEach(ln=>{
-    const mm=ln.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
-    if(mm) maxQty=Math.max(maxQty,mm[1].length);
-  });
-  lines.forEach((ln,i)=>{
+  // separa cada linha em: quantidade | medida (ex "/80") | nome
+  function splitLinha(ln){
     const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
+    if(!m) return null;
+    const resto=m[3];
+    const r=resto.match(/^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ].*)?$/);
+    let medida = r ? r[1] : resto;
+    let nome   = (r && r[2]) ? r[2] : '';
+    medida = medida.replace(/\s+$/,'');   // tira espaços no fim da medida
+    return {qty:m[2], medida, nome};
+  }
+  const parsed = lines.map(splitLinha);
+  // maior largura do número da frente (p/ alinhar à direita)
+  let maxQty=0;
+  parsed.forEach(p=>{ if(p) maxQty=Math.max(maxQty,p.qty.length); });
+  // maior largura de "quantidade+medida" (p/ alinhar os nomes na mesma coluna)
+  let maxCore=0;
+  parsed.forEach(p=>{ if(p) maxCore=Math.max(maxCore, maxQty + p.medida.length); });
+  lines.forEach((ln,i)=>{
     const ny=y+i*lineH+lineSize;
-    if(m){
-      const qty=m[2].padStart(maxQty,' ');   // alinha à direita
-      x.fillStyle='#a3d977';
+    const p=parsed[i];
+    if(p){
+      const qty=p.qty.padStart(maxQty,' ');   // número alinhado à direita
+      x.fillStyle=P.num;
       x.fillText(qty,padX,ny);
       const numW=x.measureText(qty).width;
-      x.fillStyle='#e8e4d8';
-      x.fillText(m[3],padX+numW,ny);
+      const gap=(maxCore - (maxQty + p.medida.length)) + 1;  // pelo menos 1 espaço
+      const resto = p.medida + (p.nome ? ' '.repeat(gap) + p.nome : '');
+      x.fillStyle=P.ink;
+      x.fillText(resto,padX+numW,ny);
     }else{
-      x.fillStyle='#e8e4d8';
+      x.fillStyle=P.ink;
       x.fillText(ln,padX,ny);
     }
   });
   y+=lines.length*lineH+18;
 
-  // divisor após as linhas (só no modo somar)
-  if(!isTexto){
-    x.strokeStyle='#33403b';x.lineWidth=1;
+  // divisor após as linhas (só no escuro; no caderno as pautas já separam)
+  if(!isTexto && !P.rule){
+    x.strokeStyle=P.line;x.lineWidth=1;
     x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   }
 
@@ -553,29 +602,31 @@ function makePNG(){
     y+=18;
     groups.forEach((g,i)=>{
       const ny=y+i*grpH+26;
-      x.fillStyle='#e8e4d8';
+      x.fillStyle=P.ink;
       x.font=`400 24px -apple-system,Roboto,sans-serif`;
       x.textAlign='left';
       x.fillText(g.nome,padX,ny);
-      x.fillStyle='#a3d977';
+      x.fillStyle=P.num;
       x.font=`700 24px "Roboto Mono",monospace`;
       x.textAlign='right';
       x.fillText(fmt(g.qt),W-padX,ny);
     });
     x.textAlign='left';
     y+=groups.length*grpH+24;
-    x.strokeStyle='#33403b';x.lineWidth=2;
-    x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+    if(!P.rule){
+      x.strokeStyle=P.line;x.lineWidth=2;
+      x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+    }
   }
 
   // total (só no modo somar)
   if(!isTexto){
     y+=40;
-    x.fillStyle='#8a938e';
+    x.fillStyle=P.muted;
     x.font=`400 22px -apple-system,Roboto,sans-serif`;
     x.textAlign='left';
     x.fillText('TOTAL',padX,y);
-    x.fillStyle='#a3d977';
+    x.fillStyle=P.num;
     x.font=`700 30px "Roboto Mono",monospace`;
     x.textAlign='right';
     x.fillText(tot,W-padX,y+3);
@@ -584,6 +635,14 @@ function makePNG(){
 
   return c;
 }
+
+document.getElementById('pngThemeBtn').onclick=()=>{
+  pngTheme = (pngTheme==='caderno') ? 'escuro' : 'caderno';
+  localStorage.setItem(PNG_THEME_KEY, pngTheme);
+  pngThemeRefresh();
+  toast(pngTheme==='caderno' ? '📔 PNG com fundo caderno' : '🌙 PNG com fundo escuro');
+};
+pngThemeRefresh();
 
 document.getElementById('hdrSharePng').onclick=async()=>{
   if(!noteBody.value.trim()){toast('Nota vazia');return;}
