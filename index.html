@@ -61,7 +61,59 @@
   .note-card{
     display:flex;align-items:center;gap:12px;
     padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;
+    border-left:4px solid transparent;
   }
+  .note-card .band{font-size:12px;font-weight:600;margin-bottom:3px;
+    display:flex;align-items:center;gap:5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .note-card .flag-btn{
+    flex-shrink:0;background:none;border:1px solid var(--line);border-radius:9px;
+    color:var(--muted);width:36px;height:36px;font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .note-card .flag-btn:active{background:var(--total-bg);}
+
+  #bandBar{
+    display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding:10px 14px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;background:var(--bg);z-index:5;
+  }
+  .chip{
+    flex-shrink:0;display:flex;align-items:center;gap:6px;white-space:nowrap;
+    background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .chip .cnt{color:var(--muted);font-weight:400;}
+  .chip.on{color:var(--ink);}
+  .chip.ger{border-style:dashed;border-color:var(--accent);color:var(--accent);}
+
+  .band-item{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
+    color:var(--ink);padding:13px 14px;font-size:15px;font-weight:600;
+    cursor:pointer;margin-bottom:10px;
+  }
+  .band-item:active{transform:scale(.98);}
+  .band-item .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .band-row{
+    display:flex;align-items:center;gap:8px;margin-bottom:10px;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+  }
+  .band-row .cnt{font-size:12px;color:var(--muted);flex-shrink:0;}
+  .band-row .del{
+    background:none;border:none;color:var(--danger);font-size:17px;
+    cursor:pointer;padding:4px 6px;flex-shrink:0;
+  }
+  .band-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);padding:12px;font-size:15px;outline:none;font-family:inherit;
+  }
+  .band-input.slim{padding:8px 10px;font-size:14px;flex:1;min-width:0;}
+  .color-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .color-dot{width:32px;height:32px;border-radius:50%;border:1px solid #444;cursor:pointer;padding:0;}
+  .color-dot.sel{border:3px solid var(--ink);}
+  .band-empty{color:var(--muted);font-size:14px;margin-bottom:12px;}
   .note-card:active{background:var(--panel);}
   .note-card .info{flex:1;min-width:0;}
   .note-card .title{font-size:16px;font-weight:600;margin-bottom:3px;
@@ -174,6 +226,32 @@
   .modal-btn.primary{background:var(--num);color:#14290a;border-color:var(--num);}
   .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
 
+  .icon-btn.done-ico{color:var(--num);font-size:24px;font-weight:700;}
+  .icon-btn.done-ico:active{background:var(--total-bg);}
+
+  #hdrMenu{
+    position:fixed;right:10px;z-index:70;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:6px;min-width:215px;display:flex;flex-direction:column;
+    box-shadow:0 10px 30px rgba(0,0,0,.55);
+  }
+  #hdrMenu.hidden{display:none !important;}
+  #hdrMenu > button{
+    display:flex !important;align-items:center;justify-content:flex-start;gap:12px;
+    width:100%;height:auto;background:none;border:none;border-radius:10px;
+    color:var(--ink);font-size:15px;font-weight:500;text-align:left;
+    padding:13px 14px;cursor:pointer;white-space:nowrap;letter-spacing:normal;
+    text-transform:none;
+  }
+  #hdrMenu > button.hidden{display:none !important;}
+  #hdrMenu > button:active{background:var(--total-bg);}
+  #hdrMenu > button svg{width:20px;height:20px;flex-shrink:0;}
+  #hdrMenu > button.danger{color:var(--danger);}
+  #hdrMenu > button#modeBtn{color:var(--num);font-weight:700;}
+  #hdrMenu > button#modeBtn.texto{color:var(--muted);}
+  #menuBackdrop{position:fixed;inset:0;z-index:65;background:transparent;}
+  #menuBackdrop.hidden{display:none !important;}
+
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
     background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;
@@ -191,21 +269,32 @@
   <button class="icon-btn" id="backupBtn" aria-label="Backup das notas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
   </button>
+  <button class="icon-btn done-ico hidden" id="doneBtn" aria-label="Pronto, fechar teclado">✓</button>
+  <button class="icon-btn hidden" id="menuBtn" aria-label="Mais opções">⋯</button>
+</header>
+
+<!-- GAVETA DO CABEÇALHO -->
+<div id="menuBackdrop" class="hidden"></div>
+<div id="hdrMenu" class="hidden">
   <button class="mode-btn hidden" id="modeBtn" aria-label="Alternar somar ou texto">Σ Somar</button>
   <button class="icon-btn wa-ico hidden" id="hdrShareText" aria-label="Enviar no WhatsApp">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
+    <span>Enviar no WhatsApp</span>
   </button>
   <button class="icon-btn hidden" id="pngThemeBtn" aria-label="Fundo do PNG">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5z"/><line x1="9" y1="4" x2="9" y2="18"/></svg>
+    <span>Fundo do PNG</span>
   </button>
   <button class="icon-btn hidden" id="hdrSharePng" aria-label="Enviar imagem">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    <span>Enviar imagem</span>
   </button>
-  <button class="icon-btn danger hidden" id="deleteBtn" aria-label="Excluir nota">🗑</button>
-</header>
+  <button class="icon-btn danger hidden" id="deleteBtn" aria-label="Excluir nota">🗑 <span>Excluir nota</span></button>
+</div>
 
 <!-- LISTA -->
 <div class="view" id="listView">
+  <div id="bandBar" class="hidden"></div>
   <div id="notesContainer"></div>
   <div class="empty hidden" id="emptyState">
     <div class="big">📝</div>
@@ -247,6 +336,30 @@
   </div>
 </div>
 <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+
+<!-- MODAL: escolher bandeira da nota -->
+<div class="modal-overlay hidden" id="bandPickModal">
+  <div class="modal">
+    <h2>⚑ Bandeira da nota</h2>
+    <p class="modal-sub">Cada nota leva uma bandeira. Use pra separar pedido, cliente ou o que você quiser.</p>
+    <div id="bandPickList"></div>
+    <button class="modal-btn" id="gerFromPick">⚙ Gerenciar bandeiras</button>
+    <button class="modal-btn ghost" id="closeBandPick">Fechar</button>
+  </div>
+</div>
+
+<!-- MODAL: gerenciar bandeiras -->
+<div class="modal-overlay hidden" id="bandManageModal">
+  <div class="modal">
+    <h2>⚑ Bandeiras</h2>
+    <p class="modal-sub">Cadastre com o nome que quiser. Toque no nome pra renomear.</p>
+    <div id="bandManageList"></div>
+    <div class="color-row" id="colorRow"></div>
+    <input type="text" class="band-input" id="newBandName" placeholder="Nome da bandeira">
+    <button class="modal-btn primary" id="addBandBtn" style="margin-top:10px">+ Adicionar</button>
+    <button class="modal-btn ghost" id="closeBandManage">Fechar</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -308,20 +421,33 @@ const emptyState=document.getElementById('emptyState');
 function renderList(){
   notesContainer.innerHTML='';
   emptyState.classList.toggle('hidden',notes.length!==0);
-  const sorted=[...notes].sort((a,b)=>b.updated-a.updated);
+  renderBandBar();
+  if(filtroBand && !bandeiras.some(b=>b.id===filtroBand)) filtroBand=null;
+  const sorted=[...notes]
+    .filter(n=>!filtroBand || n.bandeira===filtroBand)
+    .sort((a,b)=>b.updated-a.updated);
+  if(notes.length>0 && sorted.length===0){
+    notesContainer.innerHTML='<div class="empty"><p>Nenhuma nota com essa bandeira.</p></div>';
+    return;
+  }
   sorted.forEach(n=>{
     const isTexto=(n.mode==='texto');
     const tot=sumBody(n.body);
     const lines=(n.body||'').split('\n').filter(l=>l.trim()).length;
+    const b=bandDe(n);
     const card=document.createElement('div');
     card.className='note-card';
+    if(b) card.style.borderLeftColor=b.cor;
     card.innerHTML=`
       <div class="info">
+        ${b?`<div class="band" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}</div>`:''}
         <div class="title">${escapeHtml(n.title||'Sem título')}</div>
         <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.updated)}</div>
       </div>
-      ${isTexto?'':`<div class="tot mono">${fmt(tot)}</div>`}`;
+      ${isTexto?'':`<div class="tot mono">${fmt(tot)}</div>`}
+      <button class="flag-btn" aria-label="Bandeira" ${b?`style="color:${b.cor};border-color:${b.cor}"`:''}>⚑</button>`;
     card.onclick=()=>openNote(n.id);
+    card.querySelector('.flag-btn').onclick=(e)=>{e.stopPropagation();abrirBandPick(n.id);};
     notesContainer.appendChild(card);
   });
 }
@@ -362,8 +488,11 @@ function showEditor(show){
   document.getElementById('pngThemeBtn').classList.toggle('hidden',!show);
   modeBtn.classList.toggle('hidden',!show);
   document.getElementById('backupBtn').classList.toggle('hidden',show);
+  document.getElementById('doneBtn').classList.toggle('hidden',!show);
+  document.getElementById('menuBtn').classList.toggle('hidden',!show);
   brandTag.classList.toggle('hidden',show);
   headTitle.textContent=show?'Editar':'Somar Notas';
+  fecharMenu();
 }
 function newNote(){
   currentId='n'+Date.now();
@@ -678,6 +807,178 @@ window.addEventListener('popstate',()=>{
 });
 history.pushState(null,'');
 
+/* ---------- BOTÃO ✓ (fecha o teclado e salva) ---------- */
+const doneBtn=document.getElementById('doneBtn');
+// mantém o foco no campo até o clique acontecer
+doneBtn.addEventListener('pointerdown',e=>e.preventDefault());
+doneBtn.addEventListener('mousedown',e=>e.preventDefault());
+doneBtn.onclick=()=>{
+  persistCurrent(false);
+  noteBody.blur(); noteTitle.blur();
+  toast('Salvo ✓');
+};
+
+/* teclado fechado pelo botão do celular: tira o cursor e salva sozinho */
+if(window.visualViewport){
+  const vv=window.visualViewport;
+  let altAnt=vv.height;
+  vv.addEventListener('resize',()=>{
+    const h=vv.height;
+    if(h>altAnt+80){
+      const a=document.activeElement;
+      if(a===noteBody||a===noteTitle){ persistCurrent(false); a.blur(); }
+    }
+    altAnt=h;
+  });
+}
+
+/* ---------- GAVETA ⋯ DO CABEÇALHO ---------- */
+const menuBtn=document.getElementById('menuBtn');
+const hdrMenu=document.getElementById('hdrMenu');
+const menuBackdrop=document.getElementById('menuBackdrop');
+function fecharMenu(){
+  hdrMenu.classList.add('hidden');
+  menuBackdrop.classList.add('hidden');
+}
+function abrirMenu(){
+  const r=menuBtn.getBoundingClientRect();
+  hdrMenu.style.top=(r.bottom+6)+'px';
+  hdrMenu.classList.remove('hidden');
+  menuBackdrop.classList.remove('hidden');
+}
+menuBtn.onclick=(e)=>{
+  e.stopPropagation();
+  if(hdrMenu.classList.contains('hidden')) abrirMenu(); else fecharMenu();
+};
+menuBackdrop.onclick=fecharMenu;
+// qualquer opção escolhida fecha a gaveta
+hdrMenu.addEventListener('click',()=>setTimeout(fecharMenu,0));
+
+/* ---------- BANDEIRAS ---------- */
+const BKEY='somar_bandeiras';
+const CORES_BAND=['#e05252','#3fa34d','#3b82f6','#eab308','#a855f7','#f97316','#14b8a6','#ec4899'];
+let bandeiras=[];
+let filtroBand=null;
+let bandPickId=null;
+let novaBandCor=CORES_BAND[0];
+
+function loadBandeiras(){try{bandeiras=JSON.parse(localStorage.getItem(BKEY))||[];}catch(e){bandeiras=[];}}
+function saveBandeiras(){localStorage.setItem(BKEY,JSON.stringify(bandeiras));}
+function bandDe(n){return bandeiras.find(b=>b.id===n.bandeira)||null;}
+function contaBand(id){return notes.filter(n=>n.bandeira===id).length;}
+function corLivre(){
+  const usadas=bandeiras.map(b=>b.cor);
+  return CORES_BAND.find(c=>!usadas.includes(c))||CORES_BAND[0];
+}
+
+const bandBar=document.getElementById('bandBar');
+function renderBandBar(){
+  bandBar.classList.toggle('hidden',notes.length===0);
+  if(notes.length===0){bandBar.innerHTML='';return;}
+  let h=`<button class="chip ${filtroBand?'':'on'}" data-f="">Todas <span class="cnt">(${notes.length})</span></button>`;
+  bandeiras.forEach(b=>{
+    h+=`<button class="chip ${filtroBand===b.id?'on':''}" data-f="${b.id}"
+      style="${filtroBand===b.id?`border-color:${b.cor};background:${b.cor}22`:''}">
+      <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}
+      <span class="cnt">(${contaBand(b.id)})</span></button>`;
+  });
+  h+=`<button class="chip ger" id="chipGer">⚑ Bandeiras</button>`;
+  bandBar.innerHTML=h;
+  bandBar.querySelectorAll('.chip[data-f]').forEach(c=>{
+    c.onclick=()=>{filtroBand=c.dataset.f||null;renderList();};
+  });
+  document.getElementById('chipGer').onclick=abrirBandManage;
+}
+
+const bandPickModal=document.getElementById('bandPickModal');
+const bandManageModal=document.getElementById('bandManageModal');
+
+function abrirBandPick(id){
+  bandPickId=id;
+  renderBandPick();
+  bandPickModal.classList.remove('hidden');
+}
+function renderBandPick(){
+  const box=document.getElementById('bandPickList');
+  let h=`<button class="band-item" data-b=""><span class="dot" style="background:var(--line)"></span>— Sem bandeira</button>`;
+  bandeiras.forEach(b=>{
+    h+=`<button class="band-item" data-b="${b.id}" style="border-color:${b.cor};border-left:5px solid ${b.cor}">
+      <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}</button>`;
+  });
+  if(bandeiras.length===0) h+='<div class="band-empty">Nenhuma bandeira cadastrada ainda.</div>';
+  box.innerHTML=h;
+  box.querySelectorAll('.band-item').forEach(el=>{
+    el.onclick=()=>setBandNota(bandPickId, el.dataset.b||null);
+  });
+}
+function setBandNota(id,bid){
+  const n=notes.find(x=>x.id===id);
+  if(n){ n.bandeira=bid; save(); }
+  bandPickModal.classList.add('hidden');
+  renderList();
+}
+document.getElementById('closeBandPick').onclick=()=>bandPickModal.classList.add('hidden');
+bandPickModal.onclick=(e)=>{ if(e.target===bandPickModal) bandPickModal.classList.add('hidden'); };
+document.getElementById('gerFromPick').onclick=()=>{ bandPickModal.classList.add('hidden'); abrirBandManage(); };
+
+function abrirBandManage(){
+  novaBandCor=corLivre();
+  renderBandManage();
+  bandManageModal.classList.remove('hidden');
+}
+function renderBandManage(){
+  const box=document.getElementById('bandManageList');
+  if(bandeiras.length===0){
+    box.innerHTML='<div class="band-empty">Nenhuma bandeira ainda. Crie a primeira abaixo.</div>';
+  }else{
+    box.innerHTML=bandeiras.map(b=>`
+      <div class="band-row" style="border-left:5px solid ${b.cor}" data-b="${b.id}">
+        <span class="dot" style="width:12px;height:12px;border-radius:50%;background:${b.cor};flex-shrink:0"></span>
+        <input type="text" class="band-input slim" value="${escapeHtml(b.nome)}">
+        <span class="cnt">${contaBand(b.id)}</span>
+        <button class="del" aria-label="Excluir">🗑</button>
+      </div>`).join('');
+    box.querySelectorAll('.band-row').forEach(row=>{
+      const id=row.dataset.b;
+      row.querySelector('input').onchange=(e)=>{
+        const b=bandeiras.find(x=>x.id===id);
+        if(b){ b.nome=e.target.value.trim()||b.nome; saveBandeiras(); renderList(); renderBandManage(); }
+      };
+      row.querySelector('.del').onclick=()=>removeBandeira(id);
+    });
+  }
+  const cr=document.getElementById('colorRow');
+  cr.innerHTML=CORES_BAND.map(c=>`<button class="color-dot ${novaBandCor===c?'sel':''}" data-c="${c}" style="background:${c}"></button>`).join('');
+  cr.querySelectorAll('.color-dot').forEach(d=>{
+    d.onclick=()=>{ novaBandCor=d.dataset.c; renderBandManage(); };
+  });
+}
+function addBandeira(){
+  const inp=document.getElementById('newBandName');
+  const nome=inp.value.trim();
+  if(!nome){ toast('Dê um nome pra bandeira'); return; }
+  bandeiras.push({id:'b'+Date.now(),nome,cor:novaBandCor||corLivre()});
+  saveBandeiras();
+  inp.value='';
+  novaBandCor=corLivre();
+  renderBandManage();
+  renderList();
+}
+function removeBandeira(id){
+  const b=bandeiras.find(x=>x.id===id);
+  if(!b) return;
+  if(!confirm(`Excluir a bandeira "${b.nome}"? As notas continuam, só ficam sem bandeira.`)) return;
+  bandeiras=bandeiras.filter(x=>x.id!==id);
+  notes.forEach(n=>{ if(n.bandeira===id) n.bandeira=null; });
+  if(filtroBand===id) filtroBand=null;
+  saveBandeiras(); save();
+  renderBandManage(); renderList();
+}
+document.getElementById('addBandBtn').onclick=addBandeira;
+document.getElementById('newBandName').addEventListener('keydown',e=>{ if(e.key==='Enter') addBandeira(); });
+document.getElementById('closeBandManage').onclick=()=>bandManageModal.classList.add('hidden');
+bandManageModal.onclick=(e)=>{ if(e.target===bandManageModal) bandManageModal.classList.add('hidden'); };
+
 /* ---------- BACKUP: exportar / importar ---------- */
 const backupModal=document.getElementById('backupModal');
 document.getElementById('backupBtn').onclick=()=>backupModal.classList.remove('hidden');
@@ -685,7 +986,7 @@ document.getElementById('closeBackup').onclick=()=>backupModal.classList.add('hi
 backupModal.onclick=(e)=>{ if(e.target===backupModal) backupModal.classList.add('hidden'); };
 
 function backupData(){
-  return JSON.stringify({app:'somar-notas',v:1,exportado:new Date().toISOString(),notas:notes},null,2);
+  return JSON.stringify({app:'somar-notas',v:1,exportado:new Date().toISOString(),notas:notes,bandeiras},null,2);
 }
 function backupFileName(){
   const d=new Date();
@@ -742,6 +1043,11 @@ importFile.onchange=()=>{
           notes.push(n); ids.add(n.id); novas++;
         }
       });
+      if(Array.isArray(data.bandeiras)){
+        const bids=new Set(bandeiras.map(b=>b.id));
+        data.bandeiras.forEach(b=>{ if(b&&b.id&&!bids.has(b.id)){ bandeiras.push(b); bids.add(b.id); } });
+        saveBandeiras();
+      }
       save();renderList();
       backupModal.classList.add('hidden');
       toast(`Importado! ${novas} nota(s) nova(s)`);
@@ -758,7 +1064,7 @@ if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().catch(()=>{});
 }
 
-load();renderList();applyResumoState();
+load();loadBandeiras();renderList();applyResumoState();
 
 /* PWA: registra o service worker (instala como app + atualiza sozinho) */
 if('serviceWorker' in navigator){
