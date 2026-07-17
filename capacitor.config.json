@@ -2,6 +2,10 @@
   "appId": "br.com.jl.somarnotas",
   "appName": "Somar Notas",
   "webDir": "www",
+  "server": {
+    "url": "https://jonata-83.github.io/Somar-notas/",
+    "cleartext": false
+  },
   "android": {
     "allowMixedContent": true
   }
