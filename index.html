@@ -818,20 +818,6 @@ doneBtn.onclick=()=>{
   toast('Salvo ✓');
 };
 
-/* teclado fechado pelo botão do celular: tira o cursor e salva sozinho */
-if(window.visualViewport){
-  const vv=window.visualViewport;
-  let altAnt=vv.height;
-  vv.addEventListener('resize',()=>{
-    const h=vv.height;
-    if(h>altAnt+80){
-      const a=document.activeElement;
-      if(a===noteBody||a===noteTitle){ persistCurrent(false); a.blur(); }
-    }
-    altAnt=h;
-  });
-}
-
 /* ---------- GAVETA ⋯ DO CABEÇALHO ---------- */
 const menuBtn=document.getElementById('menuBtn');
 const hdrMenu=document.getElementById('hdrMenu');
