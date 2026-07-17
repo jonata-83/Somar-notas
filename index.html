@@ -1069,7 +1069,16 @@ load();loadBandeiras();renderList();applyResumoState();
 /* PWA: registra o service worker (instala como app + atualiza sozinho) */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      reg.update();
+      // se um sw novo assumir, recarrega uma vez pra pegar a versão nova
+      let recarregou=false;
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(recarregou) return;
+        recarregou=true;
+        location.reload();
+      });
+    }).catch(()=>{});
   });
 }
 </script>
