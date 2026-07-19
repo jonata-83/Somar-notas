@@ -372,11 +372,84 @@ function load(){try{notes=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){no
 function save(){localStorage.setItem(KEY,JSON.stringify(notes));}
 
 function lineValue(line){
+  // subtotais/total gerados pelo app e linhas de multiplicação não somam quantidade
+  if(/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
+  if(/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
+  if(/x\s*\d/i.test(line)) return 0;
   const m=line.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
   if(!m) return 0;
   return parseFloat(m[1].replace(',','.'))||0;
 }
 function sumBody(body){return (body||'').split('\n').reduce((a,l)=>a+lineValue(l),0);}
+
+// ---- Multiplicação automática: "10/80 x120" -> "10/80 x120= 1200" ----
+// Regra: quantidade = primeiro número da linha; preço = número logo após o "x".
+// Resultado = quantidade × preço, escrito (ou atualizado) depois de "=".
+// mede: quando a linha tem "x<números>", devolve a linha já com o "= resultado".
+const RX_MULT=/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*?)(x\s*)(\d+(?:[.,]\d+)?)(\s*=\s*[\d.,]*)?(\s*)$/i;
+function aplicaMultLinha(line){
+  const m=line.match(RX_MULT);
+  if(!m) return line;                 // sem "x<preço>" -> não mexe
+  const ini=m[1], qtd=m[2], meio=m[3], xtok=m[4], preco=m[5], fim=m[7]||'';
+  const q=parseFloat(qtd.replace(',','.'));
+  const pr=parseFloat(preco.replace(',','.'));
+  if(!isFinite(q)||!isFinite(pr)) return line;
+  const res=q*pr;
+  const resTxt=Number.isInteger(res)?String(res):String(res);
+  return `${ini}${qtd}${meio}${xtok}${preco}= ${resTxt}${fim}`;
+}
+// linha de multiplicação já calculada? devolve o resultado (número após o "=")
+const RX_RESULT=/x\s*\d+(?:[.,]\d+)?\s*=\s*([\d.,]+)\s*$/i;
+function valorResultado(line){
+  const m=line.match(RX_RESULT);
+  if(!m) return null;
+  return parseFloat(m[1].replace(/\./g,'').replace(',','.'))||0;
+}
+// linhas que o app gera sozinho (pra não duplicar): "= 5100" e "TOTAL= 13900"
+const RX_SUBTOTAL=/^\s*=\s*[\d.,]+\s*$/;
+const RX_TOTAL=/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i;
+function ehLinhaGerada(line){ return RX_SUBTOTAL.test(line)||RX_TOTAL.test(line); }
+
+// aplica a multiplicação em todas as linhas (menos as geradas pelo app)
+function aplicaMultTexto(txt){
+  return txt.split('\n').map(l=>ehLinhaGerada(l)?l:aplicaMultLinha(l)).join('\n');
+}
+
+// reconstrói o texto: calcula cada linha, remove os subtotais/total antigos,
+// e insere "= <subtotal>" no fim de cada grupo + "TOTAL= <geral>" no fim.
+// Um grupo termina quando aparece um cabeçalho (linha sem número na frente)
+// ou uma linha em branco depois de haver multiplicações no grupo.
+function montaComTotais(txt){
+  const linhas=txt.split('\n')
+    .filter(l=>!ehLinhaGerada(l))       // tira subtotais/total que já existiam
+    .map(l=>aplicaMultLinha(l));         // recalcula os resultados
+  const out=[];
+  let soma=0, temMult=false, geral=0, houveGrupo=false;
+  const fecharGrupo=()=>{
+    if(temMult){
+      out.push('= '+fmt(soma));
+      geral+=soma; houveGrupo=true;
+    }
+    soma=0; temMult=false;
+  };
+  linhas.forEach(l=>{
+    const v=valorResultado(l);
+    const cabecalho = l.trim() && !/^\s*[+-]?\d/.test(l);   // linha de texto = novo grupo
+    const branco = !l.trim();
+    if(cabecalho){ fecharGrupo(); out.push(l); return; }
+    if(branco){ fecharGrupo(); out.push(l); return; }
+    if(v!==null){ soma+=v; temMult=true; }
+    out.push(l);
+  });
+  fecharGrupo();
+  // total geral no fim (só se houve mais de um grupo com multiplicação)
+  if(houveGrupo){
+    // remove brancos sobrando no fim antes de pôr o total
+    while(out.length && !out[out.length-1].trim()) out.pop();
+    out.push('TOTAL= '+fmt(geral));
+  }
+  return out.join('\n');
+}
 
 // tira o número da frente e a medida (ex "500/80") -> sobra o nome do modelo
 const STRIP=/^\s*[+-]?\d+(?:[.,]\d+)?(?:\s*\/\s*[+-]?\d+(?:[.,]\d+)?)?\s*/;
@@ -393,6 +466,7 @@ function groupByModel(body){
   let cabecalho='';         // último nome de modelo escrito numa linha só de texto
   (body||'').split('\n').forEach(l=>{
     if(!l.trim()) return;
+    if(/x\s*\d/i.test(l)) return;               // linha de multiplicação: fora do resumo de quantidade
     const temNumFrente=/^\s*[+-]?\d/.test(l);   // a linha começa com número?
     if(!temNumFrente){
       // linha só de texto = nome do modelo (cabeçalho)
@@ -798,7 +872,51 @@ document.getElementById('hdrSharePng').onclick=async()=>{
 document.getElementById('newBtn').onclick=newNote;
 backBtn.onclick=closeEditor;
 deleteBtn.onclick=deleteCurrent;
-noteBody.addEventListener('input',()=>{refreshEditor();persistCurrent(false);});
+noteBody.addEventListener('input',()=>{recalcMult();refreshEditor();persistCurrent(false);});
+
+// Recalcula a multiplicação, MAS deixa a linha onde o cursor está em paz
+// (senão o resultado seria escrito no meio da digitação do preço).
+// A linha atual só é calculada quando o cursor sai dela (espaço, Enter, ✓...).
+function recalcMult(preservarLinhaAtual){
+  if(preservarLinhaAtual===undefined) preservarLinhaAtual=true;
+  const antes=noteBody.value;
+  const pos=noteBody.selectionStart;
+  const linhasAntes=antes.split('\n');
+  // descobre em qual linha o cursor está
+  let acc=0, curLine=0;
+  for(let i=0;i<linhasAntes.length;i++){
+    const fim=acc+linhasAntes[i].length;
+    if(pos<=fim){ curLine=i; break; }
+    acc=fim+1;
+  }
+  // texto da linha atual (não pode ser recalculada enquanto é digitada)
+  const linhaAtualTxt=linhasAntes[curLine];
+  // calcula tudo COM totais, mas restaura a linha do cursor ao original
+  let depois;
+  if(preservarLinhaAtual){
+    // marca a linha atual, monta os totais, e devolve a linha crua no lugar
+    const MARCA='\u0000CURSOR\u0000';
+    const copia=linhasAntes.slice(); copia[curLine]=MARCA;
+    depois=montaComTotais(copia.join('\n')).replace(MARCA,linhaAtualTxt);
+  }else{
+    depois=montaComTotais(antes);
+  }
+  if(depois===antes) return;
+  // recoloca o cursor na mesma linha/coluna
+  const novasLinhas=depois.split('\n');
+  // acha onde a linha atual (com seu texto original) foi parar
+  let idxNovo=curLine;
+  if(preservarLinhaAtual){
+    idxNovo=novasLinhas.findIndex(x=>x===linhaAtualTxt);
+    if(idxNovo<0) idxNovo=Math.min(curLine,novasLinhas.length-1);
+  }
+  const colNaLinha=pos-acc;
+  let novoPos=0;
+  for(let i=0;i<idxNovo;i++) novoPos+=novasLinhas[i].length+1;
+  novoPos+=Math.min(colNaLinha,(novasLinhas[idxNovo]||'').length);
+  noteBody.value=depois;
+  try{ noteBody.setSelectionRange(novoPos,novoPos); }catch(e){}
+}
 noteTitle.addEventListener('input',()=>persistCurrent(false));
 noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
 
@@ -813,6 +931,8 @@ const doneBtn=document.getElementById('doneBtn');
 doneBtn.addEventListener('pointerdown',e=>e.preventDefault());
 doneBtn.addEventListener('mousedown',e=>e.preventDefault());
 doneBtn.onclick=()=>{
+  const c=montaComTotais(noteBody.value);
+  if(c!==noteBody.value){ noteBody.value=c; refreshEditor(); }
   persistCurrent(false);
   noteBody.blur(); noteTitle.blur();
   toast('Salvo ✓');
