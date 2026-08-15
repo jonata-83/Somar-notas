@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -21,6 +21,7 @@
     --accent:#e0a458;
     --wa:#25d366;
     --danger:#d16a5a;
+    --neg:#ff6b6b;
     --total-bg:#2a3430;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -53,6 +54,7 @@
   }
   .icon-btn:active{background:var(--line);}
   .icon-btn.danger{color:var(--danger);}
+  .icon-btn.neg{color:var(--neg);}
 
   .view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .hidden{display:none !important;}
@@ -120,6 +122,7 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .note-card .sub{font-size:13px;color:var(--muted);}
   .note-card .tot{font-size:18px;font-weight:700;color:var(--num);white-space:nowrap;}
+  .note-card .tot.neg{color:var(--neg);}
   .empty{text-align:center;color:var(--muted);padding:70px 30px;}
   .empty .big{font-size:40px;margin-bottom:14px;opacity:.4;}
   .empty p{font-size:15px;line-height:1.5;margin:6px 0;}
@@ -147,6 +150,7 @@
     min-width:34px;
   }
   .gutter span{display:block;padding:0 8px 0 12px;}
+  .gutter span.neg{color:var(--neg);}
   #noteBody{
     flex:1;background:var(--bg);border:none;color:var(--ink);
     font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;
@@ -195,6 +199,7 @@
   }
   .resumo .row .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-4px);}
   .resumo .row .qt{color:var(--num);font-weight:700;white-space:nowrap;}
+  .resumo .row .qt.neg{color:var(--neg);}
 
   .total-bar{
     flex-shrink:0;background:var(--total-bg);border-top:1px solid var(--line);
@@ -203,7 +208,7 @@
   }
   .total-bar .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
   .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
-
+  .total-bar .val.neg{color:var(--neg);}
 
   .modal-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,.6);
@@ -269,6 +274,7 @@
   <button class="icon-btn" id="backupBtn" aria-label="Backup das notas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
   </button>
+  <button class="icon-btn hidden" id="signBtn" aria-label="Inverter sinal">−</button>
   <button class="icon-btn done-ico hidden" id="doneBtn" aria-label="Pronto, fechar teclado">✓</button>
   <button class="icon-btn hidden" id="menuBtn" aria-label="Mais opções">⋯</button>
 </header>
@@ -372,7 +378,6 @@ function load(){try{notes=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){no
 function save(){localStorage.setItem(KEY,JSON.stringify(notes));}
 
 function lineValue(line){
-  // subtotais/total gerados pelo app e linhas de multiplicação não somam quantidade
   if(/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
   if(/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
   if(/x\s*\d/i.test(line)) return 0;
@@ -382,14 +387,10 @@ function lineValue(line){
 }
 function sumBody(body){return (body||'').split('\n').reduce((a,l)=>a+lineValue(l),0);}
 
-// ---- Multiplicação automática: "10/80 x120" -> "10/80 x120= 1200" ----
-// Regra: quantidade = primeiro número da linha; preço = número logo após o "x".
-// Resultado = quantidade × preço, escrito (ou atualizado) depois de "=".
-// mede: quando a linha tem "x<números>", devolve a linha já com o "= resultado".
 const RX_MULT=/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*?)(x\s*)(\d+(?:[.,]\d+)?)(\s*=\s*[\d.,]*)?(\s*)$/i;
 function aplicaMultLinha(line){
   const m=line.match(RX_MULT);
-  if(!m) return line;                 // sem "x<preço>" -> não mexe
+  if(!m) return line;
   const ini=m[1], qtd=m[2], meio=m[3], xtok=m[4], preco=m[5], fim=m[7]||'';
   const q=parseFloat(qtd.replace(',','.'));
   const pr=parseFloat(preco.replace(',','.'));
@@ -398,31 +399,24 @@ function aplicaMultLinha(line){
   const resTxt=Number.isInteger(res)?String(res):String(res);
   return `${ini}${qtd}${meio}${xtok}${preco}= ${resTxt}${fim}`;
 }
-// linha de multiplicação já calculada? devolve o resultado (número após o "=")
 const RX_RESULT=/x\s*\d+(?:[.,]\d+)?\s*=\s*([\d.,]+)\s*$/i;
 function valorResultado(line){
   const m=line.match(RX_RESULT);
   if(!m) return null;
   return parseFloat(m[1].replace(/\./g,'').replace(',','.'))||0;
 }
-// linhas que o app gera sozinho (pra não duplicar): "= 5100" e "TOTAL= 13900"
 const RX_SUBTOTAL=/^\s*=\s*[\d.,]+\s*$/;
 const RX_TOTAL=/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i;
 function ehLinhaGerada(line){ return RX_SUBTOTAL.test(line)||RX_TOTAL.test(line); }
 
-// aplica a multiplicação em todas as linhas (menos as geradas pelo app)
 function aplicaMultTexto(txt){
   return txt.split('\n').map(l=>ehLinhaGerada(l)?l:aplicaMultLinha(l)).join('\n');
 }
 
-// reconstrói o texto: calcula cada linha, remove os subtotais/total antigos,
-// e insere "= <subtotal>" no fim de cada grupo + "TOTAL= <geral>" no fim.
-// Um grupo termina quando aparece um cabeçalho (linha sem número na frente)
-// ou uma linha em branco depois de haver multiplicações no grupo.
 function montaComTotais(txt){
   const linhas=txt.split('\n')
-    .filter(l=>!ehLinhaGerada(l))       // tira subtotais/total que já existiam
-    .map(l=>aplicaMultLinha(l));         // recalcula os resultados
+    .filter(l=>!ehLinhaGerada(l))
+    .map(l=>aplicaMultLinha(l));
   const out=[];
   let soma=0, temMult=false, geral=0, houveGrupo=false;
   const fecharGrupo=()=>{
@@ -434,7 +428,7 @@ function montaComTotais(txt){
   };
   linhas.forEach(l=>{
     const v=valorResultado(l);
-    const cabecalho = l.trim() && !/^\s*[+-]?\d/.test(l);   // linha de texto = novo grupo
+    const cabecalho = l.trim() && !/^\s*[+-]?\d/.test(l);
     const branco = !l.trim();
     if(cabecalho){ fecharGrupo(); out.push(l); return; }
     if(branco){ fecharGrupo(); out.push(l); return; }
@@ -442,39 +436,31 @@ function montaComTotais(txt){
     out.push(l);
   });
   fecharGrupo();
-  // total geral no fim (só se houve mais de um grupo com multiplicação)
   if(houveGrupo){
-    // remove brancos sobrando no fim antes de pôr o total
     while(out.length && !out[out.length-1].trim()) out.pop();
     out.push('TOTAL= '+fmt(geral));
   }
   return out.join('\n');
 }
 
-// tira o número da frente e a medida (ex "500/80") -> sobra o nome do modelo
 const STRIP=/^\s*[+-]?\d+(?:[.,]\d+)?(?:\s*\/\s*[+-]?\d+(?:[.,]\d+)?)?\s*/;
 function modelName(line){
   return line.replace(STRIP,'').trim();
 }
-// agrupa por modelo somando as quantidades, na ordem em que aparecem.
-// Duas formas de nomear o modelo:
-//   1) nome na MESMA linha do número (ex "8/60 Fixa mista")
-//   2) nome numa linha SÓ de texto, acima das quantidades (ex "Fixa mista")
-//      -> vale como cabeçalho: as linhas de baixo somam dentro dele
+
 function groupByModel(body){
-  const map=new Map();      // chave minúscula -> {nome, qt}
-  let cabecalho='';         // último nome de modelo escrito numa linha só de texto
+  const map=new Map();
+  let cabecalho='';
   (body||'').split('\n').forEach(l=>{
     if(!l.trim()) return;
-    if(/x\s*\d/i.test(l)) return;               // linha de multiplicação: fora do resumo de quantidade
-    const temNumFrente=/^\s*[+-]?\d/.test(l);   // a linha começa com número?
+    if(/x\s*\d/i.test(l)) return;
+    const temNumFrente=/^\s*[+-]?\d/.test(l);
     if(!temNumFrente){
-      // linha só de texto = nome do modelo (cabeçalho)
       cabecalho=l.trim();
       return;
     }
     const qt=lineValue(l);
-    const inline=modelName(l);                  // nome escrito na mesma linha, se houver
+    const inline=modelName(l);
     const nome = inline || cabecalho || '(sem nome)';
     const key=nome.toLowerCase();
     if(map.has(key)) map.get(key).qt+=qt;
@@ -518,7 +504,7 @@ function renderList(){
         <div class="title">${escapeHtml(n.title||'Sem título')}</div>
         <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.updated)}</div>
       </div>
-      ${isTexto?'':`<div class="tot mono">${fmt(tot)}</div>`}
+      ${isTexto?'':`<div class="tot mono ${tot<0?'neg':''}">${fmt(tot)}</div>`}
       <button class="flag-btn" aria-label="Bandeira" ${b?`style="color:${b.cor};border-color:${b.cor}"`:''}>⚑</button>`;
     card.onclick=()=>openNote(n.id);
     card.querySelector('.flag-btn').onclick=(e)=>{e.stopPropagation();abrirBandPick(n.id);};
@@ -537,8 +523,9 @@ const deleteBtn=document.getElementById('deleteBtn');
 const headTitle=document.getElementById('headTitle');
 const brandTag=document.getElementById('brandTag');
 const modeBtn=document.getElementById('modeBtn');
+const signBtn=document.getElementById('signBtn');
 
-let currentMode='somar';  // 'somar' ou 'texto'
+let currentMode='somar';
 function applyMode(mode){
   currentMode = mode==='texto' ? 'texto' : 'somar';
   const isTexto = currentMode==='texto';
@@ -564,6 +551,7 @@ function showEditor(show){
   document.getElementById('backupBtn').classList.toggle('hidden',show);
   document.getElementById('doneBtn').classList.toggle('hidden',!show);
   document.getElementById('menuBtn').classList.toggle('hidden',!show);
+  document.getElementById('signBtn').classList.toggle('hidden',!show);
   brandTag.classList.toggle('hidden',show);
   headTitle.textContent=show?'Editar':'Somar Notas';
   fecharMenu();
@@ -597,30 +585,40 @@ function deleteCurrent(){
     currentId=null;showEditor(false);renderList();
   }
 }
+
+function hasNegative(body){
+  return (body||'').split('\n').some(l=>/^\s*-\d/.test(l));
+}
 function refreshEditor(){
   const lines=noteBody.value.split('\n');
   const nLines=Math.max(lines.length,1);
-  let g='';for(let i=1;i<=nLines;i++) g+=`<span>${i}</span>`;
+  let g='';
+  for(let i=1;i<=nLines;i++){
+    const neg = lines[i-1] && /^\s*-\d/.test(lines[i-1]);
+    g+=`<span class="${neg?'neg':''}">${i}</span>`;
+  }
   gutter.innerHTML=g;
-  totalVal.textContent=fmt(sumBody(noteBody.value));
+  const tot=sumBody(noteBody.value);
+  totalVal.textContent=fmt(tot);
+  totalVal.classList.toggle('neg', tot<0);
+  const lbl=document.querySelector('.total-bar .lbl');
+  if(lbl) lbl.textContent = hasNegative(noteBody.value) ? 'Saldo' : 'Total';
   renderResumo();
 }
 function renderResumo(){
   const groups=groupByModel(noteBody.value);
   const box=document.getElementById('resumo');
   const wrap=document.getElementById('resumoWrap');
-  // só mostra se houver mais de um modelo distinto
   if(groups.length<2){wrap.classList.add('empty');box.innerHTML='';return;}
   wrap.classList.remove('empty');
   box.innerHTML=groups.map(g=>`
     <div class="row">
       <span class="nm">${escapeHtml(g.nome)}</span>
       <span class="dots"></span>
-      <span class="qt mono">${fmt(g.qt)}</span>
+      <span class="qt mono ${g.qt<0?'neg':''}">${fmt(g.qt)}</span>
     </div>`).join('');
 }
 
-/* esconder/mostrar o resumo (lembra a escolha) */
 const RESUMO_KEY='somar_resumo_collapsed';
 function applyResumoState(){
   const wrap=document.getElementById('resumoWrap');
@@ -645,14 +643,11 @@ function toast(msg){
 function buildText(){
   const title=noteTitle.value.trim()||'Nota';
   const raw=noteBody.value.replace(/\n+$/,'');
-  // modo só texto: título + texto puro
   if(currentMode==='texto'){
     return `*${title}*\n\n${raw}`;
   }
   const tot=fmt(sumBody(noteBody.value));
   const groups=groupByModel(noteBody.value);
-
-  // alinha o número da frente de cada linha do pedido
   const bodyLines=raw.split('\n');
   let maxQ=0;
   bodyLines.forEach(l=>{const m=l.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);if(m)maxQ=Math.max(maxQ,m[1].length);});
@@ -660,15 +655,14 @@ function buildText(){
     const m=l.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
     return m ? m[2].padStart(maxQ)+m[3] : l;
   }).join('\n');
-
-  // resumo por modelo (quantidade alinhada à direita)
   let block=body;
   if(groups.length>1){
     const maxLen=Math.max(...groups.map(g=>fmt(g.qt).length));
     const rows=groups.map(g=>`${fmt(g.qt).padStart(maxLen)}  ${g.nome}`).join('\n');
     block=body+'\n────────\n'+rows;
   }
-  return `*${title}*\n\n\`\`\`\n${block}\n\`\`\`\n\n*Total: ${tot}*`;
+  const label = hasNegative(noteBody.value) ? 'Saldo' : 'Total';
+  return `*${title}*\n\n\`\`\`\n${block}\n\`\`\`\n\n*${label}: ${tot}*`;
 }
 
 document.getElementById('hdrShareText').onclick=()=>{
@@ -677,12 +671,11 @@ document.getElementById('hdrShareText').onclick=()=>{
   window.open(url,'_blank');
 };
 
-/* ---------- Tema do PNG: escuro (padrão) ou caderno ---------- */
 const PNG_THEME_KEY='somar_png_theme';
 let pngTheme = localStorage.getItem(PNG_THEME_KEY)==='caderno' ? 'caderno' : 'escuro';
 const PNG_THEMES = {
-  escuro:  { paper:'#1c2321', ink:'#e8e4d8', num:'#a3d977', line:'#33403b', muted:'#8a938e', rule:null,      margin:null },
-  caderno: { paper:'#faf6ea', ink:'#26303f', num:'#1b4f9c', line:'#cbbfa4', muted:'#8a7f66', rule:'#aecbe6', margin:'#e2a0a0' }
+  escuro:  { paper:'#1c2321', ink:'#e8e4d8', num:'#a3d977', neg:'#ff6b6b', line:'#33403b', muted:'#8a938e', rule:null,      margin:null },
+  caderno: { paper:'#faf6ea', ink:'#26303f', num:'#1b4f9c', neg:'#d32f2f', line:'#cbbfa4', muted:'#8a7f66', rule:'#aecbe6', margin:'#e2a0a0' }
 };
 function pngThemeRefresh(){
   const b=document.getElementById('pngThemeBtn');
@@ -711,11 +704,11 @@ function makePNG(){
   const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
   const totalBlock = isTexto ? 0 : (2 + 40 + 20);
 
-  const H = padTop + titleSize + 24 + 18   // título
-          + lines.length*lineH + 24        // linhas
-          + (isTexto ? 0 : (2 + 18))        // divisor após linhas
-          + groupsBlock                     // resumo por modelo
-          + totalBlock                      // divisor + total
+  const H = padTop + titleSize + 24 + 18
+          + lines.length*lineH + 24
+          + (isTexto ? 0 : (2 + 18))
+          + groupsBlock
+          + totalBlock
           + padTop;
 
   const c=document.createElement('canvas');
@@ -723,12 +716,10 @@ function makePNG(){
   const x=c.getContext('2d');
   x.scale(scale,scale);
 
-  // fundo (papel)
   x.fillStyle=P.paper; x.fillRect(0,0,W,H);
-  // linhas do caderno (pautado) + margem vermelha
   if(P.rule){
-    const bodyTop = padTop + titleSize + 24 + 18;      // onde começam as linhas do pedido
-    const ruleStart = bodyTop + lineSize + 8;           // logo abaixo da 1ª linha
+    const bodyTop = padTop + titleSize + 24 + 18;
+    const ruleStart = bodyTop + lineSize + 8;
     x.strokeStyle=P.rule; x.lineWidth=1;
     for(let ry=ruleStart; ry<H-14; ry+=lineH){
       x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke();
@@ -740,7 +731,6 @@ function makePNG(){
   }
 
   let y=padTop;
-  // título + data
   x.fillStyle=P.ink;
   x.font=`600 ${titleSize}px -apple-system,Roboto,sans-serif`;
   x.fillText(title,padX,y+titleSize-6);
@@ -755,9 +745,7 @@ function makePNG(){
   x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   y+=18;
 
-  // linhas do pedido
   x.font=`400 ${lineSize}px "Roboto Mono",ui-monospace,monospace`;
-  // separa cada linha em: quantidade | medida (ex "/80") | nome
   function splitLinha(ln){
     const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
     if(!m) return null;
@@ -765,25 +753,24 @@ function makePNG(){
     const r=resto.match(/^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ].*)?$/);
     let medida = r ? r[1] : resto;
     let nome   = (r && r[2]) ? r[2] : '';
-    medida = medida.replace(/\s+$/,'');   // tira espaços no fim da medida
+    medida = medida.replace(/\s+$/,'');
     return {qty:m[2], medida, nome};
   }
   const parsed = lines.map(splitLinha);
-  // maior largura do número da frente (p/ alinhar à direita)
   let maxQty=0;
   parsed.forEach(p=>{ if(p) maxQty=Math.max(maxQty,p.qty.length); });
-  // maior largura de "quantidade+medida" (p/ alinhar os nomes na mesma coluna)
   let maxCore=0;
   parsed.forEach(p=>{ if(p) maxCore=Math.max(maxCore, maxQty + p.medida.length); });
   lines.forEach((ln,i)=>{
     const ny=y+i*lineH+lineSize;
     const p=parsed[i];
     if(p){
-      const qty=p.qty.padStart(maxQty,' ');   // número alinhado à direita
-      x.fillStyle=P.num;
+      const qty=p.qty.padStart(maxQty,' ');
+      const isNeg = /^-/.test(qty.trim());
+      x.fillStyle=isNeg ? (P.neg || '#ff6b6b') : P.num;
       x.fillText(qty,padX,ny);
       const numW=x.measureText(qty).width;
-      const gap=(maxCore - (maxQty + p.medida.length)) + 1;  // pelo menos 1 espaço
+      const gap=(maxCore - (maxQty + p.medida.length)) + 1;
       const resto = p.medida + (p.nome ? ' '.repeat(gap) + p.nome : '');
       x.fillStyle=P.ink;
       x.fillText(resto,padX+numW,ny);
@@ -794,13 +781,11 @@ function makePNG(){
   });
   y+=lines.length*lineH+18;
 
-  // divisor após as linhas (só no escuro; no caderno as pautas já separam)
   if(!isTexto && !P.rule){
     x.strokeStyle=P.line;x.lineWidth=1;
     x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   }
 
-  // resumo por modelo
   if(showGroups){
     y+=18;
     groups.forEach((g,i)=>{
@@ -809,7 +794,7 @@ function makePNG(){
       x.font=`400 24px -apple-system,Roboto,sans-serif`;
       x.textAlign='left';
       x.fillText(g.nome,padX,ny);
-      x.fillStyle=P.num;
+      x.fillStyle=g.qt<0 ? (P.neg || '#ff6b6b') : P.num;
       x.font=`700 24px "Roboto Mono",monospace`;
       x.textAlign='right';
       x.fillText(fmt(g.qt),W-padX,ny);
@@ -822,14 +807,14 @@ function makePNG(){
     }
   }
 
-  // total (só no modo somar)
   if(!isTexto){
     y+=40;
     x.fillStyle=P.muted;
     x.font=`400 22px -apple-system,Roboto,sans-serif`;
     x.textAlign='left';
-    x.fillText('TOTAL',padX,y);
-    x.fillStyle=P.num;
+    const label = hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL';
+    x.fillText(label,padX,y);
+    x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
     x.font=`700 30px "Roboto Mono",monospace`;
     x.textAlign='right';
     x.fillText(tot,W-padX,y+3);
@@ -874,27 +859,20 @@ backBtn.onclick=closeEditor;
 deleteBtn.onclick=deleteCurrent;
 noteBody.addEventListener('input',()=>{recalcMult();refreshEditor();persistCurrent(false);});
 
-// Recalcula a multiplicação, MAS deixa a linha onde o cursor está em paz
-// (senão o resultado seria escrito no meio da digitação do preço).
-// A linha atual só é calculada quando o cursor sai dela (espaço, Enter, ✓...).
 function recalcMult(preservarLinhaAtual){
   if(preservarLinhaAtual===undefined) preservarLinhaAtual=true;
   const antes=noteBody.value;
   const pos=noteBody.selectionStart;
   const linhasAntes=antes.split('\n');
-  // descobre em qual linha o cursor está
   let acc=0, curLine=0;
   for(let i=0;i<linhasAntes.length;i++){
     const fim=acc+linhasAntes[i].length;
     if(pos<=fim){ curLine=i; break; }
     acc=fim+1;
   }
-  // texto da linha atual (não pode ser recalculada enquanto é digitada)
   const linhaAtualTxt=linhasAntes[curLine];
-  // calcula tudo COM totais, mas restaura a linha do cursor ao original
   let depois;
   if(preservarLinhaAtual){
-    // marca a linha atual, monta os totais, e devolve a linha crua no lugar
     const MARCA='\u0000CURSOR\u0000';
     const copia=linhasAntes.slice(); copia[curLine]=MARCA;
     depois=montaComTotais(copia.join('\n')).replace(MARCA,linhaAtualTxt);
@@ -902,9 +880,7 @@ function recalcMult(preservarLinhaAtual){
     depois=montaComTotais(antes);
   }
   if(depois===antes) return;
-  // recoloca o cursor na mesma linha/coluna
   const novasLinhas=depois.split('\n');
-  // acha onde a linha atual (com seu texto original) foi parar
   let idxNovo=curLine;
   if(preservarLinhaAtual){
     idxNovo=novasLinhas.findIndex(x=>x===linhaAtualTxt);
@@ -925,9 +901,7 @@ window.addEventListener('popstate',()=>{
 });
 history.pushState(null,'');
 
-/* ---------- BOTÃO ✓ (fecha o teclado e salva) ---------- */
 const doneBtn=document.getElementById('doneBtn');
-// mantém o foco no campo até o clique acontecer
 doneBtn.addEventListener('pointerdown',e=>e.preventDefault());
 doneBtn.addEventListener('mousedown',e=>e.preventDefault());
 doneBtn.onclick=()=>{
@@ -938,7 +912,42 @@ doneBtn.onclick=()=>{
   toast('Salvo ✓');
 };
 
-/* ---------- GAVETA ⋯ DO CABEÇALHO ---------- */
+/* ---------- BOTÃO − (inverte sinal da linha atual) ---------- */
+signBtn.addEventListener('pointerdown',e=>e.preventDefault());
+signBtn.addEventListener('mousedown',e=>e.preventDefault());
+signBtn.onclick=()=>{
+  const txt=noteBody.value;
+  const pos=noteBody.selectionStart;
+  const before=txt.slice(0,pos);
+  const after=txt.slice(pos);
+  let lineStart=before.lastIndexOf('\n')+1;
+  let lineEnd=after.indexOf('\n');
+  if(lineEnd===-1) lineEnd=txt.length;
+  else lineEnd=pos+lineEnd;
+  let line=txt.slice(lineStart,lineEnd);
+  if(!line.trim()){ toast('Linha vazia'); return; }
+  const trimmed=line.trimStart();
+  const spaces=line.slice(0,line.length-trimmed.length);
+  let newLine;
+  if(/^-?\d/.test(trimmed)){
+    if(trimmed.startsWith('-')){
+      newLine=spaces+trimmed.slice(1);
+    }else{
+      newLine=spaces+'-'+trimmed;
+    }
+  }else{
+    newLine='-'+line;
+  }
+  const newVal=txt.slice(0,lineStart)+newLine+txt.slice(lineEnd);
+  noteBody.value=newVal;
+  const delta=newLine.length-line.length;
+  const newPos=pos+delta;
+  try{ noteBody.setSelectionRange(newPos,newPos); }catch(e){}
+  refreshEditor();
+  persistCurrent(false);
+  toast(/^-?\d/.test(newLine.trim()) && newLine.trim().startsWith('-') ? 'Subtração ✓' : 'Soma ✓');
+};
+
 const menuBtn=document.getElementById('menuBtn');
 const hdrMenu=document.getElementById('hdrMenu');
 const menuBackdrop=document.getElementById('menuBackdrop');
@@ -957,10 +966,8 @@ menuBtn.onclick=(e)=>{
   if(hdrMenu.classList.contains('hidden')) abrirMenu(); else fecharMenu();
 };
 menuBackdrop.onclick=fecharMenu;
-// qualquer opção escolhida fecha a gaveta
 hdrMenu.addEventListener('click',()=>setTimeout(fecharMenu,0));
 
-/* ---------- BANDEIRAS ---------- */
 const BKEY='somar_bandeiras';
 const CORES_BAND=['#e05252','#3fa34d','#3b82f6','#eab308','#a855f7','#f97316','#14b8a6','#ec4899'];
 let bandeiras=[];
@@ -1085,7 +1092,6 @@ document.getElementById('newBandName').addEventListener('keydown',e=>{ if(e.key=
 document.getElementById('closeBandManage').onclick=()=>bandManageModal.classList.add('hidden');
 bandManageModal.onclick=(e)=>{ if(e.target===bandManageModal) bandManageModal.classList.add('hidden'); };
 
-/* ---------- BACKUP: exportar / importar ---------- */
 const backupModal=document.getElementById('backupModal');
 document.getElementById('backupBtn').onclick=()=>backupModal.classList.remove('hidden');
 document.getElementById('closeBackup').onclick=()=>backupModal.classList.add('hidden');
@@ -1100,7 +1106,6 @@ function backupFileName(){
   return `somar-notas_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.json`;
 }
 
-// Exportar -> baixa arquivo .json
 document.getElementById('exportBtn').onclick=()=>{
   if(notes.length===0){toast('Nenhuma nota pra exportar');return;}
   const blob=new Blob([backupData()],{type:'application/json'});
@@ -1112,19 +1117,16 @@ document.getElementById('exportBtn').onclick=()=>{
   toast('Backup salvo — guarde no Drive ou WhatsApp');
 };
 
-// Enviar backup como arquivo no WhatsApp (compartilhar)
 document.getElementById('exportWaBtn').onclick=async()=>{
   if(notes.length===0){toast('Nenhuma nota pra enviar');return;}
   const file=new File([backupData()],backupFileName(),{type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
     try{ await navigator.share({files:[file],title:'Backup Somar Notas'}); }catch(e){}
   }else{
-    // fallback: baixa o arquivo
     document.getElementById('exportBtn').click();
   }
 };
 
-// Importar <- abre arquivo .json
 const importFile=document.getElementById('importFile');
 document.getElementById('importBtn').onclick=()=>importFile.click();
 importFile.onchange=()=>{
@@ -1136,13 +1138,11 @@ importFile.onchange=()=>{
       const data=JSON.parse(reader.result);
       const lista=Array.isArray(data)?data:data.notas;
       if(!Array.isArray(lista)) throw new Error('formato');
-      // junta com as existentes, sem duplicar por id
       const ids=new Set(notes.map(n=>n.id));
       let novas=0;
       lista.forEach(n=>{
         if(!n||!n.id){ n.id='n'+Date.now()+Math.random().toString(36).slice(2,6); }
         if(ids.has(n.id)){
-          // atualiza a existente se o backup for mais novo
           const ex=notes.find(x=>x.id===n.id);
           if((n.updated||0) >= (ex.updated||0)) Object.assign(ex,n);
         }else{
@@ -1165,19 +1165,16 @@ importFile.onchange=()=>{
   reader.readAsText(f);
 };
 
-/* pede persistência reforçada (ajuda a não apagar em limpezas automáticas) */
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().catch(()=>{});
 }
 
 load();loadBandeiras();renderList();applyResumoState();
 
-/* PWA: registra o service worker (instala como app + atualiza sozinho) */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').then(reg=>{
       reg.update();
-      // se um sw novo assumir, recarrega uma vez pra pegar a versão nova
       let recarregou=false;
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
         if(recarregou) return;
