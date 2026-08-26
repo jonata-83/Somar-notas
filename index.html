@@ -76,46 +76,61 @@
   .note-card .flag-btn:active{background:var(--total-bg);}
 
   #bandBar{
-    display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
     padding:10px 14px;border-bottom:1px solid var(--line);
     position:sticky;top:0;background:var(--bg);z-index:5;
+    scrollbar-width:none;
   }
+  #bandBar::-webkit-scrollbar{display:none;}
   .chip{
-    flex-shrink:0;display:flex;align-items:center;gap:6px;white-space:nowrap;
+    flex-shrink:0;display:flex;align-items:center;gap:5px;white-space:nowrap;
     background:var(--panel);border:1px solid var(--line);color:var(--muted);
-    border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;
+    border-radius:18px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;
+    transition:all .15s ease;
   }
-  .chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-  .chip .cnt{color:var(--muted);font-weight:400;}
-  .chip.on{color:var(--ink);}
-  .chip.ger{border-style:dashed;border-color:var(--accent);color:var(--accent);}
+  .chip:active{transform:scale(.95);}
+  .chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .chip .cnt{color:var(--muted);font-weight:400;font-size:11px;opacity:.7;}
+  .chip.on{color:var(--ink);background:var(--total-bg);border-color:var(--line);}
+  .chip.on .cnt{opacity:1;}
+  .chip.ger{
+    background:none;border:1px solid var(--line);color:var(--muted);
+    padding:6px 10px;font-size:16px;
+  }
+  .chip.ger:active{color:var(--accent);border-color:var(--accent);}
 
   .band-item{
-    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
-    color:var(--ink);padding:13px 14px;font-size:15px;font-weight:600;
-    cursor:pointer;margin-bottom:10px;
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:14px;
+    color:var(--ink);padding:14px 16px;font-size:15px;font-weight:500;
+    cursor:pointer;margin-bottom:8px;transition:all .12s ease;
   }
-  .band-item:active{transform:scale(.98);}
-  .band-item .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .band-item:active{transform:scale(.98);background:var(--panel);}
+  .band-item .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;box-shadow:inset 0 0 0 2px rgba(255,255,255,.15);}
+  .band-item.sem-band{opacity:.6;}
   .band-row{
-    display:flex;align-items:center;gap:8px;margin-bottom:10px;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+    display:flex;align-items:center;gap:10px;margin-bottom:8px;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;
   }
-  .band-row .cnt{font-size:12px;color:var(--muted);flex-shrink:0;}
+  .band-row .cnt{font-size:11px;color:var(--muted);flex-shrink:0;background:var(--bg);padding:2px 8px;border-radius:10px;}
   .band-row .del{
-    background:none;border:none;color:var(--danger);font-size:17px;
-    cursor:pointer;padding:4px 6px;flex-shrink:0;
+    background:none;border:none;color:var(--danger);font-size:18px;
+    cursor:pointer;padding:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;
   }
+  .band-row .del:active{background:rgba(209,106,90,.15);}
   .band-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
-    color:var(--ink);padding:12px;font-size:15px;outline:none;font-family:inherit;
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;
+    color:var(--ink);padding:13px 14px;font-size:15px;outline:none;font-family:inherit;
   }
-  .band-input.slim{padding:8px 10px;font-size:14px;flex:1;min-width:0;}
-  .color-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-  .color-dot{width:32px;height:32px;border-radius:50%;border:1px solid #444;cursor:pointer;padding:0;}
-  .color-dot.sel{border:3px solid var(--ink);}
-  .band-empty{color:var(--muted);font-size:14px;margin-bottom:12px;}
+  .band-input:focus{border-color:var(--accent);}
+  .band-input.slim{padding:9px 12px;font-size:14px;flex:1;min-width:0;}
+  .color-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;}
+  .color-dot{width:36px;height:36px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .15s ease;}
+  .color-dot:active{transform:scale(.88);}
+  .color-dot.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink);}
+  .band-empty{color:var(--muted);font-size:14px;text-align:center;padding:20px 0;}
+  .add-band-wrap{display:flex;gap:8px;margin-top:4px;}
+  .add-band-wrap .band-input{flex:1;}
   .note-card:active{background:var(--panel);}
   .note-card .info{flex:1;min-width:0;}
   .note-card .title{font-size:16px;font-weight:600;margin-bottom:3px;
@@ -361,9 +376,11 @@
     <p class="modal-sub">Cadastre com o nome que quiser. Toque no nome pra renomear.</p>
     <div id="bandManageList"></div>
     <div class="color-row" id="colorRow"></div>
-    <input type="text" class="band-input" id="newBandName" placeholder="Nome da bandeira">
-    <button class="modal-btn primary" id="addBandBtn" style="margin-top:10px">+ Adicionar</button>
-    <button class="modal-btn ghost" id="closeBandManage">Fechar</button>
+    <div class="add-band-wrap">
+      <input type="text" class="band-input" id="newBandName" placeholder="Nome da bandeira">
+      <button class="modal-btn primary" id="addBandBtn" style="margin:0;width:auto;padding:13px 18px;flex-shrink:0">+</button>
+    </div>
+    <button class="modal-btn ghost" id="closeBandManage" style="margin-top:14px">Fechar</button>
   </div>
 </div>
 
@@ -988,14 +1005,15 @@ const bandBar=document.getElementById('bandBar');
 function renderBandBar(){
   bandBar.classList.toggle('hidden',notes.length===0);
   if(notes.length===0){bandBar.innerHTML='';return;}
-  let h=`<button class="chip ${filtroBand?'':'on'}" data-f="">Todas <span class="cnt">(${notes.length})</span></button>`;
+  let h=`<button class="chip ${filtroBand?'':'on'}" data-f="">Todas</button>`;
   bandeiras.forEach(b=>{
-    h+=`<button class="chip ${filtroBand===b.id?'on':''}" data-f="${b.id}"
-      style="${filtroBand===b.id?`border-color:${b.cor};background:${b.cor}22`:''}">
+    const ativo = filtroBand===b.id;
+    h+=`<button class="chip ${ativo?'on':''}" data-f="${b.id}"
+      style="${ativo?`background:${b.cor}22;border-color:${b.cor};color:${b.cor}`:''}">
       <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}
-      <span class="cnt">(${contaBand(b.id)})</span></button>`;
+      <span class="cnt">${contaBand(b.id)}</span></button>`;
   });
-  h+=`<button class="chip ger" id="chipGer">⚑ Bandeiras</button>`;
+  h+=`<button class="chip ger" id="chipGer" title="Gerenciar bandeiras">⚙</button>`;
   bandBar.innerHTML=h;
   bandBar.querySelectorAll('.chip[data-f]').forEach(c=>{
     c.onclick=()=>{filtroBand=c.dataset.f||null;renderList();};
@@ -1013,12 +1031,12 @@ function abrirBandPick(id){
 }
 function renderBandPick(){
   const box=document.getElementById('bandPickList');
-  let h=`<button class="band-item" data-b=""><span class="dot" style="background:var(--line)"></span>— Sem bandeira</button>`;
+  let h=`<button class="band-item sem-band" data-b=""><span class="dot" style="background:var(--line)"></span>Sem bandeira</button>`;
   bandeiras.forEach(b=>{
-    h+=`<button class="band-item" data-b="${b.id}" style="border-color:${b.cor};border-left:5px solid ${b.cor}">
+    h+=`<button class="band-item" data-b="${b.id}" style="border-left:4px solid ${b.cor}">
       <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}</button>`;
   });
-  if(bandeiras.length===0) h+='<div class="band-empty">Nenhuma bandeira cadastrada ainda.</div>';
+  if(bandeiras.length===0) h+='<div class="band-empty">Nenhuma bandeira cadastrada ainda.<br>Toque em "Gerenciar bandeiras" pra criar.</div>';
   box.innerHTML=h;
   box.querySelectorAll('.band-item').forEach(el=>{
     el.onclick=()=>setBandNota(bandPickId, el.dataset.b||null);
@@ -1042,13 +1060,13 @@ function abrirBandManage(){
 function renderBandManage(){
   const box=document.getElementById('bandManageList');
   if(bandeiras.length===0){
-    box.innerHTML='<div class="band-empty">Nenhuma bandeira ainda. Crie a primeira abaixo.</div>';
+    box.innerHTML='<div class="band-empty">Nenhuma bandeira ainda.<br>Crie a primeira abaixo.</div>';
   }else{
     box.innerHTML=bandeiras.map(b=>`
-      <div class="band-row" style="border-left:5px solid ${b.cor}" data-b="${b.id}">
-        <span class="dot" style="width:12px;height:12px;border-radius:50%;background:${b.cor};flex-shrink:0"></span>
+      <div class="band-row" data-b="${b.id}">
+        <span class="dot" style="width:14px;height:14px;border-radius:50%;background:${b.cor};flex-shrink:0;box-shadow:inset 0 0 0 2px rgba(255,255,255,.15);"></span>
         <input type="text" class="band-input slim" value="${escapeHtml(b.nome)}">
-        <span class="cnt">${contaBand(b.id)}</span>
+        <span class="cnt">${contaBand(b.id)} nota(s)</span>
         <button class="del" aria-label="Excluir">🗑</button>
       </div>`).join('');
     box.querySelectorAll('.band-row').forEach(row=>{
