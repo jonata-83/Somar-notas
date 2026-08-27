@@ -77,36 +77,33 @@
   }
   .note-card .flag-btn:active{background:var(--total-bg);}
 
-  /* ===== GAVETA DE FILTROS ===== */
-  .filter-drawer{
+  /* ===== BARRA DE BANDEIRAS ===== */
+  #bandBarWrap{
     background:var(--bg);border-bottom:1px solid var(--line);
-    position:relative;z-index:5;
-    transition:max-height .3s ease,opacity .2s ease;
-    overflow:hidden;
+    position:sticky;top:0;z-index:5;
   }
-  .filter-drawer.collapsed{max-height:0;opacity:0;border-bottom:none;}
-  .filter-drawer:not(.collapsed){max-height:120px;opacity:1;}
   #bandBar{
     display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    padding:10px 14px 10px;
+    padding:10px 14px;
     scrollbar-width:none;
   }
   #bandBar::-webkit-scrollbar{display:none;}
-  .drawer-handle{
+  .bandbar-toggle{
     display:flex;align-items:center;justify-content:center;
-    height:22px;background:var(--bg);cursor:pointer;
-    border-bottom:1px solid var(--line);position:relative;
+    height:18px;background:var(--panel);cursor:pointer;
+    border-top:1px solid var(--line);
   }
-  .drawer-handle::after{
-    content:'';width:36px;height:4px;border-radius:2px;
+  .bandbar-toggle::after{
+    content:'';width:32px;height:3px;border-radius:2px;
     background:var(--line);transition:background .2s;
   }
-  .drawer-handle:active::after{background:var(--muted);}
-  .drawer-chevron{
-    position:absolute;right:14px;top:50%;transform:translateY(-50%);
-    color:var(--muted);font-size:12px;transition:transform .3s;
+  .bandbar-toggle:active::after{background:var(--muted);}
+  .bandbar-toggle .tc{
+    position:absolute;right:12px;color:var(--muted);font-size:10px;
+    transition:transform .2s;
   }
-  .filter-drawer.collapsed .drawer-chevron{transform:translateY(-50%) rotate(-90deg);}
+  #bandBarWrap.collapsed #bandBar{display:none;}
+  #bandBarWrap.collapsed .tc{transform:rotate(-90deg);}
   .chip{
     flex-shrink:0;display:flex;align-items:center;gap:5px;white-space:nowrap;
     background:var(--panel);border:1px solid var(--line);color:var(--muted);
@@ -366,10 +363,10 @@
 
 <!-- LISTA -->
 <div class="view" id="listView">
-  <div class="filter-drawer" id="filterDrawer">
+  <div id="bandBarWrap">
     <div id="bandBar" class="hidden"></div>
-    <div class="drawer-handle" id="drawerHandle" aria-label="Puxar filtros">
-      <span class="drawer-chevron">▾</span>
+    <div class="bandbar-toggle" id="bandbarToggle" aria-label="Mostrar/esconder filtros">
+      <span class="tc">▾</span>
     </div>
   </div>
   <div id="notesContainer"></div>
@@ -1260,34 +1257,20 @@ if(navigator.storage && navigator.storage.persist){
 
 load();loadBandeiras();renderList();applyResumoState();
 
-/* ===== GAVETA DE FILTROS ===== */
-const DRAWER_KEY='somar_drawer_collapsed';
-const filterDrawer=document.getElementById('filterDrawer');
-const drawerHandle=document.getElementById('drawerHandle');
-function applyDrawerState(){
-  const collapsed=localStorage.getItem(DRAWER_KEY)==='1';
-  filterDrawer.classList.toggle('collapsed',collapsed);
+/* ===== BARRA DE BANDEIRAS ===== */
+const BAR_TOGGLE_KEY='somar_bar_collapsed';
+const bandBarWrap=document.getElementById('bandBarWrap');
+const bandbarToggle=document.getElementById('bandbarToggle');
+function applyBarState(){
+  const collapsed=localStorage.getItem(BAR_TOGGLE_KEY)==='1';
+  bandBarWrap.classList.toggle('collapsed',collapsed);
 }
-applyDrawerState();
-drawerHandle.onclick=()=>{
-  const now=!filterDrawer.classList.contains('collapsed');
-  filterDrawer.classList.toggle('collapsed',now);
-  localStorage.setItem(DRAWER_KEY,now?'1':'0');
+applyBarState();
+bandbarToggle.onclick=()=>{
+  const now=!bandBarWrap.classList.contains('collapsed');
+  bandBarWrap.classList.toggle('collapsed',now);
+  localStorage.setItem(BAR_TOGGLE_KEY,now?'1':'0');
 };
-// swipe na gaveta
-let drawerStartY=0, drawerStartH=0;
-drawerHandle.addEventListener('touchstart',e=>{
-  drawerStartY=e.touches[0].clientY;
-},{passive:true});
-drawerHandle.addEventListener('touchmove',e=>{
-  const dy=e.touches[0].clientY-drawerStartY;
-  if(Math.abs(dy)<10) return;
-  if(dy>30) filterDrawer.classList.add('collapsed');
-  if(dy<-30) filterDrawer.classList.remove('collapsed');
-},{passive:true});
-drawerHandle.addEventListener('touchend',()=>{
-  localStorage.setItem(DRAWER_KEY,filterDrawer.classList.contains('collapsed')?'1':'0');
-});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
