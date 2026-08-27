@@ -77,33 +77,67 @@
   }
   .note-card .flag-btn:active{background:var(--total-bg);}
 
-  /* ===== BARRA DE BANDEIRAS ===== */
-  #bandBarWrap{
-    background:var(--bg);border-bottom:1px solid var(--line);
-    position:sticky;top:0;z-index:5;
+  /* ===== GAVETA DE BANDEIRAS (OVERLAY) ===== */
+  .band-drawer-backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);
+    z-index:25;opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
   }
-  #bandBar{
-    display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    padding:10px 14px;
+  .band-drawer-backdrop.open{opacity:1;pointer-events:auto;}
+  .band-drawer{
+    position:fixed;top:0;left:0;right:0;
+    background:var(--panel);
+    border-radius:0 0 20px 20px;
+    border-bottom:1px solid var(--line);
+    box-shadow:0 10px 40px rgba(0,0,0,.5);
+    z-index:26;
+    transform:translateY(-100%);
+    transition:transform .3s cubic-bezier(.32,.72,.35,1);
+    max-height:60vh;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .band-drawer.open{transform:translateY(0);}
+  .band-drawer-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .band-drawer-header h3{margin:0;font-size:16px;font-weight:600;}
+  .band-drawer-header .close-btn{
+    background:none;border:none;color:var(--muted);font-size:20px;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .band-drawer-header .close-btn:active{background:var(--line);}
+  .band-drawer-scroll{
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:10px 14px 20px;
     scrollbar-width:none;
   }
-  #bandBar::-webkit-scrollbar{display:none;}
-  .bandbar-toggle{
-    display:flex;align-items:center;justify-content:center;
-    height:18px;background:var(--panel);cursor:pointer;
-    border-top:1px solid var(--line);
+  .band-drawer-scroll::-webkit-scrollbar{display:none;}
+  .band-drawer .chip{
+    margin-bottom:6px;margin-right:6px;
   }
-  .bandbar-toggle::after{
-    content:'';width:32px;height:3px;border-radius:2px;
-    background:var(--line);transition:background .2s;
+  .band-drawer .drawer-chips{
+    display:flex;flex-wrap:wrap;
   }
-  .bandbar-toggle:active::after{background:var(--muted);}
-  .bandbar-toggle .tc{
-    position:absolute;right:12px;color:var(--muted);font-size:10px;
-    transition:transform .2s;
+  .band-drawer-handle{
+    position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+    width:36px;height:4px;border-radius:2px;background:var(--line);
   }
-  #bandBarWrap.collapsed #bandBar{display:none;}
-  #bandBarWrap.collapsed .tc{transform:rotate(-90deg);}
+  .fab-filter{
+    position:fixed;left:18px;bottom:22px;width:48px;height:48px;
+    border-radius:14px;background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);font-size:18px;cursor:pointer;
+    box-shadow:0 4px 15px rgba(0,0,0,.3);
+    display:flex;align-items:center;justify-content:center;z-index:20;
+  }
+  .fab-filter:active{transform:scale(.94);}
+  .fab-filter .badge{
+    position:absolute;top:-4px;right:-4px;
+    background:var(--accent);color:#1c2321;font-size:10px;font-weight:700;
+    min-width:18px;height:18px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;padding:0 5px;
+  }
   .chip{
     flex-shrink:0;display:flex;align-items:center;gap:5px;white-space:nowrap;
     background:var(--panel);border:1px solid var(--line);color:var(--muted);
@@ -363,12 +397,21 @@
 
 <!-- LISTA -->
 <div class="view" id="listView">
-  <div id="bandBarWrap">
-    <div id="bandBar" class="hidden"></div>
-    <div class="bandbar-toggle" id="bandbarToggle" aria-label="Mostrar/esconder filtros">
-      <span class="tc">▾</span>
+  <!-- GAVETA DE BANDEIRAS (OVERLAY) -->
+  <div class="band-drawer-backdrop" id="bandDrawerBackdrop"></div>
+  <div class="band-drawer" id="bandDrawer">
+    <div class="band-drawer-header">
+      <h3>🏷️ Filtrar por bandeira</h3>
+      <button class="close-btn" id="bandDrawerClose">✕</button>
     </div>
+    <div class="band-drawer-scroll">
+      <div class="drawer-chips" id="bandDrawerChips"></div>
+    </div>
+    <div class="band-drawer-handle"></div>
   </div>
+  <button class="fab-filter" id="fabFilter" aria-label="Filtrar bandeiras">
+    🏷️
+  </button>
   <div id="notesContainer"></div>
   <div class="empty hidden" id="emptyState">
     <div class="big">📝</div>
@@ -1071,22 +1114,43 @@ function corLivre(){
 
 const bandBar=document.getElementById('bandBar');
 function renderBandBar(){
-  bandBar.classList.toggle('hidden',notes.length===0);
-  if(notes.length===0){bandBar.innerHTML='';return;}
-  let h=`<button class="chip ${filtroBand?'':'on'}" data-f="">Todas</button>`;
+  // Atualiza badge do FAB
+  const badge=fabFilter.querySelector('.badge');
+  if(badge) badge.remove();
+  const filtroAtivo = filtroBand && bandeiras.find(b=>b.id===filtroBand);
+  if(filtroAtivo){
+    const b=document.createElement('span');
+    b.className='badge';b.textContent='!';
+    fabFilter.appendChild(b);
+    fabFilter.style.borderColor=filtroAtivo.cor;
+    fabFilter.style.color=filtroAtivo.cor;
+  }else{
+    fabFilter.style.borderColor='var(--line)';
+    fabFilter.style.color='var(--ink)';
+  }
+}
+
+function renderBandDrawer(){
+  if(notes.length===0){bandDrawerChips.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;">Nenhuma nota ainda</p>';return;}
+  let h=`<button class="chip ${filtroBand?'':'on'}" data-f="">🏷️ Todas as notas</button>`;
   bandeiras.forEach(b=>{
     const ativo = filtroBand===b.id;
+    const count=contaBand(b.id);
+    if(count===0) return;
     h+=`<button class="chip ${ativo?'on':''}" data-f="${b.id}"
       style="${ativo?`background:${b.cor}22;border-color:${b.cor};color:${b.cor}`:''}">
       <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}
-      <span class="cnt">${contaBand(b.id)}</span></button>`;
+      <span class="cnt">${count} nota(s)</span></button>`;
   });
-  h+=`<button class="chip ger" id="chipGer" title="Gerenciar bandeiras">⚙</button>`;
-  bandBar.innerHTML=h;
-  bandBar.querySelectorAll('.chip[data-f]').forEach(c=>{
-    c.onclick=()=>{filtroBand=c.dataset.f||null;renderList();};
+  h+=`<button class="chip ger" id="drawerGer" title="Gerenciar bandeiras">⚙ Gerenciar bandeiras</button>`;
+  bandDrawerChips.innerHTML=h;
+  bandDrawerChips.querySelectorAll('.chip[data-f]').forEach(c=>{
+    c.onclick=()=>{
+      filtroBand=c.dataset.f||null;
+      renderList();renderBandBar();closeBandDrawer();
+    };
   });
-  document.getElementById('chipGer').onclick=abrirBandManage;
+  document.getElementById('drawerGer').onclick=()=>{closeBandDrawer();abrirBandManage();};
 }
 
 const bandPickModal=document.getElementById('bandPickModal');
@@ -1257,20 +1321,36 @@ if(navigator.storage && navigator.storage.persist){
 
 load();loadBandeiras();renderList();applyResumoState();
 
-/* ===== BARRA DE BANDEIRAS ===== */
-const BAR_TOGGLE_KEY='somar_bar_collapsed';
-const bandBarWrap=document.getElementById('bandBarWrap');
-const bandbarToggle=document.getElementById('bandbarToggle');
-function applyBarState(){
-  const collapsed=localStorage.getItem(BAR_TOGGLE_KEY)==='1';
-  bandBarWrap.classList.toggle('collapsed',collapsed);
+/* ===== GAVETA DE BANDEIRAS (OVERLAY) ===== */
+const bandDrawer=document.getElementById('bandDrawer');
+const bandDrawerBackdrop=document.getElementById('bandDrawerBackdrop');
+const bandDrawerClose=document.getElementById('bandDrawerClose');
+const fabFilter=document.getElementById('fabFilter');
+const bandDrawerChips=document.getElementById('bandDrawerChips');
+
+function openBandDrawer(){
+  bandDrawer.classList.add('open');
+  bandDrawerBackdrop.classList.add('open');
+  renderBandDrawer();
 }
-applyBarState();
-bandbarToggle.onclick=()=>{
-  const now=!bandBarWrap.classList.contains('collapsed');
-  bandBarWrap.classList.toggle('collapsed',now);
-  localStorage.setItem(BAR_TOGGLE_KEY,now?'1':'0');
-};
+function closeBandDrawer(){
+  bandDrawer.classList.remove('open');
+  bandDrawerBackdrop.classList.remove('open');
+}
+
+fabFilter.onclick=openBandDrawer;
+bandDrawerClose.onclick=closeBandDrawer;
+bandDrawerBackdrop.onclick=closeBandDrawer;
+
+// Swipe pra baixo pra fechar
+let drawerSwipeY=0;
+bandDrawer.addEventListener('touchstart',e=>{
+  drawerSwipeY=e.touches[0].clientY;
+},{passive:true});
+bandDrawer.addEventListener('touchmove',e=>{
+  const dy=e.touches[0].clientY-drawerSwipeY;
+  if(dy>60) closeBandDrawer();
+},{passive:true});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
