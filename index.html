@@ -839,7 +839,7 @@ function makePNG(){
   x.scale(scale,scale);
 
   x.fillStyle=P.paper; x.fillRect(0,0,W,H);
-  if(comLinhas && P.rule){
+  if(pngLines && P.rule){
     const bodyTop = padTop + titleSize + 24 + 18;
     const ruleStart = bodyTop + lineSize + 8;
     x.strokeStyle=P.rule; x.lineWidth=1;
@@ -903,7 +903,7 @@ function makePNG(){
   });
   y+=lines.length*lineH+18;
 
-  if(!isTexto && !comLinhas){
+  if(!isTexto && !pngLines){
     x.strokeStyle=P.line;x.lineWidth=1;
     x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   }
@@ -923,7 +923,7 @@ function makePNG(){
     });
     x.textAlign='left';
     y+=groups.length*grpH+24;
-    if(!comLinhas){
+    if(!pngLines){
       x.strokeStyle=P.line;x.lineWidth=2;
       x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
     }
