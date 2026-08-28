@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -22,7 +22,6 @@
   header .brand{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
   .icon-btn{background:none;border:none;color:var(--ink);font-size:20px;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .icon-btn:active{background:var(--line);}
-  .icon-btn.danger{color:var(--danger);}
   .view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .hidden{display:none !important;}
   #listView{padding:8px 0 90px;}
@@ -43,7 +42,7 @@
   .gutter{flex-shrink:0;padding:16px 0;text-align:right;color:var(--muted);font-size:15px;line-height:1.7;user-select:none;background:var(--bg);min-width:34px;}
   .gutter span{display:block;padding:0 8px 0 12px;}
   .gutter span.neg{color:var(--neg);}
-  #noteBody{flex:1;background:var(--bg);border:none;color:var(--ink);font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;outline:none;white-space:pre;overflow-wrap:normal;}
+  #noteBody{flex:1;background:var(--bg);border:none;color:var(--ink);font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;outline:none;white-space:pre;}
   .total-bar{flex-shrink:0;background:var(--total-bg);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
   .total-bar .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
   .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
@@ -58,6 +57,7 @@
   .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
   .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:80%;text-align:center;}
   .toast.show{opacity:.95;transform:translateX(-50%) translateY(0);}
+  .debug-box{position:fixed;top:60px;left:10px;right:10px;background:rgba(200,0,0,.9);color:#fff;padding:10px;border-radius:8px;z-index:100;font-size:12px;max-height:200px;overflow-y:auto;display:none;}
 </style>
 </head>
 <body>
@@ -78,7 +78,6 @@
   </div>
 </div>
 
-<!-- Botao + com onclick inline como backup -->
 <button class="fab" id="newBtn" aria-label="Nova nota" onclick="window.appNewNote()">+</button>
 
 <div class="view hidden" id="editView">
@@ -93,7 +92,6 @@
   </div>
 </div>
 
-<!-- Backup modal -->
 <div class="modal-overlay hidden" id="backupModal">
   <div class="modal">
     <h2>Backup</h2>
@@ -106,10 +104,27 @@
 <input type="file" id="importFile" accept="application/json,.json" style="display:none">
 
 <div class="toast" id="toast"></div>
+<div class="debug-box" id="debugBox"></div>
 
 <script>
-// ===== VERSAO =====
-const APP_VERSION = '2.0.1';
+// ===== DEBUG =====
+const debugBox = document.getElementById('debugBox');
+function debug(msg) {
+  if (!debugBox) return;
+  debugBox.style.display = 'block';
+  debugBox.textContent += msg + '\n';
+}
+window.onerror = function(msg, url, line) {
+  debug('ERRO: ' + msg + ' (linha ' + line + ')');
+  return false;
+};
+
+// ===== LIMPAR SERVICE WORKER ANTIGO =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
+}
 
 // ===== DADOS =====
 const KEY = 'somar_notas_v1';
@@ -127,9 +142,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(KEY, JSON.stringify(notes));
-  } catch (e) {
-    // storage pode estar cheio
-  }
+  } catch (e) {}
 }
 
 // ===== UTILS =====
@@ -153,15 +166,16 @@ function lineValue(line) {
   return m ? (parseFloat(m[1].replace(',', '.')) || 0) : 0;
 }
 function sumBody(body) {
-  return (body || '').split('
-').reduce((a, l) => a + lineValue(l), 0);
+  return (body || '').split(/
+?
+/).reduce((a, l) => a + lineValue(l), 0);
 }
 
 // ===== RENDER =====
 function renderList() {
   const container = document.getElementById('notesContainer');
   const empty = document.getElementById('emptyState');
-  if (!container || !empty) return;
+  if (!container || !empty) { debug('ERRO: container ou empty nao encontrado'); return; }
 
   container.innerHTML = '';
   empty.classList.toggle('hidden', notes.length !== 0);
@@ -169,8 +183,9 @@ function renderList() {
   const sorted = [...notes].sort((a, b) => b.updated - a.updated);
   sorted.forEach(n => {
     const tot = sumBody(n.body);
-    const lines = (n.body || '').split('
-').filter(l => l.trim()).length;
+    const lines = (n.body || '').split(/
+?
+/).filter(l => l.trim()).length;
     const card = document.createElement('div');
     card.className = 'note-card';
     card.innerHTML = `
@@ -202,159 +217,180 @@ function showEditor(show) {
 }
 
 function newNote() {
-  currentId = 'n' + Date.now();
-  notes.push({id: currentId, title: '', body: '', mode: 'somar', updated: Date.now()});
+  try {
+    currentId = 'n' + Date.now();
+    notes.push({id: currentId, title: '', body: '', mode: 'somar', updated: Date.now()});
 
-  const noteTitle = document.getElementById('noteTitle');
-  const noteBody = document.getElementById('noteBody');
-  if (noteTitle) noteTitle.value = '';
-  if (noteBody) noteBody.value = '';
+    const noteTitle = document.getElementById('noteTitle');
+    const noteBody = document.getElementById('noteBody');
+    if (noteTitle) noteTitle.value = '';
+    if (noteBody) noteBody.value = '';
 
-  showEditor(true);
-  refreshEditor();
-  if (noteTitle) setTimeout(() => noteTitle.focus(), 100);
+    showEditor(true);
+    refreshEditor();
+    if (noteTitle) setTimeout(() => noteTitle.focus(), 100);
+  } catch (e) {
+    debug('ERRO newNote: ' + e.message);
+  }
 }
-
-// Tornar acessivel globalmente para o onclick inline
 window.appNewNote = newNote;
 
 function openNote(id) {
-  const n = notes.find(x => x.id === id);
-  if (!n) return;
-  currentId = id;
-  const noteTitle = document.getElementById('noteTitle');
-  const noteBody = document.getElementById('noteBody');
-  if (noteTitle) noteTitle.value = n.title || '';
-  if (noteBody) noteBody.value = n.body || '';
-  showEditor(true);
-  refreshEditor();
+  try {
+    const n = notes.find(x => x.id === id);
+    if (!n) return;
+    currentId = id;
+    const noteTitle = document.getElementById('noteTitle');
+    const noteBody = document.getElementById('noteBody');
+    if (noteTitle) noteTitle.value = n.title || '';
+    if (noteBody) noteBody.value = n.body || '';
+    showEditor(true);
+    refreshEditor();
+  } catch (e) {
+    debug('ERRO openNote: ' + e.message);
+  }
 }
 
 function closeEditor() {
-  persistCurrent(true);
-  currentId = null;
-  showEditor(false);
-  renderList();
+  try {
+    persistCurrent(true);
+    currentId = null;
+    showEditor(false);
+    renderList();
+  } catch (e) {
+    debug('ERRO closeEditor: ' + e.message);
+  }
 }
 
 function persistCurrent(cleanupEmpty) {
-  const n = notes.find(x => x.id === currentId);
-  if (!n) return;
-  const noteTitle = document.getElementById('noteTitle');
-  const noteBody = document.getElementById('noteBody');
-  n.title = noteTitle ? noteTitle.value.trim() : '';
-  n.body = noteBody ? noteBody.value : '';
-  n.updated = Date.now();
-  if (cleanupEmpty && !n.title && !n.body.trim()) {
-    notes = notes.filter(x => x.id !== currentId);
+  try {
+    const n = notes.find(x => x.id === currentId);
+    if (!n) return;
+    const noteTitle = document.getElementById('noteTitle');
+    const noteBody = document.getElementById('noteBody');
+    n.title = noteTitle ? noteTitle.value.trim() : '';
+    n.body = noteBody ? noteBody.value : '';
+    n.updated = Date.now();
+    if (cleanupEmpty && !n.title && !(n.body || '').trim()) {
+      notes = notes.filter(x => x.id !== currentId);
+    }
+    save();
+  } catch (e) {
+    debug('ERRO persist: ' + e.message);
   }
-  save();
 }
 
 function refreshEditor() {
-  const noteBody = document.getElementById('noteBody');
-  const gutter = document.getElementById('gutter');
-  const totalVal = document.getElementById('totalVal');
-  if (!noteBody || !gutter || !totalVal) return;
+  try {
+    const noteBody = document.getElementById('noteBody');
+    const gutter = document.getElementById('gutter');
+    const totalVal = document.getElementById('totalVal');
+    if (!noteBody || !gutter || !totalVal) return;
 
-  const lines = noteBody.value.split('
-');
-  const nLines = Math.max(lines.length, 1);
-  let g = '';
-  for (let i = 1; i <= nLines; i++) {
-    const neg = lines[i - 1] && /^\s*-\d/.test(lines[i - 1]);
-    g += `<span class="${neg ? 'neg' : ''}">${i}</span>`;
+    const lines = noteBody.value.split(/
+?
+/);
+    const nLines = Math.max(lines.length, 1);
+    let g = '';
+    for (let i = 1; i <= nLines; i++) {
+      const neg = lines[i - 1] && /^\s*-\d/.test(lines[i - 1]);
+      g += '<span class="' + (neg ? 'neg' : '') + '">' + i + '</span>';
+    }
+    gutter.innerHTML = g;
+    const tot = sumBody(noteBody.value);
+    totalVal.textContent = fmt(tot);
+    totalVal.classList.toggle('neg', tot < 0);
+  } catch (e) {
+    debug('ERRO refresh: ' + e.message);
   }
-  gutter.innerHTML = g;
-  const tot = sumBody(noteBody.value);
-  totalVal.textContent = fmt(tot);
-  totalVal.classList.toggle('neg', tot < 0);
 }
 
 // ===== EVENTOS =====
 function setupEvents() {
-  const newBtn = document.getElementById('newBtn');
-  const backBtn = document.getElementById('backBtn');
-  const noteTitle = document.getElementById('noteTitle');
-  const noteBody = document.getElementById('noteBody');
-  const backupBtn = document.getElementById('backupBtn');
+  try {
+    const newBtn = document.getElementById('newBtn');
+    const backBtn = document.getElementById('backBtn');
+    const noteTitle = document.getElementById('noteTitle');
+    const noteBody = document.getElementById('noteBody');
+    const backupBtn = document.getElementById('backupBtn');
 
-  if (newBtn) newBtn.onclick = newNote;
-  if (backBtn) backBtn.onclick = closeEditor;
-  if (noteTitle) noteTitle.addEventListener('input', () => persistCurrent(false));
-  if (noteBody) {
-    noteBody.addEventListener('input', () => { refreshEditor(); persistCurrent(false); });
-    noteBody.addEventListener('scroll', () => {
-      const gutter = document.getElementById('gutter');
-      if (gutter) gutter.scrollTop = noteBody.scrollTop;
-    });
-  }
-  if (backupBtn) backupBtn.onclick = () => {
-    const modal = document.getElementById('backupModal');
-    if (modal) modal.classList.remove('hidden');
-  };
-
-  // Exportar
-  const exportBtn = document.getElementById('exportBtn');
-  if (exportBtn) {
-    exportBtn.onclick = () => {
-      if (notes.length === 0) { toast('Nenhuma nota'); return; }
-      const data = JSON.stringify({app: 'somar-notas', v: 1, exportado: new Date().toISOString(), notas: notes}, null, 2);
-      const blob = new Blob([data], {type: 'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      const d = new Date();
-      a.download = `somar-notas_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      toast('Backup salvo');
-    };
-  }
-
-  // Importar
-  const importBtn = document.getElementById('importBtn');
-  const importFile = document.getElementById('importFile');
-  if (importBtn && importFile) {
-    importBtn.onclick = () => importFile.click();
-    importFile.onchange = () => {
-      const f = importFile.files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result);
-          const lista = Array.isArray(data) ? data : data.notas;
-          if (!Array.isArray(lista)) throw new Error('formato');
-          const ids = new Set(notes.map(n => n.id));
-          let novas = 0;
-          lista.forEach(n => {
-            if (!n || !n.id) n.id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
-            if (ids.has(n.id)) {
-              const ex = notes.find(x => x.id === n.id);
-              if ((n.updated || 0) >= (ex.updated || 0)) Object.assign(ex, n);
-            } else {
-              notes.push(n); ids.add(n.id); novas++;
-            }
-          });
-          save(); renderList();
-          document.getElementById('backupModal').classList.add('hidden');
-          toast(`Importado! ${novas} nota(s)`);
-        } catch (err) {
-          toast('Arquivo inválido');
-        }
-        importFile.value = '';
-      };
-      reader.readAsText(f);
-    };
-  }
-
-  // Fechar backup
-  const closeBackup = document.getElementById('closeBackup');
-  if (closeBackup) {
-    closeBackup.onclick = () => {
+    if (newBtn) newBtn.onclick = newNote;
+    if (backBtn) backBtn.onclick = closeEditor;
+    if (noteTitle) noteTitle.addEventListener('input', () => persistCurrent(false));
+    if (noteBody) {
+      noteBody.addEventListener('input', () => { refreshEditor(); persistCurrent(false); });
+      noteBody.addEventListener('scroll', () => {
+        const gutter = document.getElementById('gutter');
+        if (gutter) gutter.scrollTop = noteBody.scrollTop;
+      });
+    }
+    if (backupBtn) backupBtn.onclick = () => {
       const modal = document.getElementById('backupModal');
-      if (modal) modal.classList.add('hidden');
+      if (modal) modal.classList.remove('hidden');
     };
+
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+      exportBtn.onclick = () => {
+        if (notes.length === 0) { toast('Nenhuma nota'); return; }
+        const data = JSON.stringify({app: 'somar-notas', v: 1, exportado: new Date().toISOString(), notas: notes}, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const d = new Date();
+        a.download = 'somar-notas_' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.json';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        toast('Backup salvo');
+      };
+    }
+
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    if (importBtn && importFile) {
+      importBtn.onclick = () => importFile.click();
+      importFile.onchange = () => {
+        const f = importFile.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            const lista = Array.isArray(data) ? data : data.notas;
+            if (!Array.isArray(lista)) throw new Error('formato');
+            const ids = new Set(notes.map(n => n.id));
+            let novas = 0;
+            lista.forEach(n => {
+              if (!n || !n.id) n.id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+              if (ids.has(n.id)) {
+                const ex = notes.find(x => x.id === n.id);
+                if ((n.updated || 0) >= (ex.updated || 0)) Object.assign(ex, n);
+              } else {
+                notes.push(n); ids.add(n.id); novas++;
+              }
+            });
+            save(); renderList();
+            const modal = document.getElementById('backupModal');
+            if (modal) modal.classList.add('hidden');
+            toast('Importado! ' + novas + ' nota(s)');
+          } catch (err) {
+            toast('Arquivo inválido');
+          }
+          importFile.value = '';
+        };
+        reader.readAsText(f);
+      };
+    }
+
+    const closeBackup = document.getElementById('closeBackup');
+    if (closeBackup) {
+      closeBackup.onclick = () => {
+        const modal = document.getElementById('backupModal');
+        if (modal) modal.classList.add('hidden');
+      };
+    }
+  } catch (e) {
+    debug('ERRO setupEvents: ' + e.message);
   }
 }
 
@@ -371,13 +407,16 @@ function toast(msg) {
 
 // ===== INICIALIZAR =====
 function init() {
-  load();
-  setupEvents();
-  renderList();
-  toast('App carregado v' + APP_VERSION);
+  try {
+    load();
+    setupEvents();
+    renderList();
+    toast('App carregado');
+  } catch (e) {
+    debug('ERRO init: ' + e.message);
+  }
 }
 
-// Garantir que o DOM esta pronto
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
