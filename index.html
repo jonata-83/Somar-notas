@@ -1,28 +1,18 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1c2321">
 <title>Somar Notas</title>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
 <style>
-  :root{--bg:#1c2321;--panel:#232b28;--line:#33403b;--ink:#e8e4d8;--muted:#8a938e;--num:#a3d977;--accent:#e0a458;--wa:#25d366;--danger:#d16a5a;--neg:#ff6b6b;--total-bg:#2a3430;}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{--bg:#1c2321;--panel:#232b28;--line:#33403b;--ink:#e8e4d8;--muted:#8a938e;--num:#a3d977;--accent:#e0a458;--total-bg:#2a3430;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   html,body{margin:0;height:100%;}
   body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
-  .mono{font-family:"SF Mono","Roboto Mono",ui-monospace,Menlo,Consolas,monospace;}
   header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;}
-  header .back{background:none;border:none;color:var(--ink);font-size:24px;padding:0;width:32px;height:32px;cursor:pointer;display:none;align-items:center;justify-content:center;}
-  header h1{font-size:17px;font-weight:600;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  header .brand{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
-  .version-tag{font-size:10px;color:var(--accent);background:var(--total-bg);padding:2px 6px;border-radius:6px;font-weight:700;margin-left:4px;}
-  .icon-btn{background:none;border:none;color:var(--ink);font-size:20px;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  .icon-btn:active{background:var(--line);}
+  header h1{font-size:17px;font-weight:600;margin:0;flex:1;}
+  .version-tag{font-size:10px;color:var(--accent);background:var(--total-bg);padding:2px 6px;border-radius:6px;font-weight:700;}
   .view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .hidden{display:none !important;}
   #listView{padding:8px 0 90px;}
@@ -32,43 +22,27 @@
   .note-card .title{font-size:16px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .note-card .sub{font-size:13px;color:var(--muted);}
   .note-card .tot{font-size:18px;font-weight:700;color:var(--num);white-space:nowrap;}
-  .note-card .tot.neg{color:var(--neg);}
   .empty{text-align:center;color:var(--muted);padding:70px 30px;}
-  .empty .big{font-size:40px;margin-bottom:14px;opacity:.4;}
-  .fab{position:fixed;right:18px;bottom:22px;width:58px;height:58px;border-radius:18px;background:var(--accent);color:#1c2321;border:none;font-size:30px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:20;}
+  .fab-wrap{position:fixed;right:18px;bottom:22px;z-index:9999;}
+  .fab{width:58px;height:58px;border-radius:18px;background:var(--accent);color:#1c2321;border:none;font-size:30px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;pointer-events:auto;-webkit-user-select:none;user-select:none;}
   .fab:active{transform:scale(.94);}
   #editView{display:flex;flex-direction:column;}
   #noteTitle{background:var(--panel);border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:18px;font-weight:600;padding:14px 18px;width:100%;outline:none;flex-shrink:0;}
   .editor-wrap{flex:1;display:flex;overflow:hidden;}
   .gutter{flex-shrink:0;padding:16px 0;text-align:right;color:var(--muted);font-size:15px;line-height:1.7;user-select:none;background:var(--bg);min-width:34px;}
   .gutter span{display:block;padding:0 8px 0 12px;}
-  .gutter span.neg{color:var(--neg);}
   #noteBody{flex:1;background:var(--bg);border:none;color:var(--ink);font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;outline:none;white-space:pre;}
   .total-bar{flex-shrink:0;background:var(--total-bg);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
-  .total-bar .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
   .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
-  .total-bar .val.neg{color:var(--neg);}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:60;}
-  .modal{background:var(--panel);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px 20px 28px;border-top:1px solid var(--line);}
-  .modal h2{font-size:18px;margin:0 0 6px;}
-  .modal-sub{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px;}
-  .modal-btn{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--total-bg);color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;}
-  .modal-btn:active{transform:scale(.98);}
-  .modal-btn.primary{background:var(--num);color:#14290a;border-color:var(--num);}
-  .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
-  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:80%;text-align:center;}
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;z-index:50;pointer-events:none;}
   .toast.show{opacity:.95;transform:translateX(-50%) translateY(0);}
-  .debug-box{position:fixed;top:60px;left:10px;right:10px;background:rgba(200,0,0,.9);color:#fff;padding:10px;border-radius:8px;z-index:100;font-size:12px;max-height:200px;overflow-y:auto;display:none;}
 </style>
 </head>
 <body>
 
 <header>
-  <button class="back" id="backBtn" aria-label="Voltar">‹</button>
-  <h1 id="headTitle">Somar Notas</h1>
-  <span class="brand" id="brandTag">JL</span>
-  <span class="version-tag" id="versionTag">v2.0</span>
-  <button class="icon-btn" id="backupBtn" aria-label="Backup">⬇</button>
+  <h1>Somar Notas</h1>
+  <span class="version-tag">v2.0.4</span>
 </header>
 
 <div class="view" id="listView">
@@ -76,11 +50,16 @@
   <div class="empty hidden" id="emptyState">
     <div class="big">📝</div>
     <p>Nenhuma nota ainda.</p>
-    <p>Toque no <b style="color:var(--accent)">+</b> pra criar.</p>
   </div>
 </div>
 
-<button class="fab" id="newBtn" aria-label="Nova nota" onclick="window.appNewNote()">+</button>
+<!-- FAB com múltiplos eventos de segurança -->
+<div class="fab-wrap">
+  <button class="fab" id="newBtn" aria-label="Nova nota"
+    onclick="window.appNewNote()"
+    ontouchstart="window.appNewNote(); event.preventDefault();"
+  >+</button>
+</div>
 
 <div class="view hidden" id="editView">
   <input type="text" id="noteTitle" placeholder="Título">
@@ -94,162 +73,106 @@
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="backupModal">
-  <div class="modal">
-    <h2>Backup</h2>
-    <p class="modal-sub">Guarde uma cópia fora do navegador.</p>
-    <button class="modal-btn primary" id="exportBtn">⬇ Exportar</button>
-    <button class="modal-btn" id="importBtn">⬆ Importar</button>
-    <button class="modal-btn ghost" id="closeBackup">Fechar</button>
-  </div>
-</div>
-<input type="file" id="importFile" accept="application/json,.json" style="display:none">
-
 <div class="toast" id="toast"></div>
-<div class="debug-box" id="debugBox"></div>
 
 <script>
-// ===== DEBUG =====
-const debugBox = document.getElementById('debugBox');
-function debug(msg) {
-  if (!debugBox) return;
-  debugBox.style.display = 'block';
-  debugBox.textContent += msg + '\n';
-}
-window.onerror = function(msg, url, line) {
-  debug('ERRO: ' + msg + ' (linha ' + line + ')');
-  return false;
-};
-
-// ===== LIMPAR SERVICE WORKER ANTIGO =====
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => reg.unregister());
-  });
-}
-
-// ===== DADOS =====
 const KEY = 'somar_notas_v1';
 let notes = [];
 let currentId = null;
 
 function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    notes = raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    notes = [];
-  }
+  try { notes = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { notes = []; }
 }
 function save() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(notes));
-  } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch (e) {}
 }
 
-// ===== UTILS =====
 function fmt(n) {
   if (Number.isInteger(n)) return n.toLocaleString('pt-BR');
   return n.toLocaleString('pt-BR', {maximumFractionDigits: 3});
 }
 function escapeHtml(s) {
-  return (s || '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  return (s || '').replace(/[&<>"]/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+  });
 }
 function dateStr(ts) {
   return new Date(ts).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
 }
 
-// ===== CALCULOS =====
 function lineValue(line) {
   if (/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
   if (/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
   if (/x\s*\d/i.test(line)) return 0;
-  const m = line.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
+  var m = line.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
   return m ? (parseFloat(m[1].replace(',', '.')) || 0) : 0;
 }
 function sumBody(body) {
   return (body || '').split(/
 ?
-/).reduce((a, l) => a + lineValue(l), 0);
+/).reduce(function(a, l) { return a + lineValue(l); }, 0);
 }
 
-// ===== RENDER =====
 function renderList() {
-  const container = document.getElementById('notesContainer');
-  const empty = document.getElementById('emptyState');
-  if (!container || !empty) { debug('ERRO: container ou empty nao encontrado'); return; }
-
+  var container = document.getElementById('notesContainer');
+  var empty = document.getElementById('emptyState');
+  if (!container || !empty) return;
   container.innerHTML = '';
   empty.classList.toggle('hidden', notes.length !== 0);
-
-  const sorted = [...notes].sort((a, b) => b.updated - a.updated);
-  sorted.forEach(n => {
-    const tot = sumBody(n.body);
-    const lines = (n.body || '').split(/
+  var sorted = [...notes].sort(function(a, b) { return b.updated - a.updated; });
+  sorted.forEach(function(n) {
+    var tot = sumBody(n.body);
+    var lines = (n.body || '').split(/
 ?
-/).filter(l => l.trim()).length;
-    const card = document.createElement('div');
+/).filter(function(l) { return l.trim(); }).length;
+    var card = document.createElement('div');
     card.className = 'note-card';
-    card.innerHTML = `
-      <div class="info">
-        <div class="title">${escapeHtml(n.title || 'Sem título')}</div>
-        <div class="sub">${lines} ${lines === 1 ? 'linha' : 'linhas'} · ${dateStr(n.updated)}</div>
-      </div>
-      <div class="tot mono ${tot < 0 ? 'neg' : ''}">${fmt(tot)}</div>`;
-    card.onclick = () => openNote(n.id);
+    card.innerHTML = '<div class="info"><div class="title">' + escapeHtml(n.title || 'Sem título') + '</div><div class="sub">' + lines + ' ' + (lines === 1 ? 'linha' : 'linhas') + ' · ' + dateStr(n.updated) + '</div></div><div class="tot mono">' + fmt(tot) + '</div>';
+    card.onclick = function() { openNote(n.id); };
     container.appendChild(card);
   });
 }
 
-// ===== EDITOR =====
 function showEditor(show) {
-  const listView = document.getElementById('listView');
-  const editView = document.getElementById('editView');
-  const newBtn = document.getElementById('newBtn');
-  const backBtn = document.getElementById('backBtn');
-  const headTitle = document.getElementById('headTitle');
-  const brandTag = document.getElementById('brandTag');
-
+  var listView = document.getElementById('listView');
+  var editView = document.getElementById('editView');
+  var newBtn = document.getElementById('newBtn');
   if (listView) listView.classList.toggle('hidden', show);
   if (editView) editView.classList.toggle('hidden', !show);
   if (newBtn) newBtn.classList.toggle('hidden', show);
-  if (backBtn) backBtn.style.display = show ? 'flex' : 'none';
-  if (headTitle) headTitle.textContent = show ? 'Editar' : 'Somar Notas';
-  if (brandTag) brandTag.classList.toggle('hidden', show);
 }
 
 function newNote() {
+  alert('DEBUG: newNote() foi chamada!');
   try {
     currentId = 'n' + Date.now();
     notes.push({id: currentId, title: '', body: '', mode: 'somar', updated: Date.now()});
-
-    const noteTitle = document.getElementById('noteTitle');
-    const noteBody = document.getElementById('noteBody');
+    var noteTitle = document.getElementById('noteTitle');
+    var noteBody = document.getElementById('noteBody');
     if (noteTitle) noteTitle.value = '';
     if (noteBody) noteBody.value = '';
-
     showEditor(true);
     refreshEditor();
-    if (noteTitle) setTimeout(() => noteTitle.focus(), 100);
+    if (noteTitle) setTimeout(function() { noteTitle.focus(); }, 100);
   } catch (e) {
-    debug('ERRO newNote: ' + e.message);
+    alert('ERRO em newNote: ' + e.message);
   }
 }
 window.appNewNote = newNote;
 
 function openNote(id) {
   try {
-    const n = notes.find(x => x.id === id);
+    var n = notes.find(function(x) { return x.id === id; });
     if (!n) return;
     currentId = id;
-    const noteTitle = document.getElementById('noteTitle');
-    const noteBody = document.getElementById('noteBody');
+    var noteTitle = document.getElementById('noteTitle');
+    var noteBody = document.getElementById('noteBody');
     if (noteTitle) noteTitle.value = n.title || '';
     if (noteBody) noteBody.value = n.body || '';
     showEditor(true);
     refreshEditor();
   } catch (e) {
-    debug('ERRO openNote: ' + e.message);
+    alert('ERRO openNote: ' + e.message);
   }
 }
 
@@ -260,162 +183,92 @@ function closeEditor() {
     showEditor(false);
     renderList();
   } catch (e) {
-    debug('ERRO closeEditor: ' + e.message);
+    alert('ERRO close: ' + e.message);
   }
 }
 
 function persistCurrent(cleanupEmpty) {
   try {
-    const n = notes.find(x => x.id === currentId);
+    var n = notes.find(function(x) { return x.id === currentId; });
     if (!n) return;
-    const noteTitle = document.getElementById('noteTitle');
-    const noteBody = document.getElementById('noteBody');
+    var noteTitle = document.getElementById('noteTitle');
+    var noteBody = document.getElementById('noteBody');
     n.title = noteTitle ? noteTitle.value.trim() : '';
     n.body = noteBody ? noteBody.value : '';
     n.updated = Date.now();
     if (cleanupEmpty && !n.title && !(n.body || '').trim()) {
-      notes = notes.filter(x => x.id !== currentId);
+      notes = notes.filter(function(x) { return x.id !== currentId; });
     }
     save();
-  } catch (e) {
-    debug('ERRO persist: ' + e.message);
-  }
+  } catch (e) {}
 }
 
 function refreshEditor() {
   try {
-    const noteBody = document.getElementById('noteBody');
-    const gutter = document.getElementById('gutter');
-    const totalVal = document.getElementById('totalVal');
+    var noteBody = document.getElementById('noteBody');
+    var gutter = document.getElementById('gutter');
+    var totalVal = document.getElementById('totalVal');
     if (!noteBody || !gutter || !totalVal) return;
-
-    const lines = noteBody.value.split(/
+    var lines = noteBody.value.split(/
 ?
 /);
-    const nLines = Math.max(lines.length, 1);
-    let g = '';
-    for (let i = 1; i <= nLines; i++) {
-      const neg = lines[i - 1] && /^\s*-\d/.test(lines[i - 1]);
+    var nLines = Math.max(lines.length, 1);
+    var g = '';
+    for (var i = 1; i <= nLines; i++) {
+      var neg = lines[i - 1] && /^\s*-\d/.test(lines[i - 1]);
       g += '<span class="' + (neg ? 'neg' : '') + '">' + i + '</span>';
     }
     gutter.innerHTML = g;
-    const tot = sumBody(noteBody.value);
+    var tot = sumBody(noteBody.value);
     totalVal.textContent = fmt(tot);
     totalVal.classList.toggle('neg', tot < 0);
-  } catch (e) {
-    debug('ERRO refresh: ' + e.message);
-  }
+  } catch (e) {}
 }
 
-// ===== EVENTOS =====
 function setupEvents() {
   try {
-    const newBtn = document.getElementById('newBtn');
-    const backBtn = document.getElementById('backBtn');
-    const noteTitle = document.getElementById('noteTitle');
-    const noteBody = document.getElementById('noteBody');
-    const backupBtn = document.getElementById('backupBtn');
+    var newBtn = document.getElementById('newBtn');
+    var backBtn = document.getElementById('backBtn');
+    var noteTitle = document.getElementById('noteTitle');
+    var noteBody = document.getElementById('noteBody');
 
-    if (newBtn) newBtn.onclick = newNote;
+    alert('DEBUG: setupEvents iniciado. newBtn=' + (newBtn ? 'ENCONTRADO' : 'NULO'));
+
+    if (newBtn) {
+      newBtn.onclick = newNote;
+      newBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        newNote();
+      }, {passive: false});
+    }
     if (backBtn) backBtn.onclick = closeEditor;
-    if (noteTitle) noteTitle.addEventListener('input', () => persistCurrent(false));
+    if (noteTitle) noteTitle.addEventListener('input', function() { persistCurrent(false); });
     if (noteBody) {
-      noteBody.addEventListener('input', () => { refreshEditor(); persistCurrent(false); });
-      noteBody.addEventListener('scroll', () => {
-        const gutter = document.getElementById('gutter');
-        if (gutter) gutter.scrollTop = noteBody.scrollTop;
-      });
-    }
-    if (backupBtn) backupBtn.onclick = () => {
-      const modal = document.getElementById('backupModal');
-      if (modal) modal.classList.remove('hidden');
-    };
-
-    const exportBtn = document.getElementById('exportBtn');
-    if (exportBtn) {
-      exportBtn.onclick = () => {
-        if (notes.length === 0) { toast('Nenhuma nota'); return; }
-        const data = JSON.stringify({app: 'somar-notas', v: 1, exportado: new Date().toISOString(), notas: notes}, null, 2);
-        const blob = new Blob([data], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        const d = new Date();
-        a.download = 'somar-notas_' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.json';
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        toast('Backup salvo');
-      };
-    }
-
-    const importBtn = document.getElementById('importBtn');
-    const importFile = document.getElementById('importFile');
-    if (importBtn && importFile) {
-      importBtn.onclick = () => importFile.click();
-      importFile.onchange = () => {
-        const f = importFile.files[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            const data = JSON.parse(reader.result);
-            const lista = Array.isArray(data) ? data : data.notas;
-            if (!Array.isArray(lista)) throw new Error('formato');
-            const ids = new Set(notes.map(n => n.id));
-            let novas = 0;
-            lista.forEach(n => {
-              if (!n || !n.id) n.id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
-              if (ids.has(n.id)) {
-                const ex = notes.find(x => x.id === n.id);
-                if ((n.updated || 0) >= (ex.updated || 0)) Object.assign(ex, n);
-              } else {
-                notes.push(n); ids.add(n.id); novas++;
-              }
-            });
-            save(); renderList();
-            const modal = document.getElementById('backupModal');
-            if (modal) modal.classList.add('hidden');
-            toast('Importado! ' + novas + ' nota(s)');
-          } catch (err) {
-            toast('Arquivo inválido');
-          }
-          importFile.value = '';
-        };
-        reader.readAsText(f);
-      };
-    }
-
-    const closeBackup = document.getElementById('closeBackup');
-    if (closeBackup) {
-      closeBackup.onclick = () => {
-        const modal = document.getElementById('backupModal');
-        if (modal) modal.classList.add('hidden');
-      };
+      noteBody.addEventListener('input', function() { refreshEditor(); persistCurrent(false); });
     }
   } catch (e) {
-    debug('ERRO setupEvents: ' + e.message);
+    alert('ERRO setupEvents: ' + e.message);
   }
 }
 
-// ===== TOAST =====
 let toastTimer;
 function toast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
 }
 
-// ===== INICIALIZAR =====
 function init() {
   try {
     load();
     setupEvents();
     renderList();
-    toast('App carregado v' + APP_VERSION);
+    toast('App v2.0.4 carregado');
   } catch (e) {
-    debug('ERRO init: ' + e.message);
+    alert('ERRO INIT: ' + e.message);
   }
 }
 
