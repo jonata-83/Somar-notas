@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#1c2321">
+<meta name="theme-color" content="#000000">
 <title>Somar Notas</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,27 +12,28 @@
 <meta name="mobile-web-app-capable" content="yes">
 <style>
   :root{
-    --bg:#1c2321;
-    --panel:#232b28;
-    --line:#33403b;
-    --ink:#e8e4d8;
-    --muted:#8a938e;
-    --num:#a3d977;
+    --bg:#000000;
+    --panel:#111111;
+    --line:#2b2b2b;
+    --ink:#ffffff;
+    --muted:#9a9a9a;
+    --num:#ffffff;
     --accent:#e0a458;
     --wa:#25d366;
-    --danger:#d16a5a;
+    --danger:#ff6b6b;
     --neg:#ff6b6b;
-    --total-bg:#2a3430;
+    --total-bg:#1a1a1a;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;}
   body{
     background:var(--bg);
     color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-family:var(--font);
     display:flex;flex-direction:column;height:100dvh;overflow:hidden;
   }
-  .mono{font-family:"SF Mono","Roboto Mono",ui-monospace,Menlo,Consolas,monospace;}
+  .mono{font-family:var(--font);}
 
   header{
     display:flex;align-items:center;gap:12px;
@@ -129,9 +130,9 @@
 
   .fab{
     position:fixed;right:18px;bottom:22px;width:58px;height:58px;
-    border-radius:18px;background:var(--accent);color:#1c2321;
+    border-radius:18px;background:var(--accent);color:#000;
     border:none;font-size:30px;font-weight:400;cursor:pointer;
-    box-shadow:0 6px 20px rgba(0,0,0,.4);display:flex;
+    box-shadow:0 6px 20px rgba(0,0,0,.6);display:flex;
     align-items:center;justify-content:center;z-index:20;
   }
   .fab:active{transform:scale(.94);}
@@ -140,7 +141,7 @@
   #noteTitle{
     background:var(--panel);border:none;border-bottom:1px solid var(--line);
     color:var(--ink);font-size:18px;font-weight:600;padding:14px 18px;
-    width:100%;outline:none;flex-shrink:0;
+    width:100%;outline:none;flex-shrink:0;font-family:var(--font);
   }
   #noteTitle::placeholder{color:var(--muted);font-weight:400;}
   .editor-wrap{flex:1;display:flex;overflow:hidden;}
@@ -153,6 +154,7 @@
   .gutter span.neg{color:var(--neg);}
   #noteBody{
     flex:1;background:var(--bg);border:none;color:var(--ink);
+    font-family:var(--font);
     font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;
     outline:none;white-space:pre;overflow-wrap:normal;
   }
@@ -163,7 +165,7 @@
   .icon-btn.active{color:var(--accent);background:var(--total-bg);}
   .mode-btn{
     background:var(--total-bg);border:1px solid var(--line);
-    color:var(--num);font-size:12px;font-weight:700;
+    color:var(--ink);font-size:12px;font-weight:700;
     padding:6px 10px;border-radius:9px;cursor:pointer;white-space:nowrap;
   }
   .mode-btn:active{transform:scale(.96);}
@@ -179,6 +181,7 @@
     background:var(--panel);border:none;border-top:1px solid var(--line);
     color:var(--muted);padding:10px 20px;cursor:pointer;
     font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    font-family:var(--font);
   }
   .resumo-header:active{background:var(--total-bg);}
   .rh-chevron{font-size:14px;transition:transform .2s;}
@@ -211,7 +214,7 @@
   .total-bar .val.neg{color:var(--neg);}
 
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,.6);
+    position:fixed;inset:0;background:rgba(0,0,0,.7);
     display:flex;align-items:flex-end;justify-content:center;z-index:60;
   }
   .modal{
@@ -225,20 +228,20 @@
     display:block;width:100%;text-align:center;
     padding:14px;border-radius:12px;border:1px solid var(--line);
     background:var(--total-bg);color:var(--ink);font-size:15px;font-weight:600;
-    cursor:pointer;margin-bottom:10px;
+    cursor:pointer;margin-bottom:10px;font-family:var(--font);
   }
   .modal-btn:active{transform:scale(.98);}
-  .modal-btn.primary{background:var(--num);color:#14290a;border-color:var(--num);}
+  .modal-btn.primary{background:var(--ink);color:#000;border-color:var(--ink);}
   .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
 
-  .icon-btn.done-ico{color:var(--num);font-size:24px;font-weight:700;}
+  .icon-btn.done-ico{color:var(--ink);font-size:24px;font-weight:700;}
   .icon-btn.done-ico:active{background:var(--total-bg);}
 
   #hdrMenu{
     position:fixed;right:10px;z-index:70;
     background:var(--panel);border:1px solid var(--line);border-radius:14px;
     padding:6px;min-width:215px;display:flex;flex-direction:column;
-    box-shadow:0 10px 30px rgba(0,0,0,.55);
+    box-shadow:0 10px 30px rgba(0,0,0,.7);
   }
   #hdrMenu.hidden{display:none !important;}
   #hdrMenu > button{
@@ -246,20 +249,20 @@
     width:100%;height:auto;background:none;border:none;border-radius:10px;
     color:var(--ink);font-size:15px;font-weight:500;text-align:left;
     padding:13px 14px;cursor:pointer;white-space:nowrap;letter-spacing:normal;
-    text-transform:none;
+    text-transform:none;font-family:var(--font);
   }
   #hdrMenu > button.hidden{display:none !important;}
   #hdrMenu > button:active{background:var(--total-bg);}
   #hdrMenu > button svg{width:20px;height:20px;flex-shrink:0;}
   #hdrMenu > button.danger{color:var(--danger);}
-  #hdrMenu > button#modeBtn{color:var(--num);font-weight:700;}
+  #hdrMenu > button#modeBtn{color:var(--ink);font-weight:700;}
   #hdrMenu > button#modeBtn.texto{color:var(--muted);}
   #menuBackdrop{position:fixed;inset:0;z-index:65;background:transparent;}
   #menuBackdrop.hidden{display:none !important;}
 
   .toast{
     position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
-    background:#000;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;
+    background:#222;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;
     opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:80%;text-align:center;
   }
   .toast.show{opacity:.95;transform:translateX(-50%) translateY(0);}
@@ -674,9 +677,10 @@ document.getElementById('hdrShareText').onclick=()=>{
 const PNG_THEME_KEY='somar_png_theme';
 let pngTheme = localStorage.getItem(PNG_THEME_KEY)==='caderno' ? 'caderno' : 'escuro';
 const PNG_THEMES = {
-  escuro:  { paper:'#1c2321', ink:'#e8e4d8', num:'#a3d977', neg:'#ff6b6b', line:'#33403b', muted:'#8a938e', rule:null,      margin:null },
+  escuro:  { paper:'#000000', ink:'#ffffff', num:'#ffffff', neg:'#ff6b6b', line:'#2b2b2b', muted:'#9a9a9a', rule:null,      margin:null },
   caderno: { paper:'#faf6ea', ink:'#26303f', num:'#1b4f9c', neg:'#d32f2f', line:'#cbbfa4', muted:'#8a7f66', rule:'#aecbe6', margin:'#e2a0a0' }
 };
+const PNG_FONT='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
 function pngThemeRefresh(){
   const b=document.getElementById('pngThemeBtn');
   if(!b) return;
@@ -732,10 +736,10 @@ function makePNG(){
 
   let y=padTop;
   x.fillStyle=P.ink;
-  x.font=`600 ${titleSize}px -apple-system,Roboto,sans-serif`;
+  x.font=`600 ${titleSize}px ${PNG_FONT}`;
   x.fillText(title,padX,y+titleSize-6);
   x.fillStyle=P.muted;
-  x.font=`400 18px -apple-system,Roboto,sans-serif`;
+  x.font=`400 18px ${PNG_FONT}`;
   x.textAlign='right';
   x.fillText(dateStamp,W-padX,y+titleSize-8);
   x.textAlign='left';
@@ -745,7 +749,7 @@ function makePNG(){
   x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   y+=18;
 
-  x.font=`400 ${lineSize}px "Roboto Mono",ui-monospace,monospace`;
+  x.font=`400 ${lineSize}px ${PNG_FONT}`;
   function splitLinha(ln){
     const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
     if(!m) return null;
@@ -761,6 +765,8 @@ function makePNG(){
   parsed.forEach(p=>{ if(p) maxQty=Math.max(maxQty,p.qty.length); });
   let maxCore=0;
   parsed.forEach(p=>{ if(p) maxCore=Math.max(maxCore, maxQty + p.medida.length); });
+  let colX=0;
+  parsed.forEach(p=>{ if(p) colX=Math.max(colX, x.measureText(p.qty.padStart(maxQty,' ')+p.medida+'  ').width); });
   lines.forEach((ln,i)=>{
     const ny=y+i*lineH+lineSize;
     const p=parsed[i];
@@ -770,10 +776,9 @@ function makePNG(){
       x.fillStyle=isNeg ? (P.neg || '#ff6b6b') : P.num;
       x.fillText(qty,padX,ny);
       const numW=x.measureText(qty).width;
-      const gap=(maxCore - (maxQty + p.medida.length)) + 1;
-      const resto = p.medida + (p.nome ? ' '.repeat(gap) + p.nome : '');
       x.fillStyle=P.ink;
-      x.fillText(resto,padX+numW,ny);
+      if(p.medida) x.fillText(p.medida,padX+numW,ny);
+      if(p.nome) x.fillText(p.nome,padX+colX,ny);
     }else{
       x.fillStyle=P.ink;
       x.fillText(ln,padX,ny);
@@ -791,11 +796,11 @@ function makePNG(){
     groups.forEach((g,i)=>{
       const ny=y+i*grpH+26;
       x.fillStyle=P.ink;
-      x.font=`400 24px -apple-system,Roboto,sans-serif`;
+      x.font=`400 24px ${PNG_FONT}`;
       x.textAlign='left';
       x.fillText(g.nome,padX,ny);
       x.fillStyle=g.qt<0 ? (P.neg || '#ff6b6b') : P.num;
-      x.font=`700 24px "Roboto Mono",monospace`;
+      x.font=`700 24px ${PNG_FONT}`;
       x.textAlign='right';
       x.fillText(fmt(g.qt),W-padX,ny);
     });
@@ -810,12 +815,12 @@ function makePNG(){
   if(!isTexto){
     y+=40;
     x.fillStyle=P.muted;
-    x.font=`400 22px -apple-system,Roboto,sans-serif`;
+    x.font=`400 22px ${PNG_FONT}`;
     x.textAlign='left';
     const label = hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL';
     x.fillText(label,padX,y);
     x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
-    x.font=`700 30px "Roboto Mono",monospace`;
+    x.font=`700 30px ${PNG_FONT}`;
     x.textAlign='right';
     x.fillText(tot,W-padX,y+3);
     x.textAlign='left';
@@ -828,7 +833,7 @@ document.getElementById('pngThemeBtn').onclick=()=>{
   pngTheme = (pngTheme==='caderno') ? 'escuro' : 'caderno';
   localStorage.setItem(PNG_THEME_KEY, pngTheme);
   pngThemeRefresh();
-  toast(pngTheme==='caderno' ? '📔 PNG com fundo caderno' : '🌙 PNG com fundo escuro');
+  toast(pngTheme==='caderno' ? '📔 PNG com fundo caderno' : '🌙 PNG com fundo preto');
 };
 pngThemeRefresh();
 
