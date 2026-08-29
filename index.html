@@ -76,20 +76,6 @@
   }
   .note-card .flag-btn:active{background:var(--total-bg);}
 
-  #bandBar{
-    display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    padding:10px 14px;border-bottom:1px solid var(--line);
-    position:sticky;top:0;background:var(--bg);z-index:5;
-  }
-  .chip{
-    flex-shrink:0;display:flex;align-items:center;gap:6px;white-space:nowrap;
-    background:var(--panel);border:1px solid var(--line);color:var(--muted);
-    border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;
-  }
-  .chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-  .chip .cnt{color:var(--muted);font-weight:400;}
-  .chip.on{color:var(--ink);}
-  .chip.ger{border-style:dashed;border-color:var(--accent);color:var(--accent);}
 
   .band-item{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
@@ -235,6 +221,136 @@
   .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
 
   .icon-btn.done-ico{color:var(--ink);font-size:24px;font-weight:700;}
+
+  /* Barra de busca */
+  .search-wrap{
+    flex:1;display:flex;align-items:center;gap:8px;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
+    padding:0 12px;height:38px;margin-right:4px;
+  }
+  .search-wrap.hidden{display:none !important;}
+  .search-wrap .search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
+  .search-wrap input{
+    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
+    outline:none;font-family:inherit;padding:0;
+  }
+  .search-wrap input::placeholder{color:var(--muted);}
+  .search-clear{
+    background:none;border:none;color:var(--muted);font-size:20px;
+    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;flex-shrink:0;
+  }
+  .search-clear.hidden{display:none !important;}
+
+  /* Tela de bandeiras */
+  #bandsScreen{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:var(--bg);z-index:60;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .3s ease;
+  }
+  #bandsScreen.open{transform:translateX(0);}
+  #bandsScreen .bands-header{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  #bandsScreen .bands-header h2{font-size:17px;font-weight:600;margin:0;flex:1;}
+  #bandsScreen .bands-body{
+    flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;
+  }
+  #bandsScreen .bands-body .chip{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;margin-bottom:10px;font-size:15px;font-weight:600;
+    cursor:pointer;color:var(--ink);width:100%;text-align:left;
+  }
+  #bandsScreen .bands-body .chip:active{transform:scale(.98);}
+  #bandsScreen .bands-body .chip .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  #bandsScreen .bands-body .chip .cnt{margin-left:auto;color:var(--muted);font-weight:400;font-size:14px;}
+  #bandsScreen .bands-body .chip.all{border-style:dashed;border-color:var(--accent);color:var(--accent);}
+  #bandsScreen .bands-body .chip.on{background:var(--total-bg);border-color:var(--ink);}
+  #bandsScreen .bands-empty{color:var(--muted);text-align:center;padding:50px 20px;font-size:15px;}
+  #bandsScreen .bands-search-wrap{
+    display:flex;align-items:center;gap:8px;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
+    padding:0 12px;height:42px;margin:12px 16px;
+  }
+  #bandsScreen .bands-search-wrap .bands-search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
+  #bandsScreen .bands-search-wrap input{
+    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
+    outline:none;font-family:inherit;padding:0;
+  }
+  #bandsScreen .bands-search-wrap input::placeholder{color:var(--muted);}
+  #bandsScreen .bands-search-clear{
+    background:none;border:none;color:var(--muted);font-size:20px;
+    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;flex-shrink:0;
+  }
+  #bandsScreen .bands-search-clear.hidden{display:none !important;}
+
+  /* Barra de busca */
+  .search-wrap{
+    flex:1;display:flex;align-items:center;gap:8px;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
+    padding:0 12px;height:38px;margin-right:4px;
+  }
+  .search-wrap.hidden{display:none !important;}
+  .search-wrap .search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
+  .search-wrap input{
+    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
+    outline:none;font-family:inherit;padding:0;
+  }
+  .search-wrap input::placeholder{color:var(--muted);}
+  .search-clear{
+    background:none;border:none;color:var(--muted);font-size:20px;
+    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;flex-shrink:0;
+  }
+  .search-clear.hidden{display:none !important;}
+
+  /* Tela de bandeiras */
+  #bandsScreen{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:var(--bg);z-index:60;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .3s ease;
+  }
+  #bandsScreen.open{transform:translateX(0);}
+  #bandsScreen .bands-header{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  #bandsScreen .bands-header h2{font-size:17px;font-weight:600;margin:0;flex:1;}
+  #bandsScreen .bands-body{
+    flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;
+  }
+  #bandsScreen .bands-body .chip{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;margin-bottom:10px;font-size:15px;font-weight:600;
+    cursor:pointer;color:var(--ink);width:100%;text-align:left;
+  }
+  #bandsScreen .bands-body .chip:active{transform:scale(.98);}
+  #bandsScreen .bands-body .chip .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  #bandsScreen .bands-body .chip .cnt{margin-left:auto;color:var(--muted);font-weight:400;font-size:14px;}
+  #bandsScreen .bands-body .chip.all{border-style:dashed;border-color:var(--accent);color:var(--accent);}
+  #bandsScreen .bands-body .chip.on{background:var(--total-bg);border-color:var(--ink);}
+  #bandsScreen .bands-empty{color:var(--muted);text-align:center;padding:50px 20px;font-size:15px;}
+  #bandsScreen .bands-search-wrap{
+    display:flex;align-items:center;gap:8px;
+    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
+    padding:0 12px;height:42px;margin:12px 16px;
+  }
+  #bandsScreen .bands-search-wrap .bands-search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
+  #bandsScreen .bands-search-wrap input{
+    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
+    outline:none;font-family:inherit;padding:0;
+  }
+  #bandsScreen .bands-search-wrap input::placeholder{color:var(--muted);}
+  #bandsScreen .bands-search-clear{
+    background:none;border:none;color:var(--muted);font-size:20px;
+    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;flex-shrink:0;
+  }
+  #bandsScreen .bands-search-clear.hidden{display:none !important;}
   .icon-btn.done-ico:active{background:var(--total-bg);}
 
   #hdrMenu{
@@ -272,8 +388,16 @@
 
 <header>
   <button class="back" id="backBtn" aria-label="Voltar">‹</button>
+  <div class="search-wrap hidden" id="searchWrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Buscar notas..." autocomplete="off">
+    <button class="search-clear hidden" id="searchClear">×</button>
+  </div>
   <h1 id="headTitle">Somar Notas</h1>
-  <span class="brand" id="brandTag">JL</span>
+  
+  <button class="icon-btn" id="bandsBtn" aria-label="Bandeiras">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+  </button>
   <button class="icon-btn" id="backupBtn" aria-label="Backup das notas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
   </button>
@@ -303,7 +427,6 @@
 
 <!-- LISTA -->
 <div class="view" id="listView">
-  <div id="bandBar" class="hidden"></div>
   <div id="notesContainer"></div>
   <div class="empty hidden" id="emptyState">
     <div class="big">📝</div>
@@ -368,6 +491,20 @@
     <button class="modal-btn primary" id="addBandBtn" style="margin-top:10px">+ Adicionar</button>
     <button class="modal-btn ghost" id="closeBandManage">Fechar</button>
   </div>
+</div>
+
+<!-- TELA DE BANDEIRAS -->
+<div id="bandsScreen">
+  <div class="bands-header">
+    <button class="back" id="bandsBack" aria-label="Voltar">‹</button>
+    <h2>Bandeiras</h2>
+  </div>
+  <div class="bands-search-wrap">
+    <svg class="bands-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="bandsSearchInput" placeholder="Buscar bandeira..." autocomplete="off">
+    <button class="bands-search-clear hidden" id="bandsSearchClear">×</button>
+  </div>
+  <div class="bands-body" id="bandsBody"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -480,17 +617,70 @@ const listView=document.getElementById('listView');
 const editView=document.getElementById('editView');
 const notesContainer=document.getElementById('notesContainer');
 const emptyState=document.getElementById('emptyState');
+const searchWrap=document.getElementById('searchWrap');
+const searchInput=document.getElementById('searchInput');
+const searchClear=document.getElementById('searchClear');
+const bandsBtn=document.getElementById('bandsBtn');
+const bandsScreen=document.getElementById('bandsScreen');
+const bandsBack=document.getElementById('bandsBack');
+const bandsBody=document.getElementById('bandsBody');
+
+let searchTerm='';
+let bandsSearchTerm='';
+
+function matchesSearch(n,term){
+  if(!term) return true;
+  const t=term.toLowerCase();
+  return (n.title||'').toLowerCase().includes(t) || (n.body||'').toLowerCase().includes(t);
+}
+
+function openBandsScreen(){
+  renderBandsScreen();
+  bandsScreen.classList.add('open');
+}
+function closeBandsScreen(){
+  bandsScreen.classList.remove('open');
+}
+function renderBandsScreen(){
+  const term=bandsSearchTerm.toLowerCase();
+  const filtradas=bandeiras.filter(b=>!term || b.nome.toLowerCase().includes(term));
+  let h=`<button class="chip all ${!filtroBand?'on':''}" data-b="">Todas as notas <span class="cnt">${notes.length}</span></button>`;
+  if(filtradas.length===0){
+    h+='<div class="bands-empty">'+(term?'Nenhuma bandeira encontrada.':'Nenhuma bandeira cadastrada.<br>Toque em ⚑ Bandeiras no menu pra criar.')+'</div>';
+  }else{
+    filtradas.forEach(b=>{
+      h+=`<button class="chip ${filtroBand===b.id?'on':''}" data-b="${b.id}" style="${filtroBand===b.id?'border-color:'+b.cor:''}">
+        <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}
+        <span class="cnt">${contaBand(b.id)} nota(s)</span>
+      </button>`;
+    });
+  }
+  bandsBody.innerHTML=h;
+  bandsBody.querySelectorAll('.chip').forEach(c=>{
+    c.onclick=()=>{
+      filtroBand=c.dataset.b||null;
+      renderList();
+      closeBandsScreen();
+      if(filtroBand){
+        const b=bandeiras.find(x=>x.id===filtroBand);
+        toast(b?'Filtrado: '+b.nome:'Todas as notas');
+      }else{
+        toast('Todas as notas');
+      }
+    };
+  });
+}
 
 function renderList(){
   notesContainer.innerHTML='';
-  emptyState.classList.toggle('hidden',notes.length!==0);
-  renderBandBar();
   if(filtroBand && !bandeiras.some(b=>b.id===filtroBand)) filtroBand=null;
   const sorted=[...notes]
     .filter(n=>!filtroBand || n.bandeira===filtroBand)
+    .filter(n=>matchesSearch(n,searchTerm))
     .sort((a,b)=>b.updated-a.updated);
+  emptyState.classList.toggle('hidden',sorted.length!==0);
   if(notes.length>0 && sorted.length===0){
-    notesContainer.innerHTML='<div class="empty"><p>Nenhuma nota com essa bandeira.</p></div>';
+    notesContainer.innerHTML='<div class="empty"><p>'+(searchTerm?'Nenhuma nota encontrada.':'Nenhuma nota com essa bandeira.')+'</p></div>';
     return;
   }
   sorted.forEach(n=>{
@@ -547,6 +737,9 @@ function showEditor(show){
   editView.classList.toggle('hidden',!show);
   backBtn.style.display=show?'flex':'none';
   deleteBtn.classList.toggle('hidden',!show);
+  searchWrap.classList.toggle('hidden',show);
+  bandsBtn.classList.toggle('hidden',show);
+  headTitle.style.display=show?'none':'';
   document.getElementById('hdrShareText').classList.toggle('hidden',!show);
   document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
   document.getElementById('pngThemeBtn').classList.toggle('hidden',!show);
@@ -862,6 +1055,34 @@ document.getElementById('hdrSharePng').onclick=async()=>{
 document.getElementById('newBtn').onclick=newNote;
 backBtn.onclick=closeEditor;
 deleteBtn.onclick=deleteCurrent;
+
+// Busca
+searchInput.addEventListener('input',()=>{
+  searchTerm=searchInput.value.trim();
+  searchClear.classList.toggle('hidden',!searchTerm);
+  renderList();
+});
+searchClear.onclick=()=>{searchInput.value='';searchTerm='';searchClear.classList.add('hidden');renderList();searchInput.focus();};
+
+// Bandeiras
+bandsBtn.onclick=openBandsScreen;
+bandsBack.onclick=closeBandsScreen;
+
+// Busca de bandeiras
+const bandsSearchInput=document.getElementById('bandsSearchInput');
+const bandsSearchClear=document.getElementById('bandsSearchClear');
+if(bandsSearchInput){
+  bandsSearchInput.addEventListener('input',()=>{
+    bandsSearchTerm=bandsSearchInput.value.trim();
+    bandsSearchClear.classList.toggle('hidden',!bandsSearchTerm);
+    renderBandsScreen();
+  });
+}
+if(bandsSearchClear){
+  bandsSearchClear.onclick=()=>{
+    bandsSearchInput.value='';bandsSearchTerm='';bandsSearchClear.classList.add('hidden');renderBandsScreen();bandsSearchInput.focus();
+  };
+}
 noteBody.addEventListener('input',()=>{recalcMult();refreshEditor();persistCurrent(false);});
 
 function recalcMult(){
@@ -966,24 +1187,7 @@ function corLivre(){
   return CORES_BAND.find(c=>!usadas.includes(c))||CORES_BAND[0];
 }
 
-const bandBar=document.getElementById('bandBar');
-function renderBandBar(){
-  bandBar.classList.toggle('hidden',notes.length===0);
-  if(notes.length===0){bandBar.innerHTML='';return;}
-  let h=`<button class="chip ${filtroBand?'':'on'}" data-f="">Todas <span class="cnt">(${notes.length})</span></button>`;
-  bandeiras.forEach(b=>{
-    h+=`<button class="chip ${filtroBand===b.id?'on':''}" data-f="${b.id}"
-      style="${filtroBand===b.id?`border-color:${b.cor};background:${b.cor}22`:''}">
-      <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}
-      <span class="cnt">(${contaBand(b.id)})</span></button>`;
-  });
-  h+=`<button class="chip ger" id="chipGer">⚑ Bandeiras</button>`;
-  bandBar.innerHTML=h;
-  bandBar.querySelectorAll('.chip[data-f]').forEach(c=>{
-    c.onclick=()=>{filtroBand=c.dataset.f||null;renderList();};
-  });
-  document.getElementById('chipGer').onclick=abrirBandManage;
-}
+
 
 const bandPickModal=document.getElementById('bandPickModal');
 const bandManageModal=document.getElementById('bandManageModal');
