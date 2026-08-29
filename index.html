@@ -758,6 +758,7 @@ function newNote(){
   notes.push({id:currentId,title:'',body:'',mode:'somar',updated:Date.now()});
   noteTitle.value='';noteBody.value='';
   applyMode('somar');
+  searchTerm='';searchInput.value='';searchClear.classList.add('hidden');
   showEditor(true);refreshEditor();
   setTimeout(()=>noteTitle.focus(),100);
 }
@@ -767,7 +768,16 @@ function openNote(id){
   applyMode(n.mode||'somar');
   showEditor(true);refreshEditor();
 }
-function closeEditor(){persistCurrent(true);currentId=null;showEditor(false);renderList();}
+function closeEditor(){
+  persistCurrent(true);
+  currentId=null;
+  showEditor(false);
+  // Força reflow antes de renderizar para garantir que o DOM atualizou
+  requestAnimationFrame(()=>{
+    renderList();
+    toast('Nota salva ✓');
+  });
+}
 function persistCurrent(cleanupEmpty){
   const n=notes.find(x=>x.id===currentId);if(!n)return;
   n.title=noteTitle.value.trim();n.body=noteBody.value;n.mode=currentMode;n.updated=Date.now();
