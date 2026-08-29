@@ -864,41 +864,18 @@ backBtn.onclick=closeEditor;
 deleteBtn.onclick=deleteCurrent;
 noteBody.addEventListener('input',()=>{recalcMult();refreshEditor();persistCurrent(false);});
 
-function recalcMult(preservarLinhaAtual){
-  if(preservarLinhaAtual===undefined) preservarLinhaAtual=true;
+function recalcMult(){
   const antes=noteBody.value;
   const pos=noteBody.selectionStart;
-  const linhasAntes=antes.split('\n');
-  let acc=0, curLine=0;
-  for(let i=0;i<linhasAntes.length;i++){
-    const fim=acc+linhasAntes[i].length;
-    if(pos<=fim){ curLine=i; break; }
-    acc=fim+1;
-  }
-  const linhaAtualTxt=linhasAntes[curLine];
-  let depois;
-  if(preservarLinhaAtual){
-    const MARCA='\u0000CURSOR\u0000';
-    const copia=linhasAntes.slice(); copia[curLine]=MARCA;
-    depois=montaComTotais(copia.join('\n')).replace(MARCA,linhaAtualTxt);
-  }else{
-    depois=montaComTotais(antes);
-  }
+  // Só expande multiplicações inline (ex: 200 x 3 → 200 x 3 = 600).
+  // NÃO remove/reinsere subtotais (=) nem totais — isso fica pro botão ✓.
+  const depois=antes.split('\n').map(l=>ehLinhaGerada(l)?l:aplicaMultLinha(l)).join('\n');
   if(depois===antes) return;
-  const novasLinhas=depois.split('\n');
-  let idxNovo=curLine;
-  if(preservarLinhaAtual){
-    idxNovo=novasLinhas.findIndex(x=>x===linhaAtualTxt);
-    if(idxNovo<0) idxNovo=Math.min(curLine,novasLinhas.length-1);
-  }
-  const colNaLinha=pos-acc;
-  let novoPos=0;
-  for(let i=0;i<idxNovo;i++) novoPos+=novasLinhas[i].length+1;
-  novoPos+=Math.min(colNaLinha,(novasLinhas[idxNovo]||'').length);
   noteBody.value=depois;
+  const delta=depois.length-antes.length;
+  const novoPos=Math.min(Math.max(0,pos+delta),depois.length);
   try{ noteBody.setSelectionRange(novoPos,novoPos); }catch(e){}
 }
-noteTitle.addEventListener('input',()=>persistCurrent(false));
 noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
 
 window.addEventListener('popstate',()=>{
