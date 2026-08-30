@@ -1104,13 +1104,26 @@ noteBody.addEventListener('input',()=>{recalcMult();refreshEditor();persistCurre
 function recalcMult(){
   const antes=noteBody.value;
   const pos=noteBody.selectionStart;
-  // Só expande multiplicações inline (ex: 200 x 3 → 200 x 3 = 600).
-  // NÃO remove/reinsere subtotais (=) nem totais — isso fica pro botão ✓.
-  const depois=antes.split('\n').map(l=>ehLinhaGerada(l)?l:aplicaMultLinha(l)).join('\n');
+  const linhas=antes.split('\n');
+  // acha a linha onde o cursor está
+  let acc=0, cur=0;
+  for(let i=0;i<linhas.length;i++){
+    const fim=acc+linhas[i].length;
+    if(pos<=fim){ cur=i; break; }
+    acc=fim+1;
+    cur=i+1;
+  }
+  const col=pos-acc;
+  // Só expande multiplicações inline (ex: 5 x 21 → 5 x 21= 105),
+  // e NUNCA na linha que está sendo digitada — o cálculo sai ao pular
+  // de linha ou no ✓. Também não mexe em subtotais (=) nem totais.
+  const novas=linhas.map((l,i)=> (i===cur||ehLinhaGerada(l)) ? l : aplicaMultLinha(l));
+  const depois=novas.join('\n');
   if(depois===antes) return;
+  let novoPos=0;
+  for(let i=0;i<cur;i++) novoPos+=novas[i].length+1;
+  novoPos+=Math.min(Math.max(col,0),(novas[cur]||'').length);
   noteBody.value=depois;
-  const delta=depois.length-antes.length;
-  const novoPos=Math.min(Math.max(0,pos+delta),depois.length);
   try{ noteBody.setSelectionRange(novoPos,novoPos); }catch(e){}
 }
 noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
