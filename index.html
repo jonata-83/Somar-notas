@@ -949,10 +949,10 @@ function makePNG(){
 
   let y=padTop;
   x.fillStyle=P.ink;
-  x.font=`600 ${titleSize}px ${PNG_FONT}`;
+  x.font=`800 ${titleSize}px ${PNG_FONT}`;
   x.fillText(title,padX,y+titleSize-6);
   x.fillStyle=P.muted;
-  x.font=`400 18px ${PNG_FONT}`;
+  x.font=`600 18px ${PNG_FONT}`;
   x.textAlign='right';
   x.fillText(dateStamp,W-padX,y+titleSize-8);
   x.textAlign='left';
@@ -962,7 +962,7 @@ function makePNG(){
   x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
   y+=18;
 
-  x.font=`400 ${lineSize}px ${PNG_FONT}`;
+  x.font=`600 ${lineSize}px ${PNG_FONT}`;
   function splitLinha(ln){
     const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
     if(!m) return null;
@@ -1009,11 +1009,11 @@ function makePNG(){
     groups.forEach((g,i)=>{
       const ny=y+i*grpH+26;
       x.fillStyle=P.ink;
-      x.font=`400 24px ${PNG_FONT}`;
+      x.font=`800 24px ${PNG_FONT}`;
       x.textAlign='left';
       x.fillText(g.nome,padX,ny);
       x.fillStyle=g.qt<0 ? (P.neg || '#ff6b6b') : P.num;
-      x.font=`700 24px ${PNG_FONT}`;
+      x.font=`800 24px ${PNG_FONT}`;
       x.textAlign='right';
       x.fillText(fmt(g.qt),W-padX,ny);
     });
@@ -1028,12 +1028,12 @@ function makePNG(){
   if(!isTexto){
     y+=40;
     x.fillStyle=P.muted;
-    x.font=`400 22px ${PNG_FONT}`;
+    x.font=`600 22px ${PNG_FONT}`;
     x.textAlign='left';
     const label = hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL';
     x.fillText(label,padX,y);
     x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
-    x.font=`700 30px ${PNG_FONT}`;
+    x.font=`900 30px ${PNG_FONT}`;
     x.textAlign='right';
     x.fillText(tot,W-padX,y+4);
     x.textAlign='left';
