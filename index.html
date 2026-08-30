@@ -546,7 +546,7 @@ function valorResultado(line){
   if(!m) return null;
   return parseFloat(m[1].replace(/\./g,'').replace(',','.'))||0;
 }
-const RX_SUBTOTAL=/^\s*=\s*[\d.,]+\s*$/;
+const RX_SUBTOTAL=/^\s*=\s*[\d.,]*\s*$/;
 const RX_TOTAL=/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i;
 function ehLinhaGerada(line){ return RX_SUBTOTAL.test(line)||RX_TOTAL.test(line); }
 
@@ -556,28 +556,33 @@ function aplicaMultTexto(txt){
 
 function montaComTotais(txt){
   const linhas=txt.split('\n')
-    .filter(l=>!ehLinhaGerada(l))
-    .map(l=>aplicaMultLinha(l));
+    .filter(l=>!RX_TOTAL.test(l))
+    .map(l=>RX_SUBTOTAL.test(l)?l:aplicaMultLinha(l));
   const out=[];
-  let soma=0, temMult=false, geral=0, houveGrupo=false;
-  const fecharGrupo=()=>{
-    if(temMult){
-      out.push('= '+fmt(soma));
-      geral+=soma; houveGrupo=true;
+  let somaMult=0, somaQtd=0, temMult=false, temItem=false;
+  let geral=0, nGrupos=0, houveMult=false;
+  const fecharGrupo=(marcador)=>{
+    if(temItem && (temMult||marcador)){
+      const sub = temMult ? somaMult : somaQtd;
+      out.push('= '+fmt(sub));
+      geral+=sub; nGrupos++;
+      if(temMult) houveMult=true;
     }
-    soma=0; temMult=false;
+    somaMult=0; somaQtd=0; temMult=false; temItem=false;
   };
   linhas.forEach(l=>{
-    const v=valorResultado(l);
-    const cabecalho = l.trim() && !/^\s*[+-]?\d/.test(l);
+    if(RX_SUBTOTAL.test(l)){ fecharGrupo(true); return; }
     const branco = !l.trim();
-    if(cabecalho){ fecharGrupo(); out.push(l); return; }
-    if(branco){ fecharGrupo(); out.push(l); return; }
-    if(v!==null){ soma+=v; temMult=true; }
+    const cabecalho = l.trim() && !/^\s*[+-]?\d/.test(l);
+    if(cabecalho || branco){ fecharGrupo(false); out.push(l); return; }
+    const v=valorResultado(l);
+    if(v!==null){ somaMult+=v; temMult=true; }
+    else { somaQtd+=lineValue(l); }
+    temItem=true;
     out.push(l);
   });
-  fecharGrupo();
-  if(houveGrupo){
+  fecharGrupo(false);
+  if(houveMult || nGrupos>1){
     while(out.length && !out[out.length-1].trim()) out.pop();
     out.push('TOTAL= '+fmt(geral));
   }
@@ -749,7 +754,7 @@ function showEditor(show){
   document.getElementById('doneBtn').classList.toggle('hidden',!show);
   document.getElementById('menuBtn').classList.toggle('hidden',!show);
   document.getElementById('signBtn').classList.toggle('hidden',!show);
-  brandTag.classList.toggle('hidden',show);
+  if(brandTag) brandTag.classList.toggle('hidden',show);
   headTitle.textContent=show?'Editar':'Somar Notas';
   fecharMenu();
 }
