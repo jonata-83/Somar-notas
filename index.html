@@ -912,10 +912,10 @@ function makePNG(){
   const P = PNG_THEMES[pngTheme] || PNG_THEMES.escuro;
 
   const scale=2;
-  const W=720;
-  const padX=40, padTop=40;
-  const titleSize=34, lineSize=26, lineH=44;
-  const grpH=40;
+  const W=1080;
+  const padX=60, padTop=60;
+  const titleSize=48, lineSize=36, lineH=62;
+  const grpH=56;
   const dateStamp=new Date().toLocaleDateString('pt-BR');
 
   const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
@@ -938,12 +938,12 @@ function makePNG(){
     const bodyTop = padTop + titleSize + 24 + 18;
     const ruleStart = bodyTop + lineSize + 8;
     x.strokeStyle=P.rule; x.lineWidth=1;
-    for(let ry=ruleStart; ry<H-14; ry+=lineH){
+    for(let ry=ruleStart; ry<H-20; ry+=lineH){
       x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke();
     }
     if(P.margin){
       x.strokeStyle=P.margin; x.lineWidth=2;
-      x.beginPath(); x.moveTo(26,0); x.lineTo(26,H); x.stroke();
+      x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke();
     }
   }
 
@@ -1035,7 +1035,7 @@ function makePNG(){
     x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
     x.font=`700 30px ${PNG_FONT}`;
     x.textAlign='right';
-    x.fillText(tot,W-padX,y+3);
+    x.fillText(tot,W-padX,y+4);
     x.textAlign='left';
   }
 
