@@ -915,7 +915,7 @@ function makePNG(){
   const W=1080;
   const padX=60, padTop=60;
   const titleSize=48, lineSize=36, lineH=62;
-  const grpH=56;
+  const grpH=72;
   const dateStamp=new Date().toLocaleDateString('pt-BR');
 
   const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
@@ -1009,11 +1009,11 @@ function makePNG(){
     groups.forEach((g,i)=>{
       const ny=y+i*grpH+26;
       x.fillStyle=P.ink;
-      x.font=`800 24px ${PNG_FONT}`;
+      x.font=`800 32px ${PNG_FONT}`;
       x.textAlign='left';
       x.fillText(g.nome,padX,ny);
       x.fillStyle=g.qt<0 ? (P.neg || '#ff6b6b') : P.num;
-      x.font=`800 24px ${PNG_FONT}`;
+      x.font=`800 32px ${PNG_FONT}`;
       x.textAlign='right';
       x.fillText(fmt(g.qt),W-padX,ny);
     });
@@ -1028,14 +1028,14 @@ function makePNG(){
   if(!isTexto){
     y+=40;
     x.fillStyle=P.muted;
-    x.font=`600 22px ${PNG_FONT}`;
+    x.font=`700 28px ${PNG_FONT}`;
     x.textAlign='left';
     const label = hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL';
     x.fillText(label,padX,y);
     x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
-    x.font=`900 30px ${PNG_FONT}`;
+    x.font=`900 40px ${PNG_FONT}`;
     x.textAlign='right';
-    x.fillText(tot,W-padX,y+4);
+    x.fillText(tot,W-padX,y+6);
     x.textAlign='left';
   }
 
