@@ -701,7 +701,7 @@ function renderList(){
       <div class="info">
         ${b?`<div class="band" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}</div>`:''}
         <div class="title">${escapeHtml(n.title||'Sem título')}</div>
-        <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.updated)}</div>
+        <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.created||n.updated)} → ${dateStr(n.updated)}</div>
       </div>
       ${isTexto?'':`<div class="tot mono ${tot<0?'neg':''}">${fmt(tot)}</div>`}
       <button class="flag-btn" aria-label="Bandeira" ${b?`style="color:${b.cor};border-color:${b.cor}"`:''}>⚑</button>`;
@@ -760,7 +760,7 @@ function showEditor(show){
 }
 function newNote(){
   currentId='n'+Date.now();
-  notes.push({id:currentId,title:'',body:'',mode:'somar',updated:Date.now()});
+  notes.push({id:currentId,title:'',body:'',mode:'somar',created:Date.now(),updated:Date.now()});
   noteTitle.value='';noteBody.value='';
   applyMode('somar');
   searchTerm='';searchInput.value='';searchClear.classList.add('hidden');
@@ -785,7 +785,7 @@ function closeEditor(){
 }
 function persistCurrent(cleanupEmpty){
   const n=notes.find(x=>x.id===currentId);if(!n)return;
-  n.title=noteTitle.value.trim();n.body=noteBody.value;n.mode=currentMode;n.updated=Date.now();
+  n.title=noteTitle.value.trim();n.body=noteBody.value;n.mode=currentMode;if(!n.created)n.created=n.updated;n.updated=Date.now();
   if(cleanupEmpty && !n.title && !n.body.trim()) notes=notes.filter(x=>x.id!==currentId);
   save();
 }
@@ -1366,9 +1366,9 @@ importFile.onchange=()=>{
         if(!n||!n.id){ n.id='n'+Date.now()+Math.random().toString(36).slice(2,6); }
         if(ids.has(n.id)){
           const ex=notes.find(x=>x.id===n.id);
-          if((n.updated||0) >= (ex.updated||0)) Object.assign(ex,n);
+          if((n.updated||0) >= (ex.updated||0)){ const oldCreated=ex.created; Object.assign(ex,n); if(!ex.created) ex.created=oldCreated||n.created||Date.now(); }
         }else{
-          notes.push(n); ids.add(n.id); novas++;
+          if(!n.created) n.created=Date.now(); notes.push(n); ids.add(n.id); novas++;
         }
       });
       if(Array.isArray(data.bandeiras)){
