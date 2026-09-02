@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#000000">
 <title>Somar Notas</title>
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
+
 <style>
   :root{
     --bg:#000000;
@@ -33,8 +35,7 @@
     font-family:var(--font);
     display:flex;flex-direction:column;height:100dvh;overflow:hidden;
   }
-  .mono{font-family:var(--font);}
-
+  
   header{
     display:flex;align-items:center;gap:12px;
     padding:14px 16px;background:var(--panel);
@@ -49,15 +50,14 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none;}
   header h1.visible{display:block;}
   header .brand{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+  
   .icon-btn{
     background:none;border:none;color:var(--ink);font-size:20px;
     width:38px;height:38px;border-radius:10px;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
   }
   .icon-btn:active{background:var(--line);}
-  .icon-btn.danger{color:var(--danger);}
-  .icon-btn.neg{color:var(--neg);}
-
+  
   .view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .hidden{display:none !important;}
 
@@ -65,45 +65,7 @@
   .note-card{
     display:flex;align-items:center;gap:12px;
     padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;
-    border-left:4px solid transparent;
   }
-  .note-card .band{font-size:12px;font-weight:600;margin-bottom:3px;
-    display:flex;align-items:center;gap:5px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .note-card .flag-btn{
-    flex-shrink:0;background:none;border:1px solid var(--line);border-radius:9px;
-    color:var(--muted);width:36px;height:36px;font-size:16px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .note-card .flag-btn:active{background:var(--total-bg);}
-
-
-  .band-item{
-    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
-    color:var(--ink);padding:13px 14px;font-size:15px;font-weight:600;
-    cursor:pointer;margin-bottom:10px;
-  }
-  .band-item:active{transform:scale(.98);}
-  .band-item .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
-  .band-row{
-    display:flex;align-items:center;gap:8px;margin-bottom:10px;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
-  }
-  .band-row .cnt{font-size:12px;color:var(--muted);flex-shrink:0;}
-  .band-row .del{
-    background:none;border:none;color:var(--danger);font-size:17px;
-    cursor:pointer;padding:4px 6px;flex-shrink:0;
-  }
-  .band-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
-    color:var(--ink);padding:12px;font-size:15px;outline:none;font-family:inherit;
-  }
-  .band-input.slim{padding:8px 10px;font-size:14px;flex:1;min-width:0;}
-  .color-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-  .color-dot{width:32px;height:32px;border-radius:50%;border:1px solid #444;cursor:pointer;padding:0;}
-  .color-dot.sel{border:3px solid var(--ink);}
-  .band-empty{color:var(--muted);font-size:14px;margin-bottom:12px;}
   .note-card:active{background:var(--panel);}
   .note-card .info{flex:1;min-width:0;}
   .note-card .title{font-size:16px;font-weight:600;margin-bottom:3px;
@@ -111,6 +73,7 @@
   .note-card .sub{font-size:13px;color:var(--muted);}
   .note-card .tot{font-size:18px;font-weight:700;color:var(--num);white-space:nowrap;}
   .note-card .tot.neg{color:var(--neg);}
+  
   .empty{text-align:center;color:var(--muted);padding:70px 30px;}
   .empty .big{font-size:40px;margin-bottom:14px;opacity:.4;}
   .empty p{font-size:15px;line-height:1.5;margin:6px 0;}
@@ -131,35 +94,41 @@
     width:100%;outline:none;flex-shrink:0;font-family:var(--font);
   }
   #noteTitle::placeholder{color:var(--muted);font-weight:400;}
-  .editor-wrap{flex:1;display:flex;overflow:hidden;}
+  
+  .editor-wrap{flex:1;display:flex;overflow:hidden;position:relative;}
+  
   .gutter{
     flex-shrink:0;padding:16px 0;text-align:right;color:var(--muted);
     font-size:15px;line-height:1.7;user-select:none;background:var(--bg);
-    min-width:34px;
+    min-width:45px;overflow:hidden;
   }
-  .gutter span{display:block;padding:0 8px 0 12px;}
+  .gutter span {
+    display:block;padding:0 8px 0 4px;height:25.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
   .gutter span.neg{color:var(--neg);}
+  
   #noteBody{
     flex:1;background:var(--bg);border:none;color:var(--ink);
-    font-family:var(--font);
-    font-size:15px;line-height:1.7;padding:16px 16px 40vh;resize:none;
-    outline:none;white-space:pre;overflow-wrap:normal;
+    font-family:var(--font);font-size:15px;line-height:1.7;
+    padding:16px 16px 40vh;resize:none;outline:none;
+    white-space:pre;overflow-wrap:normal;overflow-x:auto;
   }
   #noteBody::placeholder{color:var(--muted);}
 
   .icon-btn svg{width:22px;height:22px;}
   .icon-btn.wa-ico{color:var(--wa);}
-  .icon-btn.active{color:var(--accent);background:var(--total-bg);}
+  
   .mode-btn{
     background:var(--total-bg);border:1px solid var(--line);
     color:var(--ink);font-size:12px;font-weight:700;
     padding:6px 10px;border-radius:9px;cursor:pointer;white-space:nowrap;
   }
-  .mode-btn:active{transform:scale(.96);}
   .mode-btn.texto{color:var(--muted);}
-  /* modo só texto: esconde total e resumo */
+  
   #editView.text-mode .total-bar,
-  #editView.text-mode .resumo-wrap{display:none;}
+  #editView.text-mode .resumo-wrap,
+  #editView.text-mode .gutter{display:none !important;}
 
   .resumo-wrap{flex-shrink:0;}
   .resumo-wrap.empty{display:none;}
@@ -173,20 +142,14 @@
   .resumo-header:active{background:var(--total-bg);}
   .rh-chevron{font-size:14px;transition:transform .2s;}
   .resumo-wrap.collapsed .rh-chevron{transform:rotate(-90deg);}
+  
   .resumo{
     flex-shrink:0;background:var(--panel);
-    max-height:34vh;overflow-y:auto;
-    padding:0 20px 12px;
+    max-height:25vh;overflow-y:auto;padding:0 20px 12px;
   }
   .resumo-wrap.collapsed .resumo{display:none;}
-  .resumo .row{
-    display:flex;align-items:baseline;gap:10px;
-    font-size:14.5px;padding:4px 0;
-  }
-  .resumo .row .nm{
-    flex:1;min-width:0;color:var(--ink);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
+  .resumo .row{display:flex;align-items:baseline;gap:10px;font-size:14.5px;padding:4px 0;}
+  .resumo .row .nm{flex:1;min-width:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .resumo .row .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-4px);}
   .resumo .row .qt{color:var(--num);font-weight:700;white-space:nowrap;}
   .resumo .row .qt.neg{color:var(--neg);}
@@ -197,1216 +160,74 @@
     padding:14px 20px;
   }
   .total-bar .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
-  .total-bar .val{font-size:26px;font-weight:700;color:var(--num);}
+  .total-bar .val{font-size:26px;font-weight:800;color:var(--accent);}
   .total-bar .val.neg{color:var(--neg);}
 
-  .modal-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,.7);
-    display:flex;align-items:flex-end;justify-content:center;z-index:60;
+  /* Modal de Confirmação */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8); z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
   }
-  .modal{
-    background:var(--panel);width:100%;max-width:480px;
-    border-radius:20px 20px 0 0;padding:22px 20px 28px;
-    border-top:1px solid var(--line);
+  .modal-content {
+    background: var(--panel); width: 100%; max-width: 400px;
+    border-radius: 16px; padding: 24px; border: 1px solid var(--line);
+    text-align: center;
   }
-  .modal h2{font-size:18px;margin:0 0 6px;color:var(--ink);}
-  .modal-sub{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px;}
-  .modal-btn{
-    display:block;width:100%;text-align:center;
-    padding:14px;border-radius:12px;border:1px solid var(--line);
-    background:var(--total-bg);color:var(--ink);font-size:15px;font-weight:600;
-    cursor:pointer;margin-bottom:10px;font-family:var(--font);
+  .modal-title { font-size: 18px; font-weight: 600; margin: 0 0 20px 0; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; }
+  .btn {
+    flex: 1; background: var(--line); border: none; color: var(--ink);
+    padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 15px;
   }
-  .modal-btn:active{transform:scale(.98);}
-  .modal-btn.primary{background:var(--ink);color:#000;border-color:var(--ink);}
-  .modal-btn.ghost{background:none;border:none;color:var(--muted);margin-bottom:0;}
-
-  .icon-btn.done-ico{color:var(--ink);font-size:24px;font-weight:700;}
-
-  /* Barra de busca */
-  .search-wrap{
-    flex:1;display:flex;align-items:center;gap:8px;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
-    padding:0 12px;height:38px;margin-right:4px;
-  }
-  .search-wrap.hidden{display:none !important;}
-  .search-wrap .search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
-  .search-wrap input{
-    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
-    outline:none;font-family:inherit;padding:0;
-  }
-  .search-wrap input::placeholder{color:var(--muted);}
-  .search-clear{
-    background:none;border:none;color:var(--muted);font-size:20px;
-    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;padding:0;flex-shrink:0;
-  }
-  .search-clear.hidden{display:none !important;}
-
-  /* Tela de bandeiras */
-  #bandsScreen{
-    position:fixed;top:0;left:0;width:100%;height:100%;
-    background:var(--bg);z-index:60;display:flex;flex-direction:column;
-    transform:translateX(100%);transition:transform .3s ease;
-  }
-  #bandsScreen.open{transform:translateX(0);}
-  #bandsScreen .bands-header{
-    display:flex;align-items:center;gap:12px;
-    padding:14px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;
-  }
-  #bandsScreen .bands-header h2{font-size:17px;font-weight:600;margin:0;flex:1;}
-  #bandsScreen .bands-body{
-    flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;
-  }
-  #bandsScreen .bands-body .chip{
-    display:flex;align-items:center;gap:10px;
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:14px 16px;margin-bottom:10px;font-size:15px;font-weight:600;
-    cursor:pointer;color:var(--ink);width:100%;text-align:left;
-  }
-  #bandsScreen .bands-body .chip:active{transform:scale(.98);}
-  #bandsScreen .bands-body .chip .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
-  #bandsScreen .bands-body .chip .cnt{margin-left:auto;color:var(--muted);font-weight:400;font-size:14px;}
-  #bandsScreen .bands-body .chip.all{border-style:dashed;border-color:var(--accent);color:var(--accent);}
-  #bandsScreen .bands-body .chip.on{background:var(--total-bg);border-color:var(--ink);}
-  #bandsScreen .bands-empty{color:var(--muted);text-align:center;padding:50px 20px;font-size:15px;}
-  #bandsScreen .bands-search-wrap{
-    display:flex;align-items:center;gap:8px;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
-    padding:0 12px;height:42px;margin:12px 16px;
-  }
-  #bandsScreen .bands-search-wrap .bands-search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
-  #bandsScreen .bands-search-wrap input{
-    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
-    outline:none;font-family:inherit;padding:0;
-  }
-  #bandsScreen .bands-search-wrap input::placeholder{color:var(--muted);}
-  #bandsScreen .bands-search-clear{
-    background:none;border:none;color:var(--muted);font-size:20px;
-    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;padding:0;flex-shrink:0;
-  }
-  #bandsScreen .bands-search-clear.hidden{display:none !important;}
-
-  /* Barra de busca */
-  .search-wrap{
-    flex:1;display:flex;align-items:center;gap:8px;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
-    padding:0 12px;height:38px;margin-right:4px;
-  }
-  .search-wrap.hidden{display:none !important;}
-  .search-wrap .search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
-  .search-wrap input{
-    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
-    outline:none;font-family:inherit;padding:0;
-  }
-  .search-wrap input::placeholder{color:var(--muted);}
-  .search-clear{
-    background:none;border:none;color:var(--muted);font-size:20px;
-    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;padding:0;flex-shrink:0;
-  }
-  .search-clear.hidden{display:none !important;}
-
-  /* Tela de bandeiras */
-  #bandsScreen{
-    position:fixed;top:0;left:0;width:100%;height:100%;
-    background:var(--bg);z-index:60;display:flex;flex-direction:column;
-    transform:translateX(100%);transition:transform .3s ease;
-  }
-  #bandsScreen.open{transform:translateX(0);}
-  #bandsScreen .bands-header{
-    display:flex;align-items:center;gap:12px;
-    padding:14px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;
-  }
-  #bandsScreen .bands-header h2{font-size:17px;font-weight:600;margin:0;flex:1;}
-  #bandsScreen .bands-body{
-    flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;
-  }
-  #bandsScreen .bands-body .chip{
-    display:flex;align-items:center;gap:10px;
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:14px 16px;margin-bottom:10px;font-size:15px;font-weight:600;
-    cursor:pointer;color:var(--ink);width:100%;text-align:left;
-  }
-  #bandsScreen .bands-body .chip:active{transform:scale(.98);}
-  #bandsScreen .bands-body .chip .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
-  #bandsScreen .bands-body .chip .cnt{margin-left:auto;color:var(--muted);font-weight:400;font-size:14px;}
-  #bandsScreen .bands-body .chip.all{border-style:dashed;border-color:var(--accent);color:var(--accent);}
-  #bandsScreen .bands-body .chip.on{background:var(--total-bg);border-color:var(--ink);}
-  #bandsScreen .bands-empty{color:var(--muted);text-align:center;padding:50px 20px;font-size:15px;}
-  #bandsScreen .bands-search-wrap{
-    display:flex;align-items:center;gap:8px;
-    background:var(--total-bg);border:1px solid var(--line);border-radius:12px;
-    padding:0 12px;height:42px;margin:12px 16px;
-  }
-  #bandsScreen .bands-search-wrap .bands-search-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
-  #bandsScreen .bands-search-wrap input{
-    flex:1;background:none;border:none;color:var(--ink);font-size:15px;
-    outline:none;font-family:inherit;padding:0;
-  }
-  #bandsScreen .bands-search-wrap input::placeholder{color:var(--muted);}
-  #bandsScreen .bands-search-clear{
-    background:none;border:none;color:var(--muted);font-size:20px;
-    width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;padding:0;flex-shrink:0;
-  }
-  #bandsScreen .bands-search-clear.hidden{display:none !important;}
-  .icon-btn.done-ico:active{background:var(--total-bg);}
-
-  #hdrMenu{
-    position:fixed;right:10px;z-index:70;
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:6px;min-width:215px;display:flex;flex-direction:column;
-    box-shadow:0 10px 30px rgba(0,0,0,.7);
-  }
-  #hdrMenu.hidden{display:none !important;}
-  #hdrMenu > button{
-    display:flex !important;align-items:center;justify-content:flex-start;gap:12px;
-    width:100%;height:auto;background:none;border:none;border-radius:10px;
-    color:var(--ink);font-size:15px;font-weight:500;text-align:left;
-    padding:13px 14px;cursor:pointer;white-space:nowrap;letter-spacing:normal;
-    text-transform:none;font-family:var(--font);
-  }
-  #hdrMenu > button.hidden{display:none !important;}
-  #hdrMenu > button:active{background:var(--total-bg);}
-  #hdrMenu > button svg{width:20px;height:20px;flex-shrink:0;}
-  #hdrMenu > button.danger{color:var(--danger);}
-  #hdrMenu > button#modeBtn{color:var(--ink);font-weight:700;}
-  #hdrMenu > button#modeBtn.texto{color:var(--muted);}
-  #menuBackdrop{position:fixed;inset:0;z-index:65;background:transparent;}
-  #menuBackdrop.hidden{display:none !important;}
-
-  .toast{
-    position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
-    background:#222;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;
-    opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:80%;text-align:center;
-  }
-  .toast.show{opacity:.95;transform:translateX(-50%) translateY(0);}
+  .btn.danger-btn { background: var(--danger); color: #000; }
 </style>
 </head>
 <body>
 
-<header>
-  <button class="back" id="backBtn" aria-label="Voltar">‹</button>
-  <div class="search-wrap" id="searchWrap">
-    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="searchInput" placeholder="Buscar notas..." autocomplete="off">
-    <button class="search-clear hidden" id="searchClear">×</button>
-  </div>
-  <h1 id="headTitle">Somar Notas</h1>
-  
-  <button class="icon-btn" id="bandsBtn" aria-label="Bandeiras">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-  </button>
-  <button class="icon-btn" id="backupBtn" aria-label="Backup das notas">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-  </button>
-  <button class="icon-btn hidden" id="signBtn" aria-label="Inverter sinal">−</button>
-  <button class="icon-btn done-ico hidden" id="doneBtn" aria-label="Pronto, fechar teclado">✓</button>
-  <button class="icon-btn hidden" id="menuBtn" aria-label="Mais opções">⋯</button>
-</header>
-
-<!-- GAVETA DO CABEÇALHO -->
-<div id="menuBackdrop" class="hidden"></div>
-<div id="hdrMenu" class="hidden">
-  <button class="mode-btn hidden" id="modeBtn" aria-label="Alternar somar ou texto">Σ Somar</button>
-  <button class="icon-btn wa-ico hidden" id="hdrShareText" aria-label="Enviar no WhatsApp">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
-    <span>Enviar no WhatsApp</span>
-  </button>
-  <button class="icon-btn hidden" id="pngThemeBtn" aria-label="Fundo do PNG">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5z"/><line x1="9" y1="4" x2="9" y2="18"/></svg>
-    <span>Fundo do PNG</span>
-  </button>
-  <button class="icon-btn hidden" id="hdrSharePng" aria-label="Enviar imagem">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-    <span>Enviar imagem</span>
-  </button>
-  <button class="icon-btn danger hidden" id="deleteBtn" aria-label="Excluir nota">🗑 <span>Excluir nota</span></button>
-</div>
-
-<!-- LISTA -->
-<div class="view" id="listView">
-  <div id="notesContainer"></div>
-  <div class="empty hidden" id="emptyState">
-    <div class="big">📝</div>
-    <p>Nenhuma nota ainda.</p>
-    <p>Toque no <b style="color:var(--accent)">+</b> pra criar a primeira.</p>
-  </div>
-</div>
-<button class="fab" id="newBtn" aria-label="Nova nota">+</button>
-
-<!-- EDITOR -->
-<div class="view hidden" id="editView">
-  <input type="text" id="noteTitle" placeholder="Título">
-  <div class="editor-wrap">
-    <div class="gutter mono" id="gutter"><span>1</span></div>
-    <textarea id="noteBody" class="mono" placeholder=""></textarea>
-  </div>
-  <div class="resumo-wrap" id="resumoWrap">
-    <button class="resumo-header" id="resumoHeader">
-      <span class="rh-label">Resumo por modelo</span>
-      <span class="rh-chevron" id="rhChevron">▾</span>
+  <!-- HEADER -->
+  <header>
+    <button class="back" id="backBtn" onclick="showList()">←</button>
+    <div class="brand" id="brandText">SOMAR NOTAS</div>
+    <h1 id="headerTitle">Nova Nota</h1>
+    
+    <button class="icon-btn hidden" id="modeBtn" onclick="toggleMode()">
+      <span id="modeLabel" class="mode-btn">SOMA</span>
     </button>
-    <div class="resumo" id="resumo"></div>
+    <button class="icon-btn wa-ico hidden" id="shareBtn" onclick="shareWhatsApp()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.428 2.02 13.963.992 11.34.992c-5.437 0-9.863 4.371-9.867 9.801-.001 1.73.457 3.42 1.32 4.933l-.994 3.629 3.722-.968c1.52.83 3.205 1.267 4.851 1.267zM17.51 14.93c-.323-.16-1.914-.933-2.203-1.037-.29-.105-.502-.158-.713.158-.21.317-.817.158-1.001.37-.183.21-.367.237-.69.078-.323-.16-1.364-.496-2.6-1.586-.96-.845-1.608-1.89-1.796-2.207-.189-.316-.02-.487.14-.646.145-.143.323-.37.484-.553.161-.184.215-.316.323-.527.108-.21.054-.395-.027-.553-.08-.16-.713-1.69-.977-2.31-.257-.604-.517-.523-.713-.533-.185-.01-.397-.01-.61-.01-.212 0-.555.079-.846.395-.29.316-1.11 1.066-1.11 2.6 0 1.533 1.11 3.013 1.261 3.217.152.204 2.186 3.298 5.297 4.613.739.313 1.317.5 1.768.64.743.234 1.419.201 1.953.12.595-.089 1.915-.77 2.185-1.476.269-.704.269-1.304.188-1.432-.081-.127-.297-.205-.62-.364z"/></svg>
+    </button>
+    <button class="icon-btn" id="deleteBtn" style="color:var(--danger); display:none;" onclick="deleteCurrentNote()">🗑️</button>
+  </header>
+
+  <!-- LIST VIEW -->
+  <div id="listView" class="view">
+    <div id="notesContainer"></div>
+    <button class="fab" onclick="createNewNote()">+</button>
   </div>
-  <div class="total-bar">
-    <span class="lbl">Total</span>
-    <span class="val mono" id="totalVal">0</span>
+
+  <!-- EDIT VIEW -->
+  <div id="editView" class="view hidden">
+    <input type="text" id="noteTitle" placeholder="Título da Nota..." oninput="saveCurrentData()">
+    
+    <div class="editor-wrap">
+      <div class="gutter" id="gutterZone"></div>
+      <textarea id="noteBody" placeholder="Digite os valores (um por linha)&#10;Exemplo:&#10;150 Mercado&#10;50 Combustível&#10;-20 Desconto" oninput="processNote()"></textarea>
+    </div>
+
+    <!-- Resumo Agrupado -->
+    <div class="resumo-wrap collapsed" id="resumoSection">
+      <button class="resumo-header" onclick="toggleResumo()">
+        <span>Resumo de Itens</span>
+        <span class="rh-chevron">▼</span>
+      </button>
+      <div class="resumo" id="resumoZone"></div>
+    </div>
+
+    <!-- Barra de Total -->
+    <div class="total-bar">
+      <div class="lbl">TOTAL</div>
+      <div class="val" id="totalValue">R$ 0,00</div>
+    </div>
   </div>
-</div>
 
-<!-- MODAL DE BACKUP -->
-<div class="modal-overlay hidden" id="backupModal">
-  <div class="modal">
-    <h2>Backup das notas</h2>
-    <p class="modal-sub">Guarde uma cópia fora do navegador. Se limpar os dados ou trocar de celular, você recupera tudo.</p>
-    <button class="modal-btn primary" id="exportBtn">⬇ Exportar (salvar arquivo)</button>
-    <button class="modal-btn" id="exportWaBtn">↗ Enviar backup no WhatsApp</button>
-    <button class="modal-btn" id="importBtn">⬆ Importar (abrir arquivo)</button>
-    <button class="modal-btn ghost" id="closeBackup">Fechar</button>
-  </div>
-</div>
-<input type="file" id="importFile" accept="application/json,.json" style="display:none">
-
-<!-- MODAL: escolher bandeira da nota -->
-<div class="modal-overlay hidden" id="bandPickModal">
-  <div class="modal">
-    <h2>⚑ Bandeira da nota</h2>
-    <p class="modal-sub">Cada nota leva uma bandeira. Use pra separar pedido, cliente ou o que você quiser.</p>
-    <div id="bandPickList"></div>
-    <button class="modal-btn" id="gerFromPick">⚙ Gerenciar bandeiras</button>
-    <button class="modal-btn ghost" id="closeBandPick">Fechar</button>
-  </div>
-</div>
-
-<!-- MODAL: gerenciar bandeiras -->
-<div class="modal-overlay hidden" id="bandManageModal">
-  <div class="modal">
-    <h2>⚑ Bandeiras</h2>
-    <p class="modal-sub">Cadastre com o nome que quiser. Toque no nome pra renomear.</p>
-    <div id="bandManageList"></div>
-    <div class="color-row" id="colorRow"></div>
-    <input type="text" class="band-input" id="newBandName" placeholder="Nome da bandeira">
-    <button class="modal-btn primary" id="addBandBtn" style="margin-top:10px">+ Adicionar</button>
-    <button class="modal-btn ghost" id="closeBandManage">Fechar</button>
-  </div>
-</div>
-
-<!-- TELA DE BANDEIRAS -->
-<div id="bandsScreen">
-  <div class="bands-header">
-    <button class="back" id="bandsBack" aria-label="Voltar">‹</button>
-    <h2>Bandeiras</h2>
-  </div>
-  <div class="bands-search-wrap">
-    <svg class="bands-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="bandsSearchInput" placeholder="Buscar bandeira..." autocomplete="off">
-    <button class="bands-search-clear hidden" id="bandsSearchClear">×</button>
-  </div>
-  <div class="bands-body" id="bandsBody"></div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-const KEY='somar_notas_v1';
-let notes=[];
-let currentId=null;
-
-function load(){try{notes=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){notes=[];}}
-function save(){localStorage.setItem(KEY,JSON.stringify(notes));}
-
-function lineValue(line){
-  if(/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
-  if(/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
-  if(/x\s*\d/i.test(line)) return 0;
-  const m=line.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
-  if(!m) return 0;
-  return parseFloat(m[1].replace(',','.'))||0;
-}
-function sumBody(body){return (body||'').split('\n').reduce((a,l)=>a+lineValue(l),0);}
-
-const RX_MULT=/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*?)(x\s*)(\d+(?:[.,]\d+)?)(\s*=\s*[\d.,]*)?(\s*)$/i;
-function aplicaMultLinha(line){
-  const m=line.match(RX_MULT);
-  if(!m) return line;
-  const ini=m[1], qtd=m[2], meio=m[3], xtok=m[4], preco=m[5], fim=m[7]||'';
-  const q=parseFloat(qtd.replace(',','.'));
-  const pr=parseFloat(preco.replace(',','.'));
-  if(!isFinite(q)||!isFinite(pr)) return line;
-  const res=q*pr;
-  const resTxt=Number.isInteger(res)?String(res):String(res);
-  return `${ini}${qtd}${meio}${xtok}${preco}= ${resTxt}${fim}`;
-}
-const RX_RESULT=/x\s*\d+(?:[.,]\d+)?\s*=\s*([\d.,]+)\s*$/i;
-function valorResultado(line){
-  const m=line.match(RX_RESULT);
-  if(!m) return null;
-  return parseFloat(m[1].replace(/\./g,'').replace(',','.'))||0;
-}
-const RX_SUBTOTAL=/^\s*=\s*[\d.,]*\s*$/;
-const RX_TOTAL=/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i;
-function ehLinhaGerada(line){ return RX_SUBTOTAL.test(line)||RX_TOTAL.test(line); }
-
-function aplicaMultTexto(txt){
-  return txt.split('\n').map(l=>ehLinhaGerada(l)?l:aplicaMultLinha(l)).join('\n');
-}
-
-function montaComTotais(txt){
-  const linhas=txt.split('\n')
-    .filter(l=>!RX_TOTAL.test(l))
-    .map(l=>RX_SUBTOTAL.test(l)?l:aplicaMultLinha(l));
-  const out=[];
-  let somaMult=0, somaQtd=0, temMult=false, temItem=false;
-  let geral=0, nGrupos=0, houveMult=false;
-  const fecharGrupo=(marcador)=>{
-    if(temItem && (temMult||marcador)){
-      const sub = temMult ? somaMult : somaQtd;
-      out.push('= '+fmt(sub));
-      geral+=sub; nGrupos++;
-      if(temMult) houveMult=true;
-    }
-    somaMult=0; somaQtd=0; temMult=false; temItem=false;
-  };
-  linhas.forEach(l=>{
-    if(RX_SUBTOTAL.test(l)){ fecharGrupo(true); return; }
-    const branco = !l.trim();
-    const cabecalho = l.trim() && !/^\s*[+-]?\d/.test(l);
-    if(cabecalho || branco){ fecharGrupo(false); out.push(l); return; }
-    const v=valorResultado(l);
-    if(v!==null){ somaMult+=v; temMult=true; }
-    else { somaQtd+=lineValue(l); }
-    temItem=true;
-    out.push(l);
-  });
-  fecharGrupo(false);
-  if(houveMult || nGrupos>1){
-    while(out.length && !out[out.length-1].trim()) out.pop();
-    out.push('TOTAL= '+fmt(geral));
-  }
-  return out.join('\n');
-}
-
-const STRIP=/^\s*[+-]?\d+(?:[.,]\d+)?(?:\s*\/\s*[+-]?\d+(?:[.,]\d+)?)?\s*/;
-function modelName(line){
-  return line.replace(STRIP,'').trim();
-}
-
-function groupByModel(body){
-  const map=new Map();
-  let cabecalho='';
-  (body||'').split('\n').forEach(l=>{
-    if(!l.trim()) return;
-    if(/x\s*\d/i.test(l)) return;
-    const temNumFrente=/^\s*[+-]?\d/.test(l);
-    if(!temNumFrente){
-      cabecalho=l.trim();
-      return;
-    }
-    const qt=lineValue(l);
-    const inline=modelName(l);
-    const nome = inline || cabecalho || '(sem nome)';
-    const key=nome.toLowerCase();
-    if(map.has(key)) map.get(key).qt+=qt;
-    else map.set(key,{nome,qt});
-  });
-  return [...map.values()];
-}
-function fmt(n){
-  if(Number.isInteger(n)) return n.toLocaleString('pt-BR');
-  return n.toLocaleString('pt-BR',{maximumFractionDigits:3});
-}
-
-const listView=document.getElementById('listView');
-const editView=document.getElementById('editView');
-const notesContainer=document.getElementById('notesContainer');
-const emptyState=document.getElementById('emptyState');
-const searchWrap=document.getElementById('searchWrap');
-const searchInput=document.getElementById('searchInput');
-const searchClear=document.getElementById('searchClear');
-const bandsBtn=document.getElementById('bandsBtn');
-const bandsScreen=document.getElementById('bandsScreen');
-const bandsBack=document.getElementById('bandsBack');
-const bandsBody=document.getElementById('bandsBody');
-
-let searchTerm='';
-let bandsSearchTerm='';
-
-function matchesSearch(n,term){
-  if(!term) return true;
-  const t=term.toLowerCase();
-  return (n.title||'').toLowerCase().includes(t) || (n.body||'').toLowerCase().includes(t);
-}
-
-function openBandsScreen(){
-  renderBandsScreen();
-  bandsScreen.classList.add('open');
-}
-function closeBandsScreen(){
-  bandsScreen.classList.remove('open');
-}
-function renderBandsScreen(){
-  const term=bandsSearchTerm.toLowerCase();
-  const filtradas=bandeiras.filter(b=>!term || b.nome.toLowerCase().includes(term));
-  let h=`<button class="chip all ${!filtroBand?'on':''}" data-b="">Todas as notas <span class="cnt">${notes.length}</span></button>`;
-  if(filtradas.length===0){
-    h+='<div class="bands-empty">'+(term?'Nenhuma bandeira encontrada.':'Nenhuma bandeira cadastrada.<br>Toque em ⚑ Bandeiras no menu pra criar.')+'</div>';
-  }else{
-    filtradas.forEach(b=>{
-      h+=`<button class="chip ${filtroBand===b.id?'on':''}" data-b="${b.id}" style="${filtroBand===b.id?'border-color:'+b.cor:''}">
-        <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}
-        <span class="cnt">${contaBand(b.id)} nota(s)</span>
-      </button>`;
-    });
-  }
-  bandsBody.innerHTML=h;
-  bandsBody.querySelectorAll('.chip').forEach(c=>{
-    c.onclick=()=>{
-      filtroBand=c.dataset.b||null;
-      renderList();
-      closeBandsScreen();
-      if(filtroBand){
-        const b=bandeiras.find(x=>x.id===filtroBand);
-        toast(b?'Filtrado: '+b.nome:'Todas as notas');
-      }else{
-        toast('Todas as notas');
-      }
-    };
-  });
-}
-
-function renderList(){
-  notesContainer.innerHTML='';
-  if(filtroBand && !bandeiras.some(b=>b.id===filtroBand)) filtroBand=null;
-  const sorted=[...notes]
-    .filter(n=>!filtroBand || n.bandeira===filtroBand)
-    .filter(n=>matchesSearch(n,searchTerm))
-    .sort((a,b)=>b.updated-a.updated);
-  emptyState.classList.toggle('hidden',sorted.length!==0);
-  if(notes.length>0 && sorted.length===0){
-    notesContainer.innerHTML='<div class="empty"><p>'+(searchTerm?'Nenhuma nota encontrada.':'Nenhuma nota com essa bandeira.')+'</p></div>';
-    return;
-  }
-  sorted.forEach(n=>{
-    const isTexto=(n.mode==='texto');
-    const tot=sumBody(n.body);
-    const lines=(n.body||'').split('\n').filter(l=>l.trim()).length;
-    const b=bandDe(n);
-    const card=document.createElement('div');
-    card.className='note-card';
-    if(b) card.style.borderLeftColor=b.cor;
-    card.innerHTML=`
-      <div class="info">
-        ${b?`<div class="band" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}</div>`:''}
-        <div class="title">${escapeHtml(n.title||'Sem título')}</div>
-        <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.created||n.updated)} → ${dateStr(n.updated)}</div>
-      </div>
-      ${isTexto?'':`<div class="tot mono ${tot<0?'neg':''}">${fmt(tot)}</div>`}
-      <button class="flag-btn" aria-label="Bandeira" ${b?`style="color:${b.cor};border-color:${b.cor}"`:''}>⚑</button>`;
-    card.onclick=()=>openNote(n.id);
-    card.querySelector('.flag-btn').onclick=(e)=>{e.stopPropagation();abrirBandPick(n.id);};
-    notesContainer.appendChild(card);
-  });
-}
-function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function dateStr(ts){return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
-
-const noteTitle=document.getElementById('noteTitle');
-const noteBody=document.getElementById('noteBody');
-const gutter=document.getElementById('gutter');
-const totalVal=document.getElementById('totalVal');
-const backBtn=document.getElementById('backBtn');
-const deleteBtn=document.getElementById('deleteBtn');
-const headTitle=document.getElementById('headTitle');
-const brandTag=document.getElementById('brandTag');
-const modeBtn=document.getElementById('modeBtn');
-const signBtn=document.getElementById('signBtn');
-
-let currentMode='somar';
-function applyMode(mode){
-  currentMode = mode==='texto' ? 'texto' : 'somar';
-  const isTexto = currentMode==='texto';
-  editView.classList.toggle('text-mode',isTexto);
-  modeBtn.classList.toggle('texto',isTexto);
-  modeBtn.textContent = isTexto ? '≡ Texto' : 'Σ Somar';
-}
-modeBtn.onclick=()=>{
-  applyMode(currentMode==='somar'?'texto':'somar');
-  persistCurrent(false);
-};
-
-function showEditor(show){
-  listView.classList.toggle('hidden',show);
-  document.getElementById('newBtn').classList.toggle('hidden',show);
-  editView.classList.toggle('hidden',!show);
-  backBtn.style.display=show?'flex':'none';
-  deleteBtn.classList.toggle('hidden',!show);
-  searchWrap.classList.toggle('hidden',show);
-  bandsBtn.classList.toggle('hidden',show);
-  if(headTitle) headTitle.classList.toggle('visible',show);
-  document.getElementById('hdrShareText').classList.toggle('hidden',!show);
-  document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
-  document.getElementById('pngThemeBtn').classList.toggle('hidden',!show);
-  modeBtn.classList.toggle('hidden',!show);
-  document.getElementById('backupBtn').classList.toggle('hidden',show);
-  document.getElementById('doneBtn').classList.toggle('hidden',!show);
-  document.getElementById('menuBtn').classList.toggle('hidden',!show);
-  document.getElementById('signBtn').classList.toggle('hidden',!show);
-  if(brandTag) brandTag.classList.toggle('hidden',show);
-  headTitle.textContent=show?'Editar':'Somar Notas';
-  fecharMenu();
-}
-function newNote(){
-  currentId='n'+Date.now();
-  notes.push({id:currentId,title:'',body:'',mode:'somar',created:Date.now(),updated:Date.now()});
-  noteTitle.value='';noteBody.value='';
-  applyMode('somar');
-  searchTerm='';searchInput.value='';searchClear.classList.add('hidden');
-  showEditor(true);refreshEditor();
-  setTimeout(()=>noteTitle.focus(),100);
-}
-function openNote(id){
-  const n=notes.find(x=>x.id===id);if(!n)return;
-  currentId=id;noteTitle.value=n.title||'';noteBody.value=n.body||'';
-  applyMode(n.mode||'somar');
-  showEditor(true);refreshEditor();
-}
-function closeEditor(){
-  persistCurrent(true);
-  currentId=null;
-  showEditor(false);
-  // Força reflow antes de renderizar para garantir que o DOM atualizou
-  requestAnimationFrame(()=>{
-    renderList();
-    toast('Nota salva ✓');
-  });
-}
-function persistCurrent(cleanupEmpty){
-  const n=notes.find(x=>x.id===currentId);if(!n)return;
-  n.title=noteTitle.value.trim();n.body=noteBody.value;n.mode=currentMode;if(!n.created)n.created=n.updated;n.updated=Date.now();
-  if(cleanupEmpty && !n.title && !n.body.trim()) notes=notes.filter(x=>x.id!==currentId);
-  save();
-}
-function deleteCurrent(){
-  const n=notes.find(x=>x.id===currentId);
-  const nm=n&&n.title?`"${n.title}"`:'esta nota';
-  if(confirm(`Excluir ${nm}? Não dá pra desfazer.`)){
-    notes=notes.filter(x=>x.id!==currentId);save();
-    currentId=null;showEditor(false);renderList();
-  }
-}
-
-function hasNegative(body){
-  return (body||'').split('\n').some(l=>/^\s*-\d/.test(l));
-}
-function refreshEditor(){
-  const lines=noteBody.value.split('\n');
-  const nLines=Math.max(lines.length,1);
-  let g='';
-  for(let i=1;i<=nLines;i++){
-    const neg = lines[i-1] && /^\s*-\d/.test(lines[i-1]);
-    g+=`<span class="${neg?'neg':''}">${i}</span>`;
-  }
-  gutter.innerHTML=g;
-  const tot=sumBody(noteBody.value);
-  totalVal.textContent=fmt(tot);
-  totalVal.classList.toggle('neg', tot<0);
-  const lbl=document.querySelector('.total-bar .lbl');
-  if(lbl) lbl.textContent = hasNegative(noteBody.value) ? 'Saldo' : 'Total';
-  renderResumo();
-}
-function renderResumo(){
-  const groups=groupByModel(noteBody.value);
-  const box=document.getElementById('resumo');
-  const wrap=document.getElementById('resumoWrap');
-  if(groups.length<2){wrap.classList.add('empty');box.innerHTML='';return;}
-  wrap.classList.remove('empty');
-  box.innerHTML=groups.map(g=>`
-    <div class="row">
-      <span class="nm">${escapeHtml(g.nome)}</span>
-      <span class="dots"></span>
-      <span class="qt mono ${g.qt<0?'neg':''}">${fmt(g.qt)}</span>
-    </div>`).join('');
-}
-
-const RESUMO_KEY='somar_resumo_collapsed';
-function applyResumoState(){
-  const wrap=document.getElementById('resumoWrap');
-  const collapsed=localStorage.getItem(RESUMO_KEY)==='1';
-  wrap.classList.toggle('collapsed',collapsed);
-}
-document.getElementById('resumoHeader').onclick=()=>{
-  const wrap=document.getElementById('resumoWrap');
-  const nowCollapsed=!wrap.classList.contains('collapsed');
-  wrap.classList.toggle('collapsed',nowCollapsed);
-  localStorage.setItem(RESUMO_KEY, nowCollapsed?'1':'0');
-};
-
-let toastTimer;
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
-}
-
-function buildText(){
-  const title=noteTitle.value.trim()||'Nota';
-  const raw=noteBody.value.replace(/\n+$/,'');
-  if(currentMode==='texto'){
-    return `*${title}*\n\n${raw}`;
-  }
-  const tot=fmt(sumBody(noteBody.value));
-  const groups=groupByModel(noteBody.value);
-  const bodyLines=raw.split('\n');
-  let maxQ=0;
-  bodyLines.forEach(l=>{const m=l.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);if(m)maxQ=Math.max(maxQ,m[1].length);});
-  const body=bodyLines.map(l=>{
-    const m=l.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
-    return m ? m[2].padStart(maxQ)+m[3] : l;
-  }).join('\n');
-  let block=body;
-  if(groups.length>1){
-    const maxLen=Math.max(...groups.map(g=>fmt(g.qt).length));
-    const rows=groups.map(g=>`${fmt(g.qt).padStart(maxLen)}  ${g.nome}`).join('\n');
-    block=body+'\n────────\n'+rows;
-  }
-  const label = hasNegative(noteBody.value) ? 'Saldo' : 'Total';
-  return `*${title}*\n\n\`\`\`\n${block}\n\`\`\`\n\n*${label}: ${tot}*`;
-}
-
-document.getElementById('hdrShareText').onclick=()=>{
-  if(!noteBody.value.trim()){toast('Nota vazia');return;}
-  const url='https://wa.me/?text='+encodeURIComponent(buildText());
-  window.open(url,'_blank');
-};
-
-const PNG_THEME_KEY='somar_png_theme';
-const PNG_THEMES = {
-  escuro:  { paper:'#000000', ink:'#ffffff', num:'#ffffff', neg:'#ff6b6b', line:'#2b2b2b', muted:'#9a9a9a', rule:null,      margin:null },
-  caderno: { paper:'#faf6ea', ink:'#26303f', num:'#1b4f9c', neg:'#d32f2f', line:'#cbbfa4', muted:'#8a7f66', rule:'#aecbe6', margin:'#e2a0a0' },
-  branco:  { paper:'#ffffff', ink:'#111111', num:'#111111', neg:'#d32f2f', line:'#dddddd', muted:'#888888', rule:null,      margin:null },
-  bege:    { paper:'#f5f0e1', ink:'#2c2c2c', num:'#1b4f9c', neg:'#d32f2f', line:'#d4c9a8', muted:'#7a7055', rule:null,      margin:null }
-};
-let pngTheme = localStorage.getItem(PNG_THEME_KEY) || 'escuro';
-if(!PNG_THEMES[pngTheme]) pngTheme='escuro';
-const PNG_FONT='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
-function pngThemeRefresh(){
-  const b=document.getElementById('pngThemeBtn');
-  if(!b) return;
-  const ativo = pngTheme!=='escuro';
-  b.classList.toggle('active', ativo);
-  const labels={escuro:'Fundo do PNG: escuro',caderno:'Fundo do PNG: caderno',bege:'Fundo do PNG: bege',branco:'Fundo do PNG: branco'};
-  b.setAttribute('aria-label', (labels[pngTheme]||labels.escuro)+' (toque p/ trocar)');
-}
-
-function makePNG(){
-  const title=noteTitle.value.trim()||'Nota';
-  const lines=noteBody.value.replace(/\n+$/,'').split('\n');
-  const isTexto=(currentMode==='texto');
-  const tot=fmt(sumBody(noteBody.value));
-  const groups=isTexto?[]:groupByModel(noteBody.value);
-  const showGroups=groups.length>1;
-  const P = PNG_THEMES[pngTheme] || PNG_THEMES.escuro;
-
-  const scale=2;
-  const W=1080;
-  const padX=60, padTop=60;
-  const titleSize=48, lineSize=36, lineH=62;
-  const grpH=72;
-  const dateStamp=new Date().toLocaleDateString('pt-BR');
-
-  const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
-  const totalBlock = isTexto ? 0 : (2 + 40 + 20);
-
-  const H = padTop + titleSize + 24 + 18
-          + lines.length*lineH + 24
-          + (isTexto ? 0 : (2 + 18))
-          + groupsBlock
-          + totalBlock
-          + padTop;
-
-  const c=document.createElement('canvas');
-  c.width=W*scale; c.height=H*scale;
-  const x=c.getContext('2d');
-  x.scale(scale,scale);
-
-  x.fillStyle=P.paper; x.fillRect(0,0,W,H);
-  if(P.rule){
-    const bodyTop = padTop + titleSize + 24 + 18;
-    const ruleStart = bodyTop + lineSize + 8;
-    x.strokeStyle=P.rule; x.lineWidth=1;
-    for(let ry=ruleStart; ry<H-20; ry+=lineH){
-      x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke();
-    }
-    if(P.margin){
-      x.strokeStyle=P.margin; x.lineWidth=2;
-      x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke();
-    }
-  }
-
-  let y=padTop;
-  x.fillStyle=P.ink;
-  x.font=`800 ${titleSize}px ${PNG_FONT}`;
-  x.fillText(title,padX,y+titleSize-6);
-  x.fillStyle=P.muted;
-  x.font=`600 18px ${PNG_FONT}`;
-  x.textAlign='right';
-  x.fillText(dateStamp,W-padX,y+titleSize-8);
-  x.textAlign='left';
-  y+=titleSize+24;
-
-  x.strokeStyle=P.line;x.lineWidth=1;
-  x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
-  y+=18;
-
-  x.font=`600 ${lineSize}px ${PNG_FONT}`;
-  function splitLinha(ln){
-    const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
-    if(!m) return null;
-    const resto=m[3];
-    const r=resto.match(/^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ].*)?$/);
-    let medida = r ? r[1] : resto;
-    let nome   = (r && r[2]) ? r[2] : '';
-    medida = medida.replace(/\s+$/,'');
-    return {qty:m[2], medida, nome};
-  }
-  const parsed = lines.map(splitLinha);
-  let maxQty=0;
-  parsed.forEach(p=>{ if(p) maxQty=Math.max(maxQty,p.qty.length); });
-  let maxCore=0;
-  parsed.forEach(p=>{ if(p) maxCore=Math.max(maxCore, maxQty + p.medida.length); });
-  let colX=0;
-  parsed.forEach(p=>{ if(p) colX=Math.max(colX, x.measureText(p.qty.padStart(maxQty,' ')+p.medida+'  ').width); });
-  lines.forEach((ln,i)=>{
-    const ny=y+i*lineH+lineSize;
-    const p=parsed[i];
-    if(p){
-      const qty=p.qty.padStart(maxQty,' ');
-      const isNeg = /^-/.test(qty.trim());
-      x.fillStyle=isNeg ? (P.neg || '#ff6b6b') : P.num;
-      x.fillText(qty,padX,ny);
-      const numW=x.measureText(qty).width;
-      x.fillStyle=P.ink;
-      if(p.medida) x.fillText(p.medida,padX+numW,ny);
-      if(p.nome) x.fillText(p.nome,padX+colX,ny);
-    }else{
-      x.fillStyle=P.ink;
-      x.fillText(ln,padX,ny);
-    }
-  });
-  y+=lines.length*lineH+18;
-
-  if(!isTexto && !P.rule){
-    x.strokeStyle=P.line;x.lineWidth=1;
-    x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
-  }
-
-  if(showGroups){
-    y+=18;
-    groups.forEach((g,i)=>{
-      const ny=y+i*grpH+26;
-      x.fillStyle=P.ink;
-      x.font=`800 32px ${PNG_FONT}`;
-      x.textAlign='left';
-      x.fillText(g.nome,padX,ny);
-      x.fillStyle=g.qt<0 ? (P.neg || '#ff6b6b') : P.num;
-      x.font=`800 32px ${PNG_FONT}`;
-      x.textAlign='right';
-      x.fillText(fmt(g.qt),W-padX,ny);
-    });
-    x.textAlign='left';
-    y+=groups.length*grpH+24;
-    if(!P.rule){
-      x.strokeStyle=P.line;x.lineWidth=2;
-      x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
-    }
-  }
-
-  if(!isTexto){
-    y+=40;
-    x.fillStyle=P.muted;
-    x.font=`700 28px ${PNG_FONT}`;
-    x.textAlign='left';
-    const label = hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL';
-    x.fillText(label,padX,y);
-    x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
-    x.font=`900 40px ${PNG_FONT}`;
-    x.textAlign='right';
-    x.fillText(tot,W-padX,y+6);
-    x.textAlign='left';
-  }
-
-  return c;
-}
-
-const PNG_ORDER=['escuro','caderno','bege','branco'];
-document.getElementById('pngThemeBtn').onclick=()=>{
-  const idx=PNG_ORDER.indexOf(pngTheme);
-  pngTheme=PNG_ORDER[(idx+1)%PNG_ORDER.length];
-  localStorage.setItem(PNG_THEME_KEY, pngTheme);
-  pngThemeRefresh();
-  const labels={escuro:'🌙 PNG escuro',caderno:'📔 PNG caderno',bege:'📔 PNG bege limpo',branco:'⬜ PNG branco'};
-  toast(labels[pngTheme]);
-};
-pngThemeRefresh();
-
-document.getElementById('hdrSharePng').onclick=async()=>{
-  if(!noteBody.value.trim()){toast('Nota vazia');return;}
-  const canvas=makePNG();
-  const title=(noteTitle.value.trim()||'nota').replace(/[^\w\u00C0-\u017F]+/g,'_');
-  canvas.toBlob(async(blob)=>{
-    if(!blob){toast('Erro ao gerar imagem');return;}
-    const file=new File([blob],`${title}.png`,{type:'image/png'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({files:[file],title:noteTitle.value.trim()||'Nota'});
-      }catch(e){}
-    }else{
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`${title}.png`;
-      a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-      toast('Imagem baixada — envie pelo WhatsApp');
-    }
-  },'image/png');
-};
-
-document.getElementById('newBtn').onclick=newNote;
-backBtn.onclick=closeEditor;
-deleteBtn.onclick=deleteCurrent;
-
-// Busca
-searchInput.addEventListener('input',()=>{
-  searchTerm=searchInput.value.trim();
-  searchClear.classList.toggle('hidden',!searchTerm);
-  renderList();
-});
-searchClear.onclick=()=>{searchInput.value='';searchTerm='';searchClear.classList.add('hidden');renderList();searchInput.focus();};
-
-// Bandeiras
-bandsBtn.onclick=openBandsScreen;
-bandsBack.onclick=closeBandsScreen;
-
-// Busca de bandeiras
-const bandsSearchInput=document.getElementById('bandsSearchInput');
-const bandsSearchClear=document.getElementById('bandsSearchClear');
-if(bandsSearchInput){
-  bandsSearchInput.addEventListener('input',()=>{
-    bandsSearchTerm=bandsSearchInput.value.trim();
-    bandsSearchClear.classList.toggle('hidden',!bandsSearchTerm);
-    renderBandsScreen();
-  });
-}
-if(bandsSearchClear){
-  bandsSearchClear.onclick=()=>{
-    bandsSearchInput.value='';bandsSearchTerm='';bandsSearchClear.classList.add('hidden');renderBandsScreen();bandsSearchInput.focus();
-  };
-}
-noteBody.addEventListener('input',()=>{recalcMult();refreshEditor();persistCurrent(false);});
-
-function recalcMult(){
-  const antes=noteBody.value;
-  const pos=noteBody.selectionStart;
-  const linhas=antes.split('\n');
-  // acha a linha onde o cursor está
-  let acc=0, cur=0;
-  for(let i=0;i<linhas.length;i++){
-    const fim=acc+linhas[i].length;
-    if(pos<=fim){ cur=i; break; }
-    acc=fim+1;
-    cur=i+1;
-  }
-  const col=pos-acc;
-  // Só expande multiplicações inline (ex: 5 x 21 → 5 x 21= 105),
-  // e NUNCA na linha que está sendo digitada — o cálculo sai ao pular
-  // de linha ou no ✓. Também não mexe em subtotais (=) nem totais.
-  const novas=linhas.map((l,i)=> (i===cur||ehLinhaGerada(l)) ? l : aplicaMultLinha(l));
-  const depois=novas.join('\n');
-  if(depois===antes) return;
-  let novoPos=0;
-  for(let i=0;i<cur;i++) novoPos+=novas[i].length+1;
-  novoPos+=Math.min(Math.max(col,0),(novas[cur]||'').length);
-  noteBody.value=depois;
-  try{ noteBody.setSelectionRange(novoPos,novoPos); }catch(e){}
-}
-noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
-
-window.addEventListener('popstate',()=>{
-  if(!editView.classList.contains('hidden')){closeEditor();history.pushState(null,'');}
-});
-history.pushState(null,'');
-
-const doneBtn=document.getElementById('doneBtn');
-doneBtn.addEventListener('pointerdown',e=>e.preventDefault());
-doneBtn.addEventListener('mousedown',e=>e.preventDefault());
-doneBtn.onclick=()=>{
-  const c=montaComTotais(noteBody.value);
-  if(c!==noteBody.value){ noteBody.value=c; refreshEditor(); }
-  persistCurrent(false);
-  noteBody.blur(); noteTitle.blur();
-  toast('Salvo ✓');
-};
-
-/* ---------- BOTÃO − (inverte sinal da linha atual) ---------- */
-signBtn.addEventListener('pointerdown',e=>e.preventDefault());
-signBtn.addEventListener('mousedown',e=>e.preventDefault());
-signBtn.onclick=()=>{
-  const txt=noteBody.value;
-  const pos=noteBody.selectionStart;
-  const before=txt.slice(0,pos);
-  const after=txt.slice(pos);
-  let lineStart=before.lastIndexOf('\n')+1;
-  let lineEnd=after.indexOf('\n');
-  if(lineEnd===-1) lineEnd=txt.length;
-  else lineEnd=pos+lineEnd;
-  let line=txt.slice(lineStart,lineEnd);
-  if(!line.trim()){ toast('Linha vazia'); return; }
-  const trimmed=line.trimStart();
-  const spaces=line.slice(0,line.length-trimmed.length);
-  let newLine;
-  if(/^-?\d/.test(trimmed)){
-    if(trimmed.startsWith('-')){
-      newLine=spaces+trimmed.slice(1);
-    }else{
-      newLine=spaces+'-'+trimmed;
-    }
-  }else{
-    newLine='-'+line;
-  }
-  const newVal=txt.slice(0,lineStart)+newLine+txt.slice(lineEnd);
-  noteBody.value=newVal;
-  const delta=newLine.length-line.length;
-  const newPos=pos+delta;
-  try{ noteBody.setSelectionRange(newPos,newPos); }catch(e){}
-  refreshEditor();
-  persistCurrent(false);
-  toast(/^-?\d/.test(newLine.trim()) && newLine.trim().startsWith('-') ? 'Subtração ✓' : 'Soma ✓');
-};
-
-const menuBtn=document.getElementById('menuBtn');
-const hdrMenu=document.getElementById('hdrMenu');
-const menuBackdrop=document.getElementById('menuBackdrop');
-function fecharMenu(){
-  hdrMenu.classList.add('hidden');
-  menuBackdrop.classList.add('hidden');
-}
-function abrirMenu(){
-  const r=menuBtn.getBoundingClientRect();
-  hdrMenu.style.top=(r.bottom+6)+'px';
-  hdrMenu.classList.remove('hidden');
-  menuBackdrop.classList.remove('hidden');
-}
-menuBtn.onclick=(e)=>{
-  e.stopPropagation();
-  if(hdrMenu.classList.contains('hidden')) abrirMenu(); else fecharMenu();
-};
-menuBackdrop.onclick=fecharMenu;
-hdrMenu.addEventListener('click',()=>setTimeout(fecharMenu,0));
-
-const BKEY='somar_bandeiras';
-const CORES_BAND=['#e05252','#3fa34d','#3b82f6','#eab308','#a855f7','#f97316','#14b8a6','#ec4899'];
-let bandeiras=[];
-let filtroBand=null;
-let bandPickId=null;
-let novaBandCor=CORES_BAND[0];
-
-function loadBandeiras(){try{bandeiras=JSON.parse(localStorage.getItem(BKEY))||[];}catch(e){bandeiras=[];}}
-function saveBandeiras(){localStorage.setItem(BKEY,JSON.stringify(bandeiras));}
-function bandDe(n){return bandeiras.find(b=>b.id===n.bandeira)||null;}
-function contaBand(id){return notes.filter(n=>n.bandeira===id).length;}
-function corLivre(){
-  const usadas=bandeiras.map(b=>b.cor);
-  return CORES_BAND.find(c=>!usadas.includes(c))||CORES_BAND[0];
-}
-
-
-
-const bandPickModal=document.getElementById('bandPickModal');
-const bandManageModal=document.getElementById('bandManageModal');
-
-function abrirBandPick(id){
-  bandPickId=id;
-  renderBandPick();
-  bandPickModal.classList.remove('hidden');
-}
-function renderBandPick(){
-  const box=document.getElementById('bandPickList');
-  let h=`<button class="band-item" data-b=""><span class="dot" style="background:var(--line)"></span>— Sem bandeira</button>`;
-  bandeiras.forEach(b=>{
-    h+=`<button class="band-item" data-b="${b.id}" style="border-color:${b.cor};border-left:5px solid ${b.cor}">
-      <span class="dot" style="background:${b.cor}"></span>${escapeHtml(b.nome)}</button>`;
-  });
-  if(bandeiras.length===0) h+='<div class="band-empty">Nenhuma bandeira cadastrada ainda.</div>';
-  box.innerHTML=h;
-  box.querySelectorAll('.band-item').forEach(el=>{
-    el.onclick=()=>setBandNota(bandPickId, el.dataset.b||null);
-  });
-}
-function setBandNota(id,bid){
-  const n=notes.find(x=>x.id===id);
-  if(n){ n.bandeira=bid; save(); }
-  bandPickModal.classList.add('hidden');
-  renderList();
-}
-document.getElementById('closeBandPick').onclick=()=>bandPickModal.classList.add('hidden');
-bandPickModal.onclick=(e)=>{ if(e.target===bandPickModal) bandPickModal.classList.add('hidden'); };
-document.getElementById('gerFromPick').onclick=()=>{ bandPickModal.classList.add('hidden'); abrirBandManage(); };
-
-function abrirBandManage(){
-  novaBandCor=corLivre();
-  renderBandManage();
-  bandManageModal.classList.remove('hidden');
-}
-function renderBandManage(){
-  const box=document.getElementById('bandManageList');
-  if(bandeiras.length===0){
-    box.innerHTML='<div class="band-empty">Nenhuma bandeira ainda. Crie a primeira abaixo.</div>';
-  }else{
-    box.innerHTML=bandeiras.map(b=>`
-      <div class="band-row" style="border-left:5px solid ${b.cor}" data-b="${b.id}">
-        <span class="dot" style="width:12px;height:12px;border-radius:50%;background:${b.cor};flex-shrink:0"></span>
-        <input type="text" class="band-input slim" value="${escapeHtml(b.nome)}">
-        <span class="cnt">${contaBand(b.id)}</span>
-        <button class="del" aria-label="Excluir">🗑</button>
-      </div>`).join('');
-    box.querySelectorAll('.band-row').forEach(row=>{
-      const id=row.dataset.b;
-      row.querySelector('input').onchange=(e)=>{
-        const b=bandeiras.find(x=>x.id===id);
-        if(b){ b.nome=e.target.value.trim()||b.nome; saveBandeiras(); renderList(); renderBandManage(); }
-      };
-      row.querySelector('.del').onclick=()=>removeBandeira(id);
-    });
-  }
-  const cr=document.getElementById('colorRow');
-  cr.innerHTML=CORES_BAND.map(c=>`<button class="color-dot ${novaBandCor===c?'sel':''}" data-c="${c}" style="background:${c}"></button>`).join('');
-  cr.querySelectorAll('.color-dot').forEach(d=>{
-    d.onclick=()=>{ novaBandCor=d.dataset.c; renderBandManage(); };
-  });
-}
-function addBandeira(){
-  const inp=document.getElementById('newBandName');
-  const nome=inp.value.trim();
-  if(!nome){ toast('Dê um nome pra bandeira'); return; }
-  bandeiras.push({id:'b'+Date.now(),nome,cor:novaBandCor||corLivre()});
-  saveBandeiras();
-  inp.value='';
-  novaBandCor=corLivre();
-  renderBandManage();
-  renderList();
-}
-function removeBandeira(id){
-  const b=bandeiras.find(x=>x.id===id);
-  if(!b) return;
-  if(!confirm(`Excluir a bandeira "${b.nome}"? As notas continuam, só ficam sem bandeira.`)) return;
-  bandeiras=bandeiras.filter(x=>x.id!==id);
-  notes.forEach(n=>{ if(n.bandeira===id) n.bandeira=null; });
-  if(filtroBand===id) filtroBand=null;
-  saveBandeiras(); save();
-  renderBandManage(); renderList();
-}
-document.getElementById('addBandBtn').onclick=addBandeira;
-document.getElementById('newBandName').addEventListener('keydown',e=>{ if(e.key==='Enter') addBandeira(); });
-document.getElementById('closeBandManage').onclick=()=>bandManageModal.classList.add('hidden');
-bandManageModal.onclick=(e)=>{ if(e.target===bandManageModal) bandManageModal.classList.add('hidden'); };
-
-const backupModal=document.getElementById('backupModal');
-document.getElementById('backupBtn').onclick=()=>backupModal.classList.remove('hidden');
-document.getElementById('closeBackup').onclick=()=>backupModal.classList.add('hidden');
-backupModal.onclick=(e)=>{ if(e.target===backupModal) backupModal.classList.add('hidden'); };
-
-function backupData(){
-  return JSON.stringify({app:'somar-notas',v:1,exportado:new Date().toISOString(),notas:notes,bandeiras},null,2);
-}
-function backupFileName(){
-  const d=new Date();
-  const p=n=>String(n).padStart(2,'0');
-  return `somar-notas_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.json`;
-}
-
-document.getElementById('exportBtn').onclick=()=>{
-  if(notes.length===0){toast('Nenhuma nota pra exportar');return;}
-  const blob=new Blob([backupData()],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=backupFileName();
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  toast('Backup salvo — guarde no Drive ou WhatsApp');
-};
-
-document.getElementById('exportWaBtn').onclick=async()=>{
-  if(notes.length===0){toast('Nenhuma nota pra enviar');return;}
-  const file=new File([backupData()],backupFileName(),{type:'application/json'});
-  if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({files:[file],title:'Backup Somar Notas'}); }catch(e){}
-  }else{
-    document.getElementById('exportBtn').click();
-  }
-};
-
-const importFile=document.getElementById('importFile');
-document.getElementById('importBtn').onclick=()=>importFile.click();
-importFile.onchange=()=>{
-  const f=importFile.files[0];
-  if(!f) return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      const data=JSON.parse(reader.result);
-      const lista=Array.isArray(data)?data:data.notas;
-      if(!Array.isArray(lista)) throw new Error('formato');
-      const ids=new Set(notes.map(n=>n.id));
-      let novas=0;
-      lista.forEach(n=>{
-        if(!n||!n.id){ n.id='n'+Date.now()+Math.random().toString(36).slice(2,6); }
-        if(ids.has(n.id)){
-          const ex=notes.find(x=>x.id===n.id);
-          if((n.updated||0) >= (ex.updated||0)){ const oldCreated=ex.created; Object.assign(ex,n); if(!ex.created) ex.created=oldCreated||n.created||Date.now(); }
-        }else{
-          if(!n.created) n.created=Date.now(); notes.push(n); ids.add(n.id); novas++;
-        }
-      });
-      if(Array.isArray(data.bandeiras)){
-        const bids=new Set(bandeiras.map(b=>b.id));
-        data.bandeiras.forEach(b=>{ if(b&&b.id&&!bids.has(b.id)){ bandeiras.push(b); bids.add(b.id); } });
-        saveBandeiras();
-      }
-      save();renderList();
-      backupModal.classList.add('hidden');
-      toast(`Importado! ${novas} nota(s) nova(s)`);
-    }catch(err){
-      toast('Arquivo inválido');
-    }
-    importFile.value='';
-  };
-  reader.readAsText(f);
-};
-
-if(navigator.storage && navigator.storage.persist){
-  navigator.storage.persist().catch(()=>{});
-}
-
-load();loadBandeiras();renderList();applyResumoState();
-
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').then(reg=>{
-      reg.update();
-      let recarregou=false;
-      navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(recarregou) return;
-        recarregou=true;
-        location.reload();
-      });
-    }).catch(()=>{});
-  });
-}
-</script>
-<script src="native-share.js"></script>
-</body>
-</html>
