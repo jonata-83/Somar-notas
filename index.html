@@ -505,7 +505,8 @@ function lineValue(line){
   if(/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
   if(/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
   if(/x\s*\d/i.test(line)) return 0;
-  const m=line.match(/^\s*([+-]?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(?:\s|$)/);
+  // aceita espaço, barra (100/80) ou fim de linha logo depois da quantidade
+  const m=line.match(/^\s*([+-]?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(?:\s|\/|$)/);
   if(!m) return 0;
   return parseBrNum(m[1]);
 }
