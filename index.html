@@ -518,23 +518,29 @@ let currentId=null;
 function load(){try{notes=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){notes=[];}}
 function save(){localStorage.setItem(KEY,JSON.stringify(notes));}
 
+function parseBrNum(str){
+  if(!str) return 0;
+  const clean = String(str).replace(/\./g, '').replace(',', '.');
+  const n = parseFloat(clean);
+  return isFinite(n) ? n : 0;
+}
 function lineValue(line){
   if(/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
   if(/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
   if(/x\s*\d/i.test(line)) return 0;
-  const m=line.match(/^\s*([+-]?\d+(?:[.,]\d+)?)/);
+  const m=line.match(/^\s*([+-]?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(?:\s|$)/);
   if(!m) return 0;
-  return parseFloat(m[1].replace(',','.'))||0;
+  return parseBrNum(m[1]);
 }
 function sumBody(body){return (body||'').split('\n').reduce((a,l)=>a+lineValue(l),0);}
 
-const RX_MULT=/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*?)(x\s*)(\d+(?:[.,]\d+)?)(\s*=\s*[\d.,]*)?(\s*)$/i;
+const RX_MULT=/^(\s*)([+-]?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(.*?)(x\s*)((?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(\s*=\s*[\d.,]*)?(\s*)$/i;
 function aplicaMultLinha(line){
   const m=line.match(RX_MULT);
   if(!m) return line;
   const ini=m[1], qtd=m[2], meio=m[3], xtok=m[4], preco=m[5], fim=m[7]||'';
-  const q=parseFloat(qtd.replace(',','.'));
-  const pr=parseFloat(preco.replace(',','.'));
+  const q=parseBrNum(qtd);
+  const pr=parseBrNum(preco);
   if(!isFinite(q)||!isFinite(pr)) return line;
   const res=q*pr;
   const resTxt=Number.isInteger(res)?String(res):String(res);
@@ -544,7 +550,7 @@ const RX_RESULT=/x\s*\d+(?:[.,]\d+)?\s*=\s*([\d.,]+)\s*$/i;
 function valorResultado(line){
   const m=line.match(RX_RESULT);
   if(!m) return null;
-  return parseFloat(m[1].replace(/\./g,'').replace(',','.'))||0;
+  return parseBrNum(m[1]);
 }
 const RX_SUBTOTAL=/^\s*=\s*[\d.,]*\s*$/;
 const RX_TOTAL=/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i;
@@ -616,7 +622,15 @@ function groupByModel(body){
 }
 function fmt(n){
   if(Number.isInteger(n)) return n.toLocaleString('pt-BR');
-  return n.toLocaleString('pt-BR',{maximumFractionDigits:3});
+  return n.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function hasDecimalInBody(body){
+  return (body||'').split('\n').some(l => /^\s*[+-]?(?:\d{1,3}(?:\.\d{3})*|\d+),\d+/.test(l));
+}
+function fmtTotal(n, body){
+  if(hasDecimalInBody(body) || !Number.isInteger(n))
+    return n.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  return n.toLocaleString('pt-BR');
 }
 
 const listView=document.getElementById('listView');
@@ -811,7 +825,7 @@ function refreshEditor(){
   }
   gutter.innerHTML=g;
   const tot=sumBody(noteBody.value);
-  totalVal.textContent=fmt(tot);
+  totalVal.textContent=fmtTotal(tot, noteBody.value);
   totalVal.classList.toggle('neg', tot<0);
   const lbl=document.querySelector('.total-bar .lbl');
   if(lbl) lbl.textContent = hasNegative(noteBody.value) ? 'Saldo' : 'Total';
@@ -858,7 +872,8 @@ function buildText(){
   if(currentMode==='texto'){
     return `*${title}*\n\n${raw}`;
   }
-  const tot=fmt(sumBody(noteBody.value));
+  const rawTot=sumBody(noteBody.value);
+  const tot=fmtTotal(rawTot, noteBody.value);
   const groups=groupByModel(noteBody.value);
   const bodyLines=raw.split('\n');
   let maxQ=0;
@@ -906,7 +921,8 @@ function makePNG(){
   const title=noteTitle.value.trim()||'Nota';
   const lines=noteBody.value.replace(/\n+$/,'').split('\n');
   const isTexto=(currentMode==='texto');
-  const tot=fmt(sumBody(noteBody.value));
+  const rawTot=sumBody(noteBody.value);
+  const tot=fmtTotal(rawTot, noteBody.value);
   const groups=isTexto?[]:groupByModel(noteBody.value);
   const showGroups=groups.length>1;
   const P = PNG_THEMES[pngTheme] || PNG_THEMES.escuro;
