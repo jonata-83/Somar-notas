@@ -386,6 +386,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5z"/><line x1="9" y1="4" x2="9" y2="18"/></svg>
     <span>Fundo da imagem</span>
   </button>
+  <button class="icon-btn hidden" id="imgStyleBtn" aria-label="Estilo da imagem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="7" height="20" rx="1"/><rect x="14" y="2" width="7" height="9" rx="1"/><rect x="14" y="13" width="7" height="9" rx="1"/></svg>
+    <span id="imgStyleLbl">Imagem: tira (antigo)</span>
+  </button>
   <button class="icon-btn hidden" id="hdrSharePng" aria-label="Enviar imagem">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
     <span>Enviar imagem</span>
@@ -742,6 +746,7 @@ function showEditor(show){
   document.getElementById('hdrShareText').classList.toggle('hidden',!show);
   document.getElementById('hdrSharePng').classList.toggle('hidden',!show);
   document.getElementById('pngThemeBtn').classList.toggle('hidden',!show);
+  document.getElementById('imgStyleBtn').classList.toggle('hidden',!show);
   modeBtn.classList.toggle('hidden',!show);
   document.getElementById('backupBtn').classList.toggle('hidden',show);
   document.getElementById('trashBtn').classList.toggle('hidden',show);
@@ -973,11 +978,11 @@ function pngThemeRefresh(){
 }
 
 /* ===== Imagem estilo FOTO =====
-   Sai sempre no formato de foto de celular (retrato 3:4, 1200x1600, JPG).
+   Sai sempre no formato de tela de celular (em pé 9:16, 1080x1920, JPG).
    Nota curta: a letra fica grande, ocupando a folha toda.
    Nota comprida: divide em várias "folhas" (1/2, 2/2...) em vez de virar uma tira fina. */
-const FOTO_W=1200, FOTO_H=1600;      // tamanho final de cada imagem
-const FOTO_ZOOM_MIN=0.8;             // abaixo disso a letra fica pequena demais -> divide em folhas
+const FOTO_W=1080, FOTO_H=1920;      // tamanho final de cada imagem (formato de tela de celular 9:16)
+const FOTO_ZOOM_MIN=1.0;             // abaixo disso a letra fica pequena demais -> divide em folhas
 const L_PADX=60, L_PADTOP=60, L_TITLE=48, L_LINE=36, L_LINEH=62, L_GRPH=72;
 const L_HEADER=L_PADTOP+L_TITLE+24+18;
 
@@ -1148,32 +1153,57 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H){
 // devolve uma lista de canvas (uma por folha)
 function makeFotos(){
   const N=prepNota();
-  const ratio=FOTO_H/FOTO_W;                 // 4:3
+  const ratio=FOTO_H/FOTO_W;                 // 16:9
   const nL=N.lines.length;
   const alturaTudo = L_HEADER + nL*L_LINEH + 24 + N.footer + L_PADTOP;
 
   // 1 folha só: largura lógica que faz caber tudo no formato 3:4
-  let W = Math.max(N.needW, 720, Math.ceil(alturaTudo/ratio));
+  let W = Math.max(N.needW, 660, Math.ceil(alturaTudo/ratio));
   if(FOTO_W/W >= FOTO_ZOOM_MIN){
     const todas=N.lines.map((_,i)=>i);
     return [drawFolha(N, todas, true, '', W, W*ratio)];
   }
 
   // várias folhas, todas com a mesma letra
-  W = Math.max(N.needW, Math.ceil(FOTO_W/FOTO_ZOOM_MIN));
-  const H = W*ratio;
-  const cabe = Math.max(1, Math.floor((H - L_HEADER - 24 - 60 - L_PADTOP)/L_LINEH));
-  const cabeUltima = Math.max(0, Math.floor((H - L_HEADER - 24 - N.footer - L_PADTOP)/L_LINEH));
-  const folhas=[];
-  let i=0;
-  while(i<nL){
-    const resta=nL-i;
-    if(resta<=cabeUltima){ folhas.push([i,nL,true]); break; }
-    const n=(resta<=cabe) ? Math.max(1, resta-cabeUltima) : cabe;
-    folhas.push([i,i+n,false]);
-    i+=n;
+  function paginar(W){
+    const H = W*ratio;
+    const cabe = Math.max(1, Math.floor((H - L_HEADER - 24 - 60 - L_PADTOP)/L_LINEH));
+    const cabeUltima = Math.max(0, Math.floor((H - L_HEADER - 24 - N.footer - L_PADTOP)/L_LINEH));
+    const folhas=[];
+    let i=0;
+    while(i<nL){
+      const resta=nL-i;
+      if(resta<=cabeUltima){ folhas.push([i,nL,true]); break; }
+      // enche a folha ao máximo
+      let n=Math.min(cabe, resta);
+      // se sobraria só o total pra próxima folha, deixa umas linhas pra ela
+      if(n===resta && cabeUltima>0) n=resta-1;
+      // tenta quebrar numa linha em branco (entre grupos), sem perder muito espaço
+      const minN=Math.max(1, Math.ceil(n*0.85));
+      for(let k=n; k>=minN; k--){
+        if(!N.lines[i+k-1] || !N.lines[i+k-1].trim()){ n=k; break; }
+        if(i+k<nL && !N.lines[i+k].trim()){ n=k; break; }
+      }
+      folhas.push([i,i+n,false]);
+      i+=n;
+      while(i<nL && !N.lines[i].trim()) i++; // não começa folha com linha em branco
+    }
+    if(!folhas.length || !folhas[folhas.length-1][2]) folhas.push([nL,nL,true]); // só o total
+    return folhas;
   }
-  if(!folhas.length || !folhas[folhas.length-1][2]) folhas.push([nL,nL,true]); // só o total
+  // tamanho mínimo da letra define quantas folhas precisa...
+  let Wmax = Math.max(N.needW, Math.ceil(FOTO_W/FOTO_ZOOM_MIN));
+  const qtd = paginar(Wmax).length;
+  // ...e depois a letra cresce o máximo possível mantendo essa quantidade de folhas
+  let lo = Math.max(N.needW, 660), hi = Wmax;
+  if(lo < hi && paginar(lo).length <= qtd) hi = lo;
+  while(hi - lo > 4){
+    const mid = Math.floor((lo+hi)/2);
+    if(paginar(mid).length <= qtd) hi = mid; else lo = mid;
+  }
+  W = hi;
+  const H = W*ratio;
+  const folhas = paginar(W);
   const tot=folhas.length;
   return folhas.map((f,k)=>{
     const idxs=[]; for(let j=f[0];j<f[1];j++) idxs.push(j);
@@ -1181,15 +1211,180 @@ function makeFotos(){
   });
 }
 
-// compatibilidade: primeira folha
-function makePNG(){ return makeFotos()[0]; }
+/* ===== Estilo TIRA (antigo): uma imagem só, comprida, em PNG ===== */
+function makePNGTira(){
+  const title=noteTitle.value.trim()||'Nota';
+  const lines=noteBody.value.replace(/\n+$/,'').split('\n');
+  const isTexto=(currentMode==='texto');
+  const rawTot=sumBody(noteBody.value);
+  const tot=fmtTotal(rawTot, noteBody.value);
+  const groups=isTexto?[]:groupByModel(noteBody.value);
+  const showGroups=groups.length>1;
+  const P = PNG_THEMES[pngTheme] || PNG_THEMES.escuro;
 
-function nomeFoto(k,tot){
-  const t=(noteTitle.value.trim()||'nota').replace(/[^\wÀ-ſ]+/g,'_');
-  return tot>1 ? `${t}_${k+1}.jpg` : `${t}.jpg`;
+  const scale=2;
+  const W=1080;
+  const padX=60, padTop=60;
+  const titleSize=48, lineSize=36, lineH=62;
+  const grpH=72;
+  const dateStamp=new Date().toLocaleDateString('pt-BR');
+
+  const groupsBlock = showGroups ? (18 + groups.length*grpH + 24 + 2) : 0;
+  const totalBlock = isTexto ? 0 : (2 + 40 + 20);
+
+  const H = padTop + titleSize + 24 + 18
+          + lines.length*lineH + 24
+          + (isTexto ? 0 : (2 + 18))
+          + groupsBlock
+          + totalBlock
+          + padTop;
+
+  const c=document.createElement('canvas');
+  c.width=W*scale; c.height=H*scale;
+  const x=c.getContext('2d');
+  x.scale(scale,scale);
+
+  x.fillStyle=P.paper; x.fillRect(0,0,W,H);
+  if(P.rule){
+    const bodyTop = padTop + titleSize + 24 + 18;
+    const ruleStart = bodyTop + lineSize + 8;
+    x.strokeStyle=P.rule; x.lineWidth=1;
+    for(let ry=ruleStart; ry<H-20; ry+=lineH){
+      x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke();
+    }
+    if(P.margin){
+      x.strokeStyle=P.margin; x.lineWidth=2;
+      x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke();
+    }
+  }
+
+  let y=padTop;
+  x.fillStyle=P.ink;
+  x.font=`800 ${titleSize}px ${PNG_FONT}`;
+  x.fillText(title,padX,y+titleSize-6);
+  x.fillStyle=P.muted;
+  x.font=`600 18px ${PNG_FONT}`;
+  x.textAlign='right';
+  x.fillText(dateStamp,W-padX,y+titleSize-8);
+  x.textAlign='left';
+  y+=titleSize+24;
+
+  x.strokeStyle=P.line;x.lineWidth=1;
+  x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+  y+=18;
+
+  x.font=`600 ${lineSize}px ${PNG_FONT}`;
+  function splitLinha(ln){
+    const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
+    if(!m) return null;
+    const resto=m[3];
+    const r=resto.match(/^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ].*)?$/);
+    let medida = r ? r[1] : resto;
+    let nome   = (r && r[2]) ? r[2] : '';
+    medida = medida.replace(/\s+$/,'');
+    return {qty:m[2], medida, nome};
+  }
+  const parsed = lines.map(splitLinha);
+  let maxQty=0;
+  parsed.forEach(p=>{ if(p) maxQty=Math.max(maxQty,p.qty.length); });
+  let maxCore=0;
+  parsed.forEach(p=>{ if(p) maxCore=Math.max(maxCore, maxQty + p.medida.length); });
+  let colX=0;
+  parsed.forEach(p=>{ if(p) colX=Math.max(colX, x.measureText(p.qty.padStart(maxQty,' ')+p.medida+'  ').width); });
+  lines.forEach((ln,i)=>{
+    const ny=y+i*lineH+lineSize;
+    const p=parsed[i];
+    if(p){
+      const qty=p.qty.padStart(maxQty,' ');
+      const isNeg = /^-/.test(qty.trim());
+      x.fillStyle=isNeg ? (P.neg || '#ff6b6b') : P.num;
+      x.fillText(qty,padX,ny);
+      const numW=x.measureText(qty).width;
+      x.fillStyle=P.ink;
+      if(p.medida) x.fillText(p.medida,padX+numW,ny);
+      if(p.nome) x.fillText(p.nome,padX+colX,ny);
+    }else{
+      x.fillStyle=P.ink;
+      x.fillText(ln,padX,ny);
+    }
+  });
+  y+=lines.length*lineH+18;
+
+  if(!isTexto && !P.rule){
+    x.strokeStyle=P.line;x.lineWidth=1;
+    x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+  }
+
+  if(showGroups){
+    y+=18;
+    groups.forEach((g,i)=>{
+      const ny=y+i*grpH+26;
+      x.fillStyle=P.ink;
+      x.font=`800 32px ${PNG_FONT}`;
+      x.textAlign='left';
+      x.fillText(g.nome,padX,ny);
+      x.fillStyle=g.qt<0 ? (P.neg || '#ff6b6b') : P.num;
+      x.font=`800 32px ${PNG_FONT}`;
+      x.textAlign='right';
+      x.fillText(fmt(g.qt),W-padX,ny);
+    });
+    x.textAlign='left';
+    y+=groups.length*grpH+24;
+    if(!P.rule){
+      x.strokeStyle=P.line;x.lineWidth=2;
+      x.beginPath();x.moveTo(padX,y);x.lineTo(W-padX,y);x.stroke();
+    }
+  }
+
+  if(!isTexto){
+    y+=40;
+    x.fillStyle=P.muted;
+    x.font=`700 28px ${PNG_FONT}`;
+    x.textAlign='left';
+    const label = hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL';
+    x.fillText(label,padX,y);
+    x.fillStyle=sumBody(noteBody.value)<0 ? (P.neg || '#ff6b6b') : P.num;
+    x.font=`900 40px ${PNG_FONT}`;
+    x.textAlign='right';
+    x.fillText(tot,W-padX,y+6);
+    x.textAlign='left';
+  }
+
+  return c;
 }
-function canvasJpgBlob(c){
-  return new Promise(res=>c.toBlob(res,'image/jpeg',0.9));
+
+/* ===== Escolha do estilo: 'tira' (antigo) ou 'folhas' (novo) ===== */
+const IMG_STYLE_KEY='somar_img_estilo';
+let imgStyle = localStorage.getItem(IMG_STYLE_KEY)==='folhas' ? 'folhas' : 'tira';
+function imgStyleRefresh(){
+  const lbl=document.getElementById('imgStyleLbl');
+  const b=document.getElementById('imgStyleBtn');
+  const txt = imgStyle==='folhas' ? 'Imagem: folhas (novo)' : 'Imagem: tira (antigo)';
+  if(lbl) lbl.textContent=txt;
+  if(b){ b.setAttribute('aria-label', txt+' (toque p/ trocar)'); b.classList.toggle('active', imgStyle==='folhas'); }
+}
+document.getElementById('imgStyleBtn').onclick=()=>{
+  imgStyle = imgStyle==='folhas' ? 'tira' : 'folhas';
+  localStorage.setItem(IMG_STYLE_KEY, imgStyle);
+  imgStyleRefresh();
+  toast(imgStyle==='folhas' ? '📄 Imagem em folhas (novo)' : '📜 Imagem em tira (antigo)');
+};
+imgStyleRefresh();
+
+// gera as imagens no estilo escolhido
+function gerarImagens(){
+  if(imgStyle==='folhas') return {canvases:makeFotos(), mime:'image/jpeg', ext:'jpg', q:0.9};
+  return {canvases:[makePNGTira()], mime:'image/png', ext:'png'};
+}
+function makePNG(){ return gerarImagens().canvases[0]; }
+
+function nomeFoto(k,tot,ext){
+  ext = ext || (imgStyle==='folhas' ? 'jpg' : 'png');
+  const t=(noteTitle.value.trim()||'nota').replace(/[^\wÀ-ſ]+/g,'_');
+  return tot>1 ? `${t}_${k+1}.${ext}` : `${t}.${ext}`;
+}
+function canvasBlob(c,mime,q){
+  return new Promise(res=>c.toBlob(res,mime,q));
 }
 
 const PNG_ORDER=['escuro','caderno','bege','branco'];
@@ -1205,10 +1400,10 @@ pngThemeRefresh();
 
 document.getElementById('hdrSharePng').onclick=async()=>{
   if(!noteBody.value.trim()){toast('Nota vazia');return;}
-  const canvases=makeFotos();
-  const blobs=await Promise.all(canvases.map(canvasJpgBlob));
+  const G=gerarImagens();
+  const blobs=await Promise.all(G.canvases.map(c=>canvasBlob(c,G.mime,G.q)));
   if(blobs.some(b=>!b)){toast('Erro ao gerar imagem');return;}
-  const files=blobs.map((b,k)=>new File([b],nomeFoto(k,blobs.length),{type:'image/jpeg'}));
+  const files=blobs.map((b,k)=>new File([b],nomeFoto(k,blobs.length,G.ext),{type:G.mime}));
   if(navigator.canShare && navigator.canShare({files})){
     try{
       await navigator.share({files,title:noteTitle.value.trim()||'Nota'});
