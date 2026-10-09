@@ -22,16 +22,17 @@
     try{ await Share.share({ text: buildText() }); }catch(e){}
   };
 
-  // Imagem estilo foto (JPG 3:4, pode ter várias folhas) -> grava no cache e compartilha
+  // Imagem (estilo tira PNG ou folhas JPG, conforme escolhido no menu) -> grava no cache e compartilha
   var bPng = document.getElementById('hdrSharePng');
   if (bPng) bPng.onclick = async function(){
     if(!noteBody.value.trim()){ say('Nota vazia'); return; }
     try{
-      var canvases = (typeof makeFotos === 'function') ? makeFotos() : [makePNG()];
+      var G = (typeof gerarImagens === 'function') ? gerarImagens() : {canvases:[makePNG()], mime:'image/png', ext:'png'};
+      var canvases = G.canvases;
       var uris = [];
       for (var k = 0; k < canvases.length; k++){
-        var base64 = canvases[k].toDataURL('image/jpeg', 0.9).split(',')[1];
-        uris.push(await writeCache(nomeFoto(k, canvases.length), base64));
+        var base64 = canvases[k].toDataURL(G.mime, G.q).split(',')[1];
+        uris.push(await writeCache(nomeFoto(k, canvases.length, G.ext), base64));
       }
       await Share.share({ files: uris, title: noteTitle.value.trim()||'Nota' });
     }catch(e){ say('Erro ao compartilhar'); }
