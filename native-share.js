@@ -22,16 +22,18 @@
     try{ await Share.share({ text: buildText() }); }catch(e){}
   };
 
-  // PNG -> grava no cache e compartilha o arquivo
+  // Imagem estilo foto (JPG 3:4, pode ter várias folhas) -> grava no cache e compartilha
   var bPng = document.getElementById('hdrSharePng');
   if (bPng) bPng.onclick = async function(){
     if(!noteBody.value.trim()){ say('Nota vazia'); return; }
     try{
-      var canvas = makePNG();
-      var base64 = canvas.toDataURL('image/png').split(',')[1];
-      var title = (noteTitle.value.trim()||'nota').replace(/[^\w\u00C0-\u017F]+/g,'_');
-      var uri = await writeCache(title + '.png', base64);
-      await Share.share({ files:[uri], title: noteTitle.value.trim()||'Nota' });
+      var canvases = (typeof makeFotos === 'function') ? makeFotos() : [makePNG()];
+      var uris = [];
+      for (var k = 0; k < canvases.length; k++){
+        var base64 = canvases[k].toDataURL('image/jpeg', 0.9).split(',')[1];
+        uris.push(await writeCache(nomeFoto(k, canvases.length), base64));
+      }
+      await Share.share({ files: uris, title: noteTitle.value.trim()||'Nota' });
     }catch(e){ say('Erro ao compartilhar'); }
   };
 
