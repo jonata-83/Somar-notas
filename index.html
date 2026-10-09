@@ -985,7 +985,10 @@ function pngThemeRefresh(){
 const FOTO_W=1080, FOTO_H=1920;      // tamanho final de cada imagem (formato de tela de celular 9:16)
 const FOTO_ZOOM_MIN=1.0;             // abaixo disso a letra fica pequena demais -> divide em folhas
 const L_PADX=60, L_PADTOP=60, L_TITLE=48, L_LINE=36, L_LINEH=62, L_GRPH=72;
-const L_HEADER=L_PADTOP+L_TITLE+24+18;
+const L_DATE=30;                     // tamanho da data (canto de cima, à direita)
+const L_HEADER=L_PADTOP+L_TITLE+24+18; // cabeçalho completo (só na 1ª folha)
+const L_HEADER2=L_PADTOP;             // folhas seguintes: sem cabeçalho
+const L_CONT=80;                      // espaço reservado p/ "continua →"
 
 function splitLinha(ln){
   const m=ln.match(/^(\s*)([+-]?\d+(?:[.,]\d+)?)(.*)$/);
@@ -1033,7 +1036,10 @@ function prepNota(){
     need=Math.max(need,w);
   });
   x.font=`800 ${L_TITLE}px ${PNG_FONT}`;
-  need=Math.max(need, x.measureText(N.title).width + 230); // espaço p/ data e "1/2"
+  x.font=`700 ${L_DATE}px ${PNG_FONT}`;
+  const wData=x.measureText(`${N.dateStamp} · 10/10`).width;
+  x.font=`800 ${L_TITLE}px ${PNG_FONT}`;
+  need=Math.max(need, x.measureText(N.title).width + wData + 30); // espaço p/ data e "1/2"
   if(N.showGroups){
     x.font=`800 32px ${PNG_FONT}`;
     groups.forEach(g=>{ need=Math.max(need, x.measureText(g.nome).width + x.measureText(fmt(g.qt)).width + 60); });
@@ -1047,7 +1053,8 @@ function prepNota(){
 }
 
 // desenha uma folha. W/H = tamanho lógico da folha; sai em FOTO_W x FOTO_H
-function drawFolha(N, idxs, isLast, pageLabel, W, H){
+function drawFolha(N, idxs, isLast, pageLabel, W, H, primeira=true){
+  const hdr = primeira ? L_HEADER : L_HEADER2;
   const P=N.P;
   const c=document.createElement('canvas');
   c.width=FOTO_W; c.height=FOTO_H;
@@ -1056,7 +1063,7 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H){
 
   x.fillStyle=P.paper; x.fillRect(0,0,W,H);
   if(P.rule){
-    const ruleStart = L_HEADER + L_LINE + 8;
+    const ruleStart = hdr + L_LINE + 8;
     x.strokeStyle=P.rule; x.lineWidth=1;
     for(let ry=ruleStart; ry<H-20; ry+=L_LINEH){
       x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke();
@@ -1068,19 +1075,20 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H){
   }
 
   let y=L_PADTOP;
-  x.fillStyle=P.ink;
-  x.font=`800 ${L_TITLE}px ${PNG_FONT}`;
-  x.fillText(N.title,L_PADX,y+L_TITLE-6);
-  x.fillStyle=P.muted;
-  x.font=`600 22px ${PNG_FONT}`;
-  x.textAlign='right';
-  x.fillText(pageLabel ? `${N.dateStamp} · ${pageLabel}` : N.dateStamp, W-L_PADX, y+L_TITLE-8);
-  x.textAlign='left';
-  y+=L_TITLE+24;
-
-  x.strokeStyle=P.line; x.lineWidth=1;
-  x.beginPath(); x.moveTo(L_PADX,y); x.lineTo(W-L_PADX,y); x.stroke();
-  y+=18;
+  if(primeira){
+    x.fillStyle=P.ink;
+    x.font=`800 ${L_TITLE}px ${PNG_FONT}`;
+    x.fillText(N.title,L_PADX,y+L_TITLE-6);
+    // data no mesmo lugar de antes, só maior e escura
+    x.font=`700 ${L_DATE}px ${PNG_FONT}`;
+    x.textAlign='right';
+    x.fillText(pageLabel ? `${N.dateStamp} · ${pageLabel}` : N.dateStamp, W-L_PADX, y+L_TITLE-8);
+    x.textAlign='left';
+    y+=L_TITLE+24;
+    x.strokeStyle=P.line; x.lineWidth=1;
+    x.beginPath(); x.moveTo(L_PADX,y); x.lineTo(W-L_PADX,y); x.stroke();
+    y+=18;
+  }
 
   x.font=`600 ${L_LINE}px ${PNG_FONT}`;
   idxs.forEach((li,i)=>{
@@ -1103,10 +1111,11 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H){
   y+=idxs.length*L_LINEH+18;
 
   if(!isLast){
-    x.fillStyle=P.muted;
-    x.font=`700 24px ${PNG_FONT}`;
+    // mesmo lugar de antes, só maior e escuro
+    x.fillStyle=P.ink;
+    x.font=`800 34px ${PNG_FONT}`;
     x.textAlign='right';
-    x.fillText('continua →', W-L_PADX, y+30);
+    x.fillText('continua →', W-L_PADX, y+40);
     x.textAlign='left';
     return c;
   }
@@ -1168,11 +1177,13 @@ function makeFotos(){
   // várias folhas, todas com a mesma letra
   function paginar(W){
     const H = W*ratio;
-    const cabe = Math.max(1, Math.floor((H - L_HEADER - 24 - 60 - L_PADTOP)/L_LINEH));
-    const cabeUltima = Math.max(0, Math.floor((H - L_HEADER - 24 - N.footer - L_PADTOP)/L_LINEH));
+    const cabeF = hd => Math.max(1, Math.floor((H - hd - 24 - L_CONT - L_PADTOP)/L_LINEH));
+    const cabeUltF = hd => Math.max(0, Math.floor((H - hd - 24 - N.footer - L_PADTOP)/L_LINEH));
     const folhas=[];
     let i=0;
     while(i<nL){
+      const hd = folhas.length ? L_HEADER2 : L_HEADER;
+      const cabe=cabeF(hd), cabeUltima=cabeUltF(hd);
       const resta=nL-i;
       if(resta<=cabeUltima){ folhas.push([i,nL,true]); break; }
       // enche a folha ao máximo
@@ -1208,7 +1219,7 @@ function makeFotos(){
   const tot=folhas.length;
   return folhas.map((f,k)=>{
     const idxs=[]; for(let j=f[0];j<f[1];j++) idxs.push(j);
-    return drawFolha(N, idxs, f[2], `${k+1}/${tot}`, W, H);
+    return drawFolha(N, idxs, f[2], `${k+1}/${tot}`, W, H, k===0);
   });
 }
 
