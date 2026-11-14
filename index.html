@@ -1034,6 +1034,26 @@ function splitValor(ln){
   }
   return null;
 }
+// Linhas que vão pra imagem: tira o subtotal do grupo que só tem um item
+// com preço (o valor já aparece na própria linha, não precisa repetir).
+function linhasImagem(){
+  const lines=noteBody.value.replace(/\n+$/,'').split('\n');
+  const out=[];
+  let itens=0, ultimo=null;
+  lines.forEach(l=>{
+    const v=splitValor(l);
+    if(v && v.tipo==='item'){ itens++; ultimo=v.valor; out.push(l); return; }
+    if(v && v.tipo==='sub'){
+      const repetido = itens===1 && Math.abs(v.valor-ultimo)<0.005;
+      itens=0; ultimo=null;
+      if(!repetido) out.push(l);
+      return;
+    }
+    if(!l.trim() || !/^\s*[+-]?\d/.test(l)){ itens=0; ultimo=null; }  // cabeçalho ou linha em branco
+    out.push(l);
+  });
+  return out;
+}
 const VAL_GAP=40;   // espaço mínimo entre o texto e o valor
 function drawValor(x, v, xDir, ny, size, P){
   if(!v) return;
@@ -1046,7 +1066,7 @@ function drawValor(x, v, xDir, ny, size, P){
 }
 
 function prepNota(){
-  const lines=noteBody.value.replace(/\n+$/,'').split('\n');
+  const lines=linhasImagem();
   const isTexto=(currentMode==='texto');
   const groups=isTexto?[]:groupByModel(noteBody.value);
   const N={
@@ -1279,7 +1299,7 @@ function makeFotos(){
 /* ===== Estilo TIRA (antigo): uma imagem só, comprida, em PNG ===== */
 function makePNGTira(){
   const title=noteTitle.value.trim()||'Nota';
-  const lines=noteBody.value.replace(/\n+$/,'').split('\n');
+  const lines=linhasImagem();
   const isTexto=(currentMode==='texto');
   const rawTot=sumBody(noteBody.value);
   const tot=fmtTotal(rawTot, noteBody.value);
