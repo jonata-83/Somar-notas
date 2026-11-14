@@ -500,18 +500,32 @@ let currentId=null;
 function load(){try{notes=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){notes=[];}}
 function save(){localStorage.setItem(KEY,JSON.stringify(notes));}
 
+// Número no padrão brasileiro, mas aceitando ponto como decimal também:
+//   1.500 / 12.345.678 -> milhar      1.500,50 -> milhar + decimal
+//   25,5 / 25.5 / 688.5 -> decimal (ponto que não forma grupo de 3 é decimal)
+const NUM='(?:\\d{1,3}(?:\\.\\d{3})+|\\d+)(?:[.,]\\d+)?';
 function parseBrNum(str){
   if(!str) return 0;
-  const clean = String(str).replace(/\./g, '').replace(',', '.');
+  let t=String(str).trim().replace(/[.,]+$/,'');
+  let clean;
+  if(t.includes(',')) clean=t.replace(/\./g,'').replace(',', '.');
+  else if(/^[+-]?\d{1,3}(?:\.\d{3})+$/.test(t)) clean=t.replace(/\./g,'');
+  else clean=t;
   const n = parseFloat(clean);
   return isFinite(n) ? n : 0;
 }
+// resultado da multiplicação escrito na linha: inteiro puro ou decimal com vírgula
+function fmtRes(n){
+  const r=Math.round((n+Number.EPSILON)*100)/100;
+  return Number.isInteger(r) ? String(r) : r.toFixed(2).replace('.',',');
+}
+const RX_QTD=new RegExp('^\\s*([+-]?'+NUM+')(?:\\s|\\/|$)');
 function lineValue(line){
   if(/^\s*=\s*[\d.,]+\s*$/.test(line)) return 0;
   if(/^\s*TOTAL\s*=\s*[\d.,]+\s*$/i.test(line)) return 0;
   if(/x\s*\d/i.test(line)) return 0;
   // aceita espaço, barra (100/80) ou fim de linha logo depois da quantidade
-  const m=line.match(/^\s*([+-]?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(?:\s|\/|$)/);
+  const m=line.match(RX_QTD);
   if(!m) return 0;
   return parseBrNum(m[1]);
 }
@@ -519,7 +533,7 @@ function sumBody(body){return (body||'').split('\n').reduce((a,l)=>a+lineValue(l
 
 // precisa de espaço antes do "x" (10/80 x120); "3x8" é medida, não conta.
 // Depois do resultado pode ter anotação: "200/80 x130= 26000 levou 100"
-const RX_MULT=/^(\s*)([+-]?(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(?![\d.,]*\d)(.*?)(\s+x\s*)((?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d+)?)(\s*=\s*[\d.,]*)?((?:\s+[^\d\s=.,].*?)?)(\s*)$/i;
+const RX_MULT=new RegExp('^(\\s*)([+-]?'+NUM+')(?![\\d.,]*\\d)(.*?)(\\s+x\\s*)('+NUM+')(\\s*=\\s*[\\d.,]*)?((?:\\s+[^\\d\\s=.,].*?)?)(\\s*)$','i');
 function aplicaMultLinha(line){
   const m=line.match(RX_MULT);
   if(!m) return line;
@@ -528,10 +542,10 @@ function aplicaMultLinha(line){
   const pr=parseBrNum(preco);
   if(!isFinite(q)||!isFinite(pr)) return line;
   const res=q*pr;
-  const resTxt=Number.isInteger(res)?String(res):String(res);
+  const resTxt=fmtRes(res);
   return `${ini}${qtd}${meio}${xtok}${preco}= ${resTxt}${nota}${fim}`;
 }
-const RX_RESULT=/\sx\s*\d+(?:[.,]\d+)?\s*=\s*([\d.,]+)(?:\s+[^\d\s=.,].*?)?\s*$/i;
+const RX_RESULT=/\sx\s*\d[\d.,]*\s*=\s*([\d.,]+)(?:\s+[^\d\s=.,].*?)?\s*$/i;
 function valorResultado(line){
   const m=line.match(RX_RESULT);
   if(!m) return null;
@@ -615,7 +629,7 @@ function fmt(n){
   return n.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 function hasDecimalInBody(body){
-  return (body||'').split('\n').some(l => /^\s*[+-]?(?:\d{1,3}(?:\.\d{3})*|\d+),\d+/.test(l));
+  return (body||'').split('\n').some(l => { const m=l.match(RX_QTD); return !!m && !Number.isInteger(parseBrNum(m[1])); });
 }
 function fmtTotal(n, body){
   if(hasDecimalInBody(body) || !Number.isInteger(n))
