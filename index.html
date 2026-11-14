@@ -1015,6 +1015,36 @@ function splitLinha(ln){
   return {qty:m[2], medida, nome};
 }
 
+// Valor em dinheiro que vai no canto direito da imagem.
+// item:  "27/80 x25,5= 688,50"  -> esquerda "27/80 x25,5", direita R$ 688,50
+// sub:   "= 688,50"             -> só o valor à direita (negrito)
+// total: "TOTAL= 7.506,50"      -> "TOTAL" à esquerda, valor à direita
+function fmtDin(n){
+  return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function splitValor(ln){
+  let m=ln.match(/^\s*TOTAL\s*=\s*([\d.,]*\d[\d.,]*)\s*$/i);
+  if(m) return {esq:'TOTAL', valor:parseBrNum(m[1]), tipo:'total'};
+  m=ln.match(/^\s*=\s*([\d.,]*\d[\d.,]*)\s*$/);
+  if(m) return {esq:'', valor:parseBrNum(m[1]), tipo:'sub'};
+  m=ln.match(RX_MULT);
+  if(m && m[6] && /\d/.test(m[6])){
+    const esq=(m[1]+m[2]+m[3]+m[4]+m[5]+(m[7]||'')).replace(/\s+$/,'');
+    return {esq, valor:parseBrNum(m[6].replace(/^\s*=\s*/,'')), tipo:'item'};
+  }
+  return null;
+}
+const VAL_GAP=40;   // espaço mínimo entre o texto e o valor
+function drawValor(x, v, xDir, ny, size, P){
+  if(!v) return;
+  x.save();
+  x.font=`${v.tipo==='item'?600:800} ${size}px ${PNG_FONT}`;
+  x.textAlign='right';
+  x.fillStyle=v.valor<0 ? (P.neg||'#ff6b6b') : P.num;
+  x.fillText(fmtDin(v.valor), xDir, ny);
+  x.restore();
+}
+
 function prepNota(){
   const lines=noteBody.value.replace(/\n+$/,'').split('\n');
   const isTexto=(currentMode==='texto');
@@ -1028,8 +1058,10 @@ function prepNota(){
     label: hasNegative(noteBody.value) ? 'SALDO' : 'TOTAL',
     P: PNG_THEMES[pngTheme] || PNG_THEMES.escuro,
     dateStamp: new Date().toLocaleDateString('pt-BR'),
-    parsed: lines.map(splitLinha)
+    vals: lines.map(splitValor)
   };
+  N.disp=lines.map((l,i)=>N.vals[i]?N.vals[i].esq:l);   // texto da esquerda
+  N.parsed=N.disp.map(l=>l?splitLinha(l):null);
   // medidas (mesmas colunas pra todas as folhas)
   const x=document.createElement('canvas').getContext('2d');
   x.font=`600 ${L_LINE}px ${PNG_FONT}`;
@@ -1046,7 +1078,13 @@ function prepNota(){
       const qty=p.qty.padStart(maxQty,' ');
       w = p.nome ? colX + x.measureText(p.nome).width
                  : x.measureText(qty).width + x.measureText(p.medida).width;
-    }else w=x.measureText(ln).width;
+    }else w=x.measureText(N.disp[i]).width;
+    const v=N.vals[i];
+    if(v){
+      x.font=`800 ${L_LINE}px ${PNG_FONT}`;
+      w += (w?VAL_GAP:0) + x.measureText(fmtDin(v.valor)).width;
+      x.font=`600 ${L_LINE}px ${PNG_FONT}`;
+    }
     need=Math.max(need,w);
   });
   x.font=`800 ${L_TITLE}px ${PNG_FONT}`;
@@ -1106,8 +1144,9 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H, primeira=true){
 
   x.font=`600 ${L_LINE}px ${PNG_FONT}`;
   idxs.forEach((li,i)=>{
-    const ln=N.lines[li], p=N.parsed[li];
+    const ln=N.disp[li], p=N.parsed[li];
     const ny=y+i*L_LINEH+L_LINE;
+    drawValor(x, N.vals[li], W-L_PADX, ny, L_LINE, P);
     if(p){
       const qty=p.qty.padStart(N.maxQty,' ');
       const isNeg = /^-/.test(qty.trim());
@@ -1310,16 +1349,19 @@ function makePNGTira(){
     medida = medida.replace(/\s+$/,'');
     return {qty:m[2], medida, nome};
   }
-  const parsed = lines.map(splitLinha);
+  const vals = lines.map(splitValor);
+  const disp = lines.map((l,i)=>vals[i]?vals[i].esq:l);
+  const parsed = disp.map(l=>l?splitLinha(l):null);
   let maxQty=0;
   parsed.forEach(p=>{ if(p) maxQty=Math.max(maxQty,p.qty.length); });
   let maxCore=0;
   parsed.forEach(p=>{ if(p) maxCore=Math.max(maxCore, maxQty + p.medida.length); });
   let colX=0;
   parsed.forEach(p=>{ if(p) colX=Math.max(colX, x.measureText(p.qty.padStart(maxQty,' ')+p.medida+'  ').width); });
-  lines.forEach((ln,i)=>{
+  disp.forEach((ln,i)=>{
     const ny=y+i*lineH+lineSize;
     const p=parsed[i];
+    drawValor(x, vals[i], W-padX, ny, lineSize, P);
     if(p){
       const qty=p.qty.padStart(maxQty,' ');
       const isNeg = /^-/.test(qty.trim());
