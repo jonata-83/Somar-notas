@@ -347,6 +347,69 @@
   .trash-row .act.restore{color:var(--wa);border-color:var(--wa);}
   .trash-row .act.forever{color:var(--danger);border-color:var(--danger);}
   .trash-empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:14px;}
+
+  /* ===== CONTAS (saldo por bandeira) ===== */
+  .side-screen{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:var(--bg);z-index:58;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .3s ease;
+  }
+  .side-screen.open{transform:translateX(0);}
+  #contaScreen{z-index:59;}
+  .side-header{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .side-header .back{
+    background:none;border:none;color:var(--ink);font-size:24px;
+    padding:0;width:32px;height:32px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;
+  }
+  .side-header h2{font-size:17px;font-weight:600;margin:0;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .side-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 110px;}
+  .conta-card{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);
+    border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;
+    color:var(--ink);font-family:var(--font);
+  }
+  .conta-card:active{transform:scale(.98);}
+  .conta-card .ci{flex:1;min-width:0;}
+  .conta-card .cn{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .conta-card .cs{font-size:12px;color:var(--muted);margin-top:3px;}
+  .conta-card .cv{font-size:16px;font-weight:700;white-space:nowrap;}
+  .deve{color:var(--neg) !important;}
+  .ok{color:var(--wa) !important;}
+  .resumo-conta{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:18px;
+  }
+  .rc-lbl{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+  .rc-saldo{font-size:32px;font-weight:700;margin:4px 0 12px;}
+  .rc-linha{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;color:var(--muted);}
+  .rc-linha b{color:var(--ink);}
+  .extrato-tit{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:0 2px 6px;}
+  .mov{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .mov:active{background:var(--panel);}
+  .mov .md{font-size:13px;color:var(--muted);width:44px;flex-shrink:0;}
+  .mov .mi{flex:1;min-width:0;}
+  .mov .mt{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mov .ms{font-size:12px;color:var(--muted);margin-top:2px;}
+  .mov .mv{font-size:15px;font-weight:700;white-space:nowrap;}
+  .conta-fab{
+    position:absolute;left:16px;right:16px;bottom:20px;padding:16px;border-radius:14px;
+    background:var(--accent);color:#000;font-size:16px;font-weight:700;border:none;
+    font-family:var(--font);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.6);
+  }
+  .conta-fab:active{transform:scale(.98);}
+  .conta-vazia{color:var(--muted);text-align:center;padding:50px 20px;font-size:15px;line-height:1.6;}
+  .pag-row{display:flex;gap:8px;margin-top:10px;}
+  .pag-row .band-input{flex:1;min-width:0;}
+  .pag-fill{
+    flex-shrink:0;background:var(--total-bg);border:1px solid var(--line);border-radius:10px;
+    color:var(--accent);font-size:13px;font-weight:600;padding:0 12px;cursor:pointer;font-family:var(--font);
+  }
 </style>
 </head>
 <body>
@@ -362,6 +425,9 @@
   
   <button class="icon-btn" id="bandsBtn" aria-label="Bandeiras">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+  </button>
+  <button class="icon-btn" id="contasBtn" aria-label="Contas e saldos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 6V4h12v2"/><circle cx="17" cy="15" r="1.5"/></svg>
   </button>
   <button class="icon-btn" id="trashBtn" aria-label="Lixeira">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -393,6 +459,10 @@
   <button class="icon-btn hidden" id="hdrSharePng" aria-label="Enviar imagem">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
     <span>Enviar imagem</span>
+  </button>
+  <button class="icon-btn hidden" id="contaBtn" aria-label="Lançar na conta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 6V4h12v2"/><circle cx="17" cy="15" r="1.5"/></svg>
+    <span id="contaLbl">Lançar na conta</span>
   </button>
   <button class="icon-btn danger hidden" id="deleteBtn" aria-label="Excluir nota">🗑 <span>Excluir nota</span></button>
 </div>
@@ -488,6 +558,45 @@
     <button class="bands-search-clear hidden" id="bandsSearchClear">×</button>
   </div>
   <div class="bands-body" id="bandsBody"></div>
+</div>
+
+<!-- TELA: LISTA DE CONTAS -->
+<div id="contasScreen" class="side-screen">
+  <div class="side-header">
+    <button class="back" id="contasBack" aria-label="Voltar">‹</button>
+    <h2>Contas</h2>
+  </div>
+  <div class="side-body" id="contasBody"></div>
+</div>
+
+<!-- TELA: UMA CONTA (extrato) -->
+<div id="contaScreen" class="side-screen">
+  <div class="side-header">
+    <button class="back" id="contaBack" aria-label="Voltar">‹</button>
+    <h2 id="contaTitulo">Conta</h2>
+    <button class="icon-btn wa-ico" id="contaShare" aria-label="Enviar extrato no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
+    </button>
+  </div>
+  <div class="side-body" id="contaBody"></div>
+  <button class="conta-fab" id="addPagBtn">+ Pagamento</button>
+</div>
+
+<!-- MODAL: pagamento -->
+<div class="modal-overlay hidden" id="pagModal" style="z-index:75">
+  <div class="modal">
+    <h2 id="pagTitulo">Novo pagamento</h2>
+    <p class="modal-sub" id="pagSub"></p>
+    <div class="pag-row" style="margin-top:0">
+      <input type="text" class="band-input" id="pagValor" inputmode="decimal" placeholder="Valor (ex: 1.500)" autocomplete="off">
+      <button class="pag-fill" id="pagFill">Quitar tudo</button>
+    </div>
+    <input type="date" class="band-input" id="pagData" style="margin-top:10px">
+    <input type="text" class="band-input" id="pagObs" placeholder="Observação (pix, dinheiro...)" style="margin-top:10px" autocomplete="off">
+    <button class="modal-btn primary" id="pagSalvar" style="margin-top:14px">Salvar</button>
+    <button class="modal-btn" id="pagExcluir" style="color:var(--danger)">Excluir pagamento</button>
+    <button class="modal-btn ghost" id="pagCancelar">Cancelar</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -719,7 +828,7 @@ function renderList(){
       <div class="info">
         ${b?`<div class="band" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}</div>`:''}
         <div class="title">${escapeHtml(n.title||'Sem título')}</div>
-        <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.created||n.updated)} → ${dateStr(n.updated)}</div>
+        <div class="sub">${lines} ${lines===1?'linha':'linhas'} · ${dateStr(n.created||n.updated)} → ${dateStr(n.updated)}${n.naConta?' · 💰':''}</div>
       </div>
       ${isTexto?'':`<div class="tot mono ${tot<0?'neg':''}">${fmt(tot)}</div>`}
       <button class="flag-btn" aria-label="Bandeira" ${b?`style="color:${b.cor};border-color:${b.cor}"`:''}>⚑</button>`;
@@ -771,6 +880,8 @@ function showEditor(show){
   modeBtn.classList.toggle('hidden',!show);
   document.getElementById('backupBtn').classList.toggle('hidden',show);
   document.getElementById('trashBtn').classList.toggle('hidden',show);
+  document.getElementById('contasBtn').classList.toggle('hidden',show);
+  document.getElementById('contaBtn').classList.toggle('hidden',!show);
   document.getElementById('doneBtn').classList.toggle('hidden',!show);
   document.getElementById('menuBtn').classList.toggle('hidden',!show);
   document.getElementById('signBtn').classList.toggle('hidden',!show);
@@ -779,19 +890,20 @@ function showEditor(show){
   fecharMenu();
 }
 function newNote(){
+  voltarConta=null;
   currentId='n'+Date.now();
   notes.push({id:currentId,title:'',body:'',mode:'somar',created:Date.now(),updated:Date.now()});
   noteTitle.value='';noteBody.value='';
   applyMode('somar');
   searchTerm='';searchInput.value='';searchClear.classList.add('hidden');
-  showEditor(true);refreshEditor();
+  showEditor(true);refreshEditor();refreshContaBtn();
   setTimeout(()=>noteTitle.focus(),100);
 }
 function openNote(id){
   const n=notes.find(x=>x.id===id);if(!n)return;
   currentId=id;noteTitle.value=n.title||'';noteBody.value=n.body||'';
   applyMode(n.mode||'somar');
-  showEditor(true);refreshEditor();
+  showEditor(true);refreshEditor();refreshContaBtn();
 }
 function closeEditor(){
   persistCurrent(true);
@@ -801,6 +913,7 @@ function closeEditor(){
   requestAnimationFrame(()=>{
     renderList();
     toast('Nota salva ✓');
+    if(voltarConta){ const b=voltarConta; voltarConta=null; abrirConta(b); }
   });
 }
 function persistCurrent(cleanupEmpty){
@@ -813,7 +926,7 @@ function deleteCurrent(){
   const n=notes.find(x=>x.id===currentId);
   const nm=n&&n.title?`"${n.title}"`:'esta nota';
   if(confirm(`Mover ${nm} pra lixeira?`)){
-    moveToTrash(currentId);
+    moveToTrash(currentId);voltarConta=null;
     currentId=null;showEditor(false);renderList();
     toast('Nota na lixeira 🗑');
   }
@@ -1583,7 +1696,10 @@ function recalcMult(){
 noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
 
 window.addEventListener('popstate',()=>{
-  if(!editView.classList.contains('hidden')){closeEditor();history.pushState(null,'');}
+  if(!pagModal.classList.contains('hidden')){pagModal.classList.add('hidden');history.pushState(null,'');}
+  else if(contaScreen.classList.contains('open')){fecharConta();history.pushState(null,'');}
+  else if(contasScreen.classList.contains('open')){contasScreen.classList.remove('open');history.pushState(null,'');}
+  else if(!editView.classList.contains('hidden')){closeEditor();history.pushState(null,'');}
 });
 history.pushState(null,'');
 
@@ -1699,6 +1815,8 @@ function setBandNota(id,bid){
   if(n){ n.bandeira=bid; save(); }
   bandPickModal.classList.add('hidden');
   renderList();
+  if(lancarPendente===id && n && bid) lancarNaConta(n);
+  lancarPendente=null;
 }
 document.getElementById('closeBandPick').onclick=()=>bandPickModal.classList.add('hidden');
 bandPickModal.onclick=(e)=>{ if(e.target===bandPickModal) bandPickModal.classList.add('hidden'); };
@@ -1753,11 +1871,14 @@ function addBandeira(){
 function removeBandeira(id){
   const b=bandeiras.find(x=>x.id===id);
   if(!b) return;
-  if(!confirm(`Excluir a bandeira "${b.nome}"? As notas continuam, só ficam sem bandeira.`)) return;
+  const nPag=pagamentos.filter(p=>p.bandeira===id).length;
+  const avisoPag = nPag ? `\n\nAtenção: ${nPag} pagamento(s) dessa conta também serão apagados.` : '';
+  if(!confirm(`Excluir a bandeira "${b.nome}"? As notas continuam, só ficam sem bandeira.${avisoPag}`)) return;
   bandeiras=bandeiras.filter(x=>x.id!==id);
-  notes.forEach(n=>{ if(n.bandeira===id) n.bandeira=null; });
+  notes.forEach(n=>{ if(n.bandeira===id){ n.bandeira=null; n.naConta=false; } });
+  pagamentos=pagamentos.filter(p=>p.bandeira!==id);
   if(filtroBand===id) filtroBand=null;
-  saveBandeiras(); save();
+  saveBandeiras(); save(); savePag();
   renderBandManage(); renderList();
 }
 document.getElementById('addBandBtn').onclick=addBandeira;
@@ -1765,13 +1886,262 @@ document.getElementById('newBandName').addEventListener('keydown',e=>{ if(e.key=
 document.getElementById('closeBandManage').onclick=()=>bandManageModal.classList.add('hidden');
 bandManageModal.onclick=(e)=>{ if(e.target===bandManageModal) bandManageModal.classList.add('hidden'); };
 
+/* =========================================================
+   CONTAS — uma conta por bandeira (cliente).
+   Nota "lançada na conta" entra com o TOTAL em R$ (somente as
+   linhas "qtd x preço"). Pagamentos abatem até o saldo zerar.
+   Se a nota for editada depois, o valor na conta acompanha.
+   ========================================================= */
+const PKEY='somar_pagamentos';
+let pagamentos=[];
+let lancarPendente=null;   // nota esperando escolher bandeira pra lançar
+let voltarConta=null;      // abriu nota a partir do extrato -> volta pra ele
+let contaAberta=null;      // id da bandeira com extrato aberto
+let pagEditId=null;
+
+function loadPag(){try{pagamentos=JSON.parse(localStorage.getItem(PKEY))||[];}catch(e){pagamentos=[];}}
+function savePag(){localStorage.setItem(PKEY,JSON.stringify(pagamentos));}
+
+// Valor em dinheiro da nota (soma das linhas "qtd x preço" pelos grupos).
+function valorNota(n){
+  const c=montaComTotais(n.body||'');
+  const linhas=c.split('\n');
+  if(!linhas.some(l=>valorResultado(l)!==null)) return 0;
+  const t=linhas.find(l=>RX_TOTAL.test(l));
+  if(t) return parseBrNum(t.split('=')[1]);
+  return linhas.reduce((a,l)=>{const v=valorResultado(l);return a+(v||0);},0);
+}
+function quase0(v){return Math.abs(v)<0.005;}
+function dataCurta(ts){return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
+function dataLonga(ts){return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+function isoDia(ts){const d=new Date(ts);const p=x=>String(x).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
+function tsDeIso(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new Date(+m[1],+m[2]-1,+m[3],12).getTime():Date.now();}
+
+function contaDe(bid){
+  const cargas=notes.filter(n=>n.naConta && n.bandeira===bid)
+    .map(n=>({tipo:'carga',id:n.id,data:n.created||n.updated,titulo:n.title||'Sem título',valor:valorNota(n)}));
+  const pags=pagamentos.filter(p=>p.bandeira===bid)
+    .map(p=>({tipo:'pag',id:p.id,data:p.data,titulo:p.obs||'Pagamento',valor:p.valor}));
+  const vendido=cargas.reduce((a,c)=>a+c.valor,0);
+  const pago=pags.reduce((a,p)=>a+p.valor,0);
+  const movs=[...cargas,...pags].sort((a,b)=>(a.data-b.data)||(a.tipo==='carga'?-1:1));
+  let s=0; movs.forEach(m=>{ s+= m.tipo==='carga'?m.valor:-m.valor; m.saldo=s; });
+  return {cargas,pags,movs,vendido,pago,saldo:vendido-pago};
+}
+function saldoTxt(saldo){
+  if(quase0(saldo)) return {txt:'✅ Quitado', cls:'ok'};
+  if(saldo<0) return {txt:'Crédito '+fmtDin(-saldo), cls:'ok'};
+  return {txt:fmtDin(saldo), cls:'deve'};
+}
+
+/* ----- botão do editor: Lançar / Tirar da conta ----- */
+const contaBtnEl=document.getElementById('contaBtn');
+function refreshContaBtn(){
+  const n=notes.find(x=>x.id===currentId);
+  const na=!!(n&&n.naConta);
+  document.getElementById('contaLbl').textContent = na ? 'Na conta ✓ (tirar)' : 'Lançar na conta';
+  contaBtnEl.classList.toggle('active', na);
+}
+function lancarNaConta(n){
+  n.naConta=true; save();
+  refreshContaBtn(); renderList();
+  const b=bandDe(n);
+  const c=contaDe(n.bandeira);
+  toast(`Lançado em ${b?b.nome:'conta'} · saldo ${fmtDin(c.saldo)}`);
+}
+contaBtnEl.onclick=()=>{
+  persistCurrent(false);
+  const n=notes.find(x=>x.id===currentId);
+  if(!n) return;
+  if(n.naConta){
+    if(confirm('Tirar esta nota da conta? O valor dela sai do saldo.')){
+      n.naConta=false; save(); refreshContaBtn(); toast('Nota saiu da conta');
+    }
+    return;
+  }
+  // garante subtotais e TOTAL escritos antes de lançar
+  const c=montaComTotais(noteBody.value);
+  if(c!==noteBody.value){ noteBody.value=c; refreshEditor(); persistCurrent(false); }
+  const v=valorNota(n);
+  if(!(v>0)){ toast('Nota sem valor — use linhas tipo "8/80 x180"'); return; }
+  if(!bandDe(n)){
+    lancarPendente=n.id;
+    abrirBandPick(n.id);
+    toast('Escolha a bandeira (cliente) da conta');
+    return;
+  }
+  lancarNaConta(n);
+};
+
+/* ----- tela: lista de contas ----- */
+const contasScreen=document.getElementById('contasScreen');
+const contaScreen=document.getElementById('contaScreen');
+const pagModal=document.getElementById('pagModal');
+
+function abrirContas(){ renderContas(); contasScreen.classList.add('open'); }
+function renderContas(){
+  const box=document.getElementById('contasBody');
+  const lista=bandeiras.map(b=>({b,c:contaDe(b.id)}))
+    .filter(x=>x.c.movs.length>0)
+    .sort((x,y)=>{
+      const qx=quase0(x.c.saldo)?1:0, qy=quase0(y.c.saldo)?1:0;
+      return (qx-qy)||(y.c.saldo-x.c.saldo);
+    });
+  if(lista.length===0){
+    box.innerHTML=`<div class="conta-vazia">Nenhuma conta ainda.<br><br>Abra uma nota com valores, toque em <b>⋯</b> e depois em <b style="color:var(--accent)">Lançar na conta</b>. O total vai pra conta da bandeira (cliente) e aqui você lança os pagamentos.</div>`;
+    return;
+  }
+  const aReceber=lista.reduce((a,x)=>a+Math.max(x.c.saldo,0),0);
+  let h=`<div class="resumo-conta">
+    <div class="rc-lbl">Total a receber</div>
+    <div class="rc-saldo ${quase0(aReceber)?'ok':'deve'}">${quase0(aReceber)?'✅ Tudo quitado':fmtDin(aReceber)}</div>
+  </div>`;
+  lista.forEach(({b,c})=>{
+    const s=saldoTxt(c.saldo);
+    h+=`<button class="conta-card" data-b="${b.id}" style="border-left-color:${b.cor}">
+      <div class="ci">
+        <div class="cn" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}</div>
+        <div class="cs">${c.cargas.length} nota(s) · ${c.pags.length} pagamento(s)</div>
+      </div>
+      <div class="cv ${s.cls}">${s.txt}</div>
+    </button>`;
+  });
+  box.innerHTML=h;
+  box.querySelectorAll('.conta-card').forEach(el=>el.onclick=()=>abrirConta(el.dataset.b));
+}
+
+/* ----- tela: extrato de uma conta ----- */
+function abrirConta(bid){
+  contaAberta=bid;
+  renderConta();
+  contasScreen.classList.add('open');
+  contaScreen.classList.add('open');
+}
+function fecharConta(){
+  contaScreen.classList.remove('open');
+  contaAberta=null;
+  renderContas();
+}
+function renderConta(){
+  const b=bandeiras.find(x=>x.id===contaAberta);
+  if(!b){ fecharConta(); return; }
+  document.getElementById('contaTitulo').textContent=b.nome;
+  const c=contaDe(b.id);
+  const s=saldoTxt(c.saldo);
+  let h=`<div class="resumo-conta" style="border-left:5px solid ${b.cor}">
+    <div class="rc-lbl">${c.saldo>0.005?'Saldo a receber':'Saldo'}</div>
+    <div class="rc-saldo ${s.cls}">${s.txt}</div>
+    <div class="rc-linha"><span>Vendido</span><b>${fmtDin(c.vendido)}</b></div>
+    <div class="rc-linha"><span>Pago</span><b class="ok">${fmtDin(c.pago)}</b></div>
+  </div>`;
+  if(c.movs.length===0){
+    h+='<div class="conta-vazia">Sem lançamentos.</div>';
+  }else{
+    h+='<div class="extrato-tit">Extrato</div>';
+    // mais recente em cima
+    [...c.movs].reverse().forEach(m=>{
+      const carga=m.tipo==='carga';
+      h+=`<div class="mov" data-t="${m.tipo}" data-id="${m.id}">
+        <div class="md">${dataCurta(m.data)}</div>
+        <div class="mi">
+          <div class="mt">${carga?'📦 ':'💵 '}${escapeHtml(m.titulo)}</div>
+          <div class="ms">saldo ${fmtDin(m.saldo)}</div>
+        </div>
+        <div class="mv ${carga?'':'ok'}">${carga?'+ ':'− '}${fmtDin(m.valor)}</div>
+      </div>`;
+    });
+  }
+  const box=document.getElementById('contaBody');
+  box.innerHTML=h;
+  box.querySelectorAll('.mov').forEach(el=>{
+    el.onclick=()=>{
+      if(el.dataset.t==='carga'){
+        voltarConta=contaAberta;
+        contaScreen.classList.remove('open');
+        contasScreen.classList.remove('open');
+        openNote(el.dataset.id);
+      }else{
+        abrirPag(el.dataset.id);
+      }
+    };
+  });
+}
+
+/* ----- modal de pagamento ----- */
+function abrirPag(id){
+  pagEditId=id||null;
+  const p=id?pagamentos.find(x=>x.id===id):null;
+  const c=contaDe(contaAberta);
+  document.getElementById('pagTitulo').textContent=p?'Editar pagamento':'Novo pagamento';
+  document.getElementById('pagSub').textContent='Saldo atual: '+saldoTxt(c.saldo).txt.replace('✅ ','');
+  document.getElementById('pagValor').value=p?fmt(p.valor):'';
+  document.getElementById('pagData').value=isoDia(p?p.data:Date.now());
+  document.getElementById('pagObs').value=p?(p.obs||''):'';
+  document.getElementById('pagExcluir').classList.toggle('hidden',!p);
+  pagModal.classList.remove('hidden');
+  if(!p) setTimeout(()=>document.getElementById('pagValor').focus(),150);
+}
+function fecharPag(){ pagModal.classList.add('hidden'); pagEditId=null; }
+document.getElementById('pagFill').onclick=()=>{
+  const c=contaDe(contaAberta);
+  const p=pagEditId?pagamentos.find(x=>x.id===pagEditId):null;
+  const resta=c.saldo+(p?p.valor:0);   // editando: o próprio pagamento volta pro saldo
+  if(resta<=0.005){ toast('Não há saldo a quitar'); return; }
+  document.getElementById('pagValor').value=fmt(Math.round(resta*100)/100);
+};
+document.getElementById('pagSalvar').onclick=()=>{
+  const v=parseBrNum(document.getElementById('pagValor').value);
+  if(!(v>0)){ toast('Digite o valor do pagamento'); return; }
+  const data=tsDeIso(document.getElementById('pagData').value);
+  const obs=document.getElementById('pagObs').value.trim();
+  if(pagEditId){
+    const p=pagamentos.find(x=>x.id===pagEditId);
+    if(p){ p.valor=v; p.data=data; p.obs=obs; }
+  }else{
+    pagamentos.push({id:'p'+Date.now(),bandeira:contaAberta,valor:v,data,obs});
+  }
+  savePag();
+  fecharPag();
+  renderConta();
+  const c=contaDe(contaAberta);
+  toast(quase0(c.saldo)?'✅ Conta quitada!':'Pagamento salvo · saldo '+fmtDin(c.saldo));
+};
+document.getElementById('pagExcluir').onclick=()=>{
+  if(!pagEditId) return;
+  if(!confirm('Excluir este pagamento?')) return;
+  pagamentos=pagamentos.filter(x=>x.id!==pagEditId);
+  savePag(); fecharPag(); renderConta();
+  toast('Pagamento excluído');
+};
+document.getElementById('pagCancelar').onclick=fecharPag;
+pagModal.onclick=(e)=>{ if(e.target===pagModal) fecharPag(); };
+
+/* ----- extrato no WhatsApp ----- */
+document.getElementById('contaShare').onclick=()=>{
+  const b=bandeiras.find(x=>x.id===contaAberta);
+  if(!b) return;
+  const c=contaDe(b.id);
+  if(c.movs.length===0){ toast('Conta sem lançamentos'); return; }
+  const linhas=c.movs.map(m=> m.tipo==='carga'
+    ? `📦 ${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`
+    : `💵 ${dataCurta(m.data)} ${m.titulo}: −${fmtDin(m.valor)}`);
+  const s=saldoTxt(c.saldo);
+  const txt=`*Conta — ${b.nome}*\n\n${linhas.join('\n')}\n\nVendido: ${fmtDin(c.vendido)}\nPago: ${fmtDin(c.pago)}\n*Saldo: ${s.txt.replace('✅ ','')}*\n\n_${dataLonga(Date.now())}_`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+};
+
+document.getElementById('contasBtn').onclick=abrirContas;
+document.getElementById('contasBack').onclick=()=>contasScreen.classList.remove('open');
+document.getElementById('contaBack').onclick=fecharConta;
+document.getElementById('addPagBtn').onclick=()=>abrirPag(null);
+
 const backupModal=document.getElementById('backupModal');
 document.getElementById('backupBtn').onclick=()=>backupModal.classList.remove('hidden');
 document.getElementById('closeBackup').onclick=()=>backupModal.classList.add('hidden');
 backupModal.onclick=(e)=>{ if(e.target===backupModal) backupModal.classList.add('hidden'); };
 
 function backupData(){
-  return JSON.stringify({app:'somar-notas',v:1,exportado:new Date().toISOString(),notas:notes,bandeiras,lixeira:trash},null,2);
+  return JSON.stringify({app:'somar-notas',v:1,exportado:new Date().toISOString(),notas:notes,bandeiras,lixeira:trash,pagamentos},null,2);
 }
 function backupFileName(){
   const d=new Date();
@@ -1832,6 +2202,11 @@ importFile.onchange=()=>{
         data.lixeira.forEach(t=>{ if(t&&t.id&&!tids.has(t.id)){ trash.push(t); tids.add(t.id); } });
         saveTrash();
       }
+      if(Array.isArray(data.pagamentos)){
+        const pids=new Set(pagamentos.map(p=>p.id));
+        data.pagamentos.forEach(p=>{ if(p&&p.id&&!pids.has(p.id)){ pagamentos.push(p); pids.add(p.id); } });
+        savePag();
+      }
       save();renderList();
       backupModal.classList.add('hidden');
       toast(`Importado! ${novas} nota(s) nova(s)`);
@@ -1847,7 +2222,7 @@ if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().catch(()=>{});
 }
 
-load();loadBandeiras();loadTrash();renderList();applyResumoState();
+load();loadBandeiras();loadTrash();loadPag();renderList();applyResumoState();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
