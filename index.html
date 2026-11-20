@@ -624,9 +624,18 @@ function parseBrNum(str){
   return isFinite(n) ? n : 0;
 }
 // resultado da multiplicação escrito na linha: inteiro puro ou decimal com vírgula
+// resultado com ponto de milhar: 23475 -> 23.475 ; 688.5 -> 688,50
 function fmtRes(n){
   const r=Math.round((n+Number.EPSILON)*100)/100;
-  return Number.isInteger(r) ? String(r) : r.toFixed(2).replace('.',',');
+  const neg=r<0, a=Math.abs(r);
+  let [int,dec]=a.toFixed(2).split('.');
+  int=int.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return (neg?'-':'')+int+(Number.isInteger(r)?'':','+dec);
+}
+// volume em m³: "15.650 m³" é 15,650 (ponto = decimal), não 15 mil
+function parseQtd(qtd, depois){
+  if(/^\s*m(?:³|3)/i.test(depois||'') && /^[+-]?\d+\.\d+$/.test(qtd)) return parseFloat(qtd);
+  return parseBrNum(qtd);
 }
 const RX_QTD=new RegExp('^\\s*([+-]?'+NUM+')(?:\\s|\\/|$)');
 function lineValue(line){
@@ -647,7 +656,7 @@ function aplicaMultLinha(line){
   const m=line.match(RX_MULT);
   if(!m) return line;
   const ini=m[1], qtd=m[2], meio=m[3], xtok=m[4], preco=m[5], nota=m[7]||'', fim=m[8]||'';
-  const q=parseBrNum(qtd);
+  const q=parseQtd(qtd, meio);
   const pr=parseBrNum(preco);
   if(!isFinite(q)||!isFinite(pr)) return line;
   const res=q*pr;
