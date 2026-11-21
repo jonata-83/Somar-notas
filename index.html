@@ -424,6 +424,7 @@
   .conta-opts{display:flex;gap:8px;margin:-6px 0 18px;}
   .conta-opts .pag-fill{flex:1;padding:10px 6px;color:var(--ink);}
   .conta-opts .pag-fill.on{color:var(--muted);}
+  .conta-opts .opt-del{flex:0 0 48px;color:var(--danger);}
   .aviso-backup{display:block;width:calc(100% - 24px);margin:6px 12px 8px;padding:12px 14px;border-radius:12px;
     background:#3a2a00;border:1px solid #7a5a00;color:#ffd666;font-size:14px;text-align:left;font-family:var(--font);cursor:pointer;}
   .aviso-backup.hidden{display:none;}
@@ -1967,14 +1968,15 @@ function removeBandeira(id){
   const b=bandeiras.find(x=>x.id===id);
   if(!b) return;
   const nPag=pagamentos.filter(p=>p.bandeira===id).length;
-  const avisoPag = nPag ? `\n\nAtenção: ${nPag} pagamento(s) dessa conta também serão apagados.` : '';
-  if(!confirm(`Excluir a bandeira "${b.nome}"? As notas continuam, só ficam sem bandeira.${avisoPag}`)) return;
+  const avisoPag = nPag ? `\n\nAtenção: ${nPag} lançamento(s) da conta (adiantamentos/pagamentos) também serão apagados.` : '';
+  if(!confirm(`Excluir "${b.nome}"? As notas continuam, só ficam sem bandeira.${avisoPag}`)) return false;
   bandeiras=bandeiras.filter(x=>x.id!==id);
   notes.forEach(n=>{ if(n.bandeira===id){ n.bandeira=null; n.naConta=false; } });
   pagamentos=pagamentos.filter(p=>p.bandeira!==id);
   if(filtroBand===id) filtroBand=null;
   saveBandeiras(); save(); savePag();
   renderBandManage(); renderList();
+  return true;
 }
 document.getElementById('addBandBtn').onclick=addBandeira;
 document.getElementById('newBandName').addEventListener('keydown',e=>{ if(e.key==='Enter') addBandeira(); });
@@ -2184,8 +2186,9 @@ function renderConta(){
     <div class="rc-linha"><span>Pago</span><b class="ok">${fmtDin(c.pago)}</b></div>
   </div>
   <div class="conta-opts">
-    <button class="pag-fill" id="optGrupo">${g==='clientes'?'👤 Grupo: Clientes':'💸 Grupo: Adiantamentos'}</button>
+    <button class="pag-fill" id="optGrupo">${g==='clientes'?'👤 Clientes':'💸 Adiantamentos'}</button>
     <button class="pag-fill${b.foraTotal?' on':''}" id="optFora">${b.foraTotal?'🔕 Fora do total':'🔔 No total'}</button>
+    <button class="pag-fill opt-del" id="optDel" aria-label="Excluir conta">🗑</button>
   </div>`;
   if(c.movs.length===0){
     h+='<div class="conta-vazia">Sem lançamentos.<br>Use os botões abaixo.</div>';
@@ -2211,6 +2214,9 @@ function renderConta(){
     b.grupo = g==='clientes' ? 'adiantamentos' : 'clientes';
     saveBandeiras(); renderConta();
     toast(b.grupo==='clientes' ? 'Movido para Clientes' : 'Movido para Adiantamentos');
+  };
+  document.getElementById('optDel').onclick=()=>{
+    if(removeBandeira(b.id)){ fecharConta(); toast('Conta excluída'); }
   };
   document.getElementById('optFora').onclick=()=>{
     b.foraTotal=!b.foraTotal; saveBandeiras(); renderConta();
