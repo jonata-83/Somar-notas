@@ -1958,7 +1958,8 @@ function savePag(){localStorage.setItem(PKEY,JSON.stringify(pagamentos));}
 function valorNota(n){
   const c=montaComTotais(n.body||'');
   const linhas=c.split('\n');
-  if(!linhas.some(l=>valorResultado(l)!==null)) return 0;
+  // sem "x preço": vale a soma simples dos números da nota (ex: "12.450")
+  if(!linhas.some(l=>valorResultado(l)!==null)) return sumBody(n.body||'');
   const t=linhas.find(l=>RX_TOTAL.test(l));
   if(t) return parseBrNum(t.split('=')[1]);
   return linhas.reduce((a,l)=>{const v=valorResultado(l);return a+(v||0);},0);
@@ -2015,7 +2016,7 @@ contaBtnEl.onclick=()=>{
   const c=montaComTotais(noteBody.value);
   if(c!==noteBody.value){ noteBody.value=c; refreshEditor(); persistCurrent(false); }
   const v=valorNota(n);
-  if(!(v>0)){ toast('Nota sem valor — use linhas tipo "8/80 x180"'); return; }
+  if(!(v>0)){ toast('Nota sem valor pra lançar'); return; }
   if(!bandDe(n)){
     lancarPendente=n.id;
     abrirBandPick(n.id);
