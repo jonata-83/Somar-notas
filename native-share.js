@@ -40,12 +40,28 @@
 
   // Backup JSON -> WhatsApp/arquivo
   async function shareBackup(){
-    if(!notes.length){ say('Nenhuma nota'); return; }
+    var temPag = (typeof pagamentos !== 'undefined') && pagamentos.length;
+    if(!notes.length && !temPag){ say('Nenhuma nota'); return; }
     try{
       var uri = await writeCache(backupFileName(), b64utf8(backupData()));
       await Share.share({ files:[uri], title:'Backup Somar Notas' });
+      if (typeof marcarBackup === 'function') marcarBackup();
     }catch(e){ say('Erro ao compartilhar'); }
   }
+  // Extrato da conta em imagem (JPG) -> compartilhar
+  var bImg = document.getElementById('contaImg');
+  if (bImg) bImg.onclick = async function(){
+    try{
+      var b = bandeiras.find(function(x){ return x.id === contaAberta; });
+      if(!b) return;
+      var cv = makeExtratoImg(b);
+      var base64 = cv.toDataURL('image/jpeg', 0.9).split(',')[1];
+      var nome = (semEmoji(b.nome)||'conta').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_') + '_extrato_' + Date.now() + '.jpg';
+      var uri = await writeCache(nome, base64);
+      await Share.share({ files:[uri], title:'Extrato ' + b.nome });
+    }catch(e){ say('Erro ao compartilhar'); }
+  };
+
   var bWa = document.getElementById('exportWaBtn');  if (bWa) bWa.onclick = shareBackup;
   var bExp = document.getElementById('exportBtn');   if (bExp) bExp.onclick = shareBackup;
 })();
