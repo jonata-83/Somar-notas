@@ -460,6 +460,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
     <span>Enviar imagem</span>
   </button>
+  <button class="icon-btn hidden" id="noteBandBtn" aria-label="Bandeira da nota">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+    <span id="noteBandLbl">Bandeira</span>
+  </button>
   <button class="icon-btn hidden" id="contaBtn" aria-label="Lançar na conta">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 6V4h12v2"/><circle cx="17" cy="15" r="1.5"/></svg>
     <span id="contaLbl">Lançar na conta</span>
@@ -517,6 +521,10 @@
     <h2>⚑ Bandeira da nota</h2>
     <p class="modal-sub">Cada nota leva uma bandeira. Use pra separar pedido, cliente ou o que você quiser.</p>
     <div id="bandPickList" class="modal-scroll"></div>
+    <div class="pag-row" style="margin:0 0 10px">
+      <input type="text" class="band-input" id="quickBandName" placeholder="Nova bandeira (ex: cliente)" autocomplete="off">
+      <button class="pag-fill" id="quickBandBtn">+ Criar</button>
+    </div>
     <button class="modal-btn" id="gerFromPick">⚙ Gerenciar bandeiras</button>
     <button class="modal-btn ghost" id="closeBandPick">Fechar</button>
   </div>
@@ -891,6 +899,7 @@ function showEditor(show){
   document.getElementById('trashBtn').classList.toggle('hidden',show);
   document.getElementById('contasBtn').classList.toggle('hidden',show);
   document.getElementById('contaBtn').classList.toggle('hidden',!show);
+  document.getElementById('noteBandBtn').classList.toggle('hidden',!show);
   document.getElementById('doneBtn').classList.toggle('hidden',!show);
   document.getElementById('menuBtn').classList.toggle('hidden',!show);
   document.getElementById('signBtn').classList.toggle('hidden',!show);
@@ -905,14 +914,14 @@ function newNote(){
   noteTitle.value='';noteBody.value='';
   applyMode('somar');
   searchTerm='';searchInput.value='';searchClear.classList.add('hidden');
-  showEditor(true);refreshEditor();refreshContaBtn();
+  showEditor(true);refreshEditor();refreshContaBtn();refreshNoteBandBtn();
   setTimeout(()=>noteTitle.focus(),100);
 }
 function openNote(id){
   const n=notes.find(x=>x.id===id);if(!n)return;
   currentId=id;noteTitle.value=n.title||'';noteBody.value=n.body||'';
   applyMode(n.mode||'somar');
-  showEditor(true);refreshEditor();refreshContaBtn();
+  showEditor(true);refreshEditor();refreshContaBtn();refreshNoteBandBtn();
 }
 function closeEditor(){
   persistCurrent(true);
@@ -1819,14 +1828,43 @@ function renderBandPick(){
     el.onclick=()=>setBandNota(bandPickId, el.dataset.b||null);
   });
 }
+function criarBandRapida(){
+  const inp=document.getElementById('quickBandName');
+  const nome=inp.value.trim();
+  if(!nome){ toast('Digite o nome da bandeira'); inp.focus(); return; }
+  const existe=bandeiras.find(b=>b.nome.toLowerCase()===nome.toLowerCase());
+  let bid;
+  if(existe){ bid=existe.id; }
+  else{
+    bid='b'+Date.now();
+    bandeiras.push({id:bid,nome,cor:corLivre()});
+    saveBandeiras();
+  }
+  inp.value='';
+  inp.blur();
+  toast((existe?'Bandeira: ':'Bandeira criada: ')+nome+' ✓');
+  setBandNota(bandPickId,bid);   // se estava lançando na conta, o aviso do lançamento aparece por cima
+}
+function refreshNoteBandBtn(){
+  const n=notes.find(x=>x.id===currentId);
+  const b=n?bandDe(n):null;
+  const lbl=document.getElementById('noteBandLbl');
+  const btn=document.getElementById('noteBandBtn');
+  lbl.textContent = b ? 'Bandeira: '+b.nome : 'Bandeira';
+  btn.style.color = b ? b.cor : '';
+}
 function setBandNota(id,bid){
   const n=notes.find(x=>x.id===id);
   if(n){ n.bandeira=bid; save(); }
   bandPickModal.classList.add('hidden');
   renderList();
+  if(id===currentId) refreshNoteBandBtn();
   if(lancarPendente===id && n && bid) lancarNaConta(n);
   lancarPendente=null;
 }
+document.getElementById('quickBandBtn').onclick=criarBandRapida;
+document.getElementById('quickBandName').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); criarBandRapida(); } });
+document.getElementById('noteBandBtn').onclick=()=>{ persistCurrent(false); noteBody.blur(); abrirBandPick(currentId); };
 document.getElementById('closeBandPick').onclick=()=>bandPickModal.classList.add('hidden');
 bandPickModal.onclick=(e)=>{ if(e.target===bandPickModal) bandPickModal.classList.add('hidden'); };
 document.getElementById('gerFromPick').onclick=()=>{ bandPickModal.classList.add('hidden'); abrirBandManage(); };
