@@ -408,6 +408,21 @@
     font-family:var(--font);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.6);
   }
   .conta-fab:active{transform:scale(.98);}
+  .conta-fabs{position:absolute;left:16px;right:16px;bottom:20px;display:flex;gap:10px;}
+  .conta-fabs .conta-fab{position:static;flex:1;padding:16px 8px;font-size:15px;}
+  .conta-fab.sec{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
+  .grupo-hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:18px 2px 10px;}
+  .grupo-hdr:first-child{margin-top:2px;}
+  .grupo-tot{font-size:20px;font-weight:700;margin-top:3px;}
+  .grupo-hdr .pag-fill{padding:9px 14px;}
+  .grupo-vazio{color:var(--muted);font-size:13px;padding:6px 2px 8px;line-height:1.5;}
+  .conta-card.fora{opacity:.55;}
+  .conta-opts{display:flex;gap:8px;margin:-6px 0 18px;}
+  .conta-opts .pag-fill{flex:1;padding:10px 6px;color:var(--ink);}
+  .conta-opts .pag-fill.on{color:var(--muted);}
+  .aviso-backup{display:block;width:calc(100% - 24px);margin:6px 12px 8px;padding:12px 14px;border-radius:12px;
+    background:#3a2a00;border:1px solid #7a5a00;color:#ffd666;font-size:14px;text-align:left;font-family:var(--font);cursor:pointer;}
+  .aviso-backup.hidden{display:none;}
   .conta-vazia{color:var(--muted);text-align:center;padding:50px 20px;font-size:15px;line-height:1.6;}
   .pag-row{display:flex;gap:8px;margin-top:10px;}
   .pag-row .band-input{flex:1;min-width:0;}
@@ -478,6 +493,7 @@
 
 <!-- LISTA -->
 <div class="view" id="listView">
+  <button class="aviso-backup hidden" id="avisoBackup"></button>
   <div id="notesContainer"></div>
   <div class="empty hidden" id="emptyState">
     <div class="big">📝</div>
@@ -515,6 +531,7 @@
     <button class="modal-btn primary" id="exportBtn">⬇ Exportar (salvar arquivo)</button>
     <button class="modal-btn" id="exportWaBtn">↗ Enviar backup no WhatsApp</button>
     <button class="modal-btn" id="importBtn">⬆ Importar (abrir arquivo)</button>
+    <p class="modal-sub" style="margin:4px 0 8px;font-size:12px">O Importar também aceita o backup do app Adiantamentos.</p>
     <button class="modal-btn ghost" id="closeBackup">Fechar</button>
   </div>
 </div>
@@ -587,12 +604,18 @@
   <div class="side-header">
     <button class="back" id="contaBack" aria-label="Voltar">‹</button>
     <h2 id="contaTitulo">Conta</h2>
+    <button class="icon-btn" id="contaImg" aria-label="Enviar extrato em imagem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+    </button>
     <button class="icon-btn wa-ico" id="contaShare" aria-label="Enviar extrato no WhatsApp">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
     </button>
   </div>
   <div class="side-body" id="contaBody"></div>
-  <button class="conta-fab" id="addPagBtn">+ Pagamento</button>
+  <div class="conta-fabs">
+    <button class="conta-fab sec" id="addAdiantBtn">+ Adiantamento</button>
+    <button class="conta-fab" id="addPagBtn">+ Pagamento</button>
+  </div>
 </div>
 
 <!-- MODAL: pagamento -->
@@ -609,6 +632,17 @@
     <button class="modal-btn primary" id="pagSalvar" style="margin-top:14px">Salvar</button>
     <button class="modal-btn" id="pagExcluir" style="color:var(--danger)">Excluir pagamento</button>
     <button class="modal-btn ghost" id="pagCancelar">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: nova conta -->
+<div class="modal-overlay hidden" id="novaContaModal" style="z-index:75">
+  <div class="modal">
+    <h2 id="novaContaTit">Nova conta</h2>
+    <p class="modal-sub">Cria a bandeira e já abre a conta.</p>
+    <input type="text" class="band-input" id="novaContaNome" placeholder="Nome" autocomplete="off">
+    <button class="modal-btn primary" id="novaContaOk" style="margin-top:14px">Criar</button>
+    <button class="modal-btn ghost" id="novaContaCancel">Cancelar</button>
   </div>
 </div>
 
@@ -1720,6 +1754,7 @@ noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
 
 window.addEventListener('popstate',()=>{
   if(!pagModal.classList.contains('hidden')){pagModal.classList.add('hidden');history.pushState(null,'');}
+  else if(!novaContaModal.classList.contains('hidden')){novaContaModal.classList.add('hidden');history.pushState(null,'');}
   else if(contaScreen.classList.contains('open')){fecharConta();history.pushState(null,'');}
   else if(contasScreen.classList.contains('open')){contasScreen.classList.remove('open');history.pushState(null,'');}
   else if(!editView.classList.contains('hidden')){closeEditor();history.pushState(null,'');}
@@ -1939,20 +1974,26 @@ document.getElementById('closeBandManage').onclick=()=>bandManageModal.classList
 bandManageModal.onclick=(e)=>{ if(e.target===bandManageModal) bandManageModal.classList.add('hidden'); };
 
 /* =========================================================
-   CONTAS — uma conta por bandeira (cliente).
-   Nota "lançada na conta" entra com o TOTAL em R$ (somente as
-   linhas "qtd x preço"). Pagamentos abatem até o saldo zerar.
-   Se a nota for editada depois, o valor na conta acompanha.
+   CONTAS — uma conta por bandeira (cliente ou pessoa).
+   Débitos (+): notas "lançadas na conta" e adiantamentos avulsos.
+   Créditos (−): pagamentos. Saldo = débitos − pagamentos.
+   Cada bandeira tem um grupo: 'clientes' ou 'adiantamentos',
+   e pode ficar "fora do total" (🔕).
    ========================================================= */
 const PKEY='somar_pagamentos';
-let pagamentos=[];
+const BKP_KEY='somar_ultimo_backup';
+let pagamentos=[];         // {id,bandeira,tipo:'pag'|'adiant',valor,data,obs}
 let lancarPendente=null;   // nota esperando escolher bandeira pra lançar
 let voltarConta=null;      // abriu nota a partir do extrato -> volta pra ele
 let contaAberta=null;      // id da bandeira com extrato aberto
 let pagEditId=null;
+let pagTipoNovo='pag';
+let novaContaGrupo='clientes';
 
 function loadPag(){try{pagamentos=JSON.parse(localStorage.getItem(PKEY))||[];}catch(e){pagamentos=[];}}
 function savePag(){localStorage.setItem(PKEY,JSON.stringify(pagamentos));}
+function tipoMov(p){ return p.tipo==='adiant' ? 'adiant' : 'pag'; }
+function grupoDe(b){ return (b && b.grupo==='adiantamentos') ? 'adiantamentos' : 'clientes'; }
 
 // Valor em dinheiro da nota (soma das linhas "qtd x preço" pelos grupos).
 function valorNota(n){
@@ -1973,13 +2014,16 @@ function tsDeIso(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new
 function contaDe(bid){
   const cargas=notes.filter(n=>n.naConta && n.bandeira===bid)
     .map(n=>({tipo:'carga',id:n.id,data:n.created||n.updated,titulo:n.title||'Sem título',valor:valorNota(n)}));
-  const pags=pagamentos.filter(p=>p.bandeira===bid)
-    .map(p=>({tipo:'pag',id:p.id,data:p.data,titulo:p.obs||'Pagamento',valor:p.valor}));
-  const vendido=cargas.reduce((a,c)=>a+c.valor,0);
+  const movs2=pagamentos.filter(p=>p.bandeira===bid)
+    .map(p=>({tipo:tipoMov(p),id:p.id,data:p.data,titulo:p.obs||(tipoMov(p)==='adiant'?'Adiantamento':'Pagamento'),valor:p.valor}));
+  const debitos=[...cargas, ...movs2.filter(m=>m.tipo==='adiant')];
+  const pags=movs2.filter(m=>m.tipo==='pag');
+  const vendido=debitos.reduce((a,c)=>a+c.valor,0);
   const pago=pags.reduce((a,p)=>a+p.valor,0);
-  const movs=[...cargas,...pags].sort((a,b)=>(a.data-b.data)||(a.tipo==='carga'?-1:1));
-  let s=0; movs.forEach(m=>{ s+= m.tipo==='carga'?m.valor:-m.valor; m.saldo=s; });
-  return {cargas,pags,movs,vendido,pago,saldo:vendido-pago};
+  const ordem={carga:0,adiant:1,pag:2};
+  const movs=[...debitos,...pags].sort((a,b)=>(a.data-b.data)||(ordem[a.tipo]-ordem[b.tipo]));
+  let s=0; movs.forEach(m=>{ s+= m.tipo==='pag'?-m.valor:m.valor; m.saldo=s; });
+  return {cargas,debitos,pags,movs,vendido,pago,saldo:vendido-pago};
 }
 function saldoTxt(saldo){
   if(quase0(saldo)) return {txt:'✅ Quitado', cls:'ok'};
@@ -2026,42 +2070,78 @@ contaBtnEl.onclick=()=>{
   lancarNaConta(n);
 };
 
-/* ----- tela: lista de contas ----- */
+/* ----- tela: lista de contas (Clientes / Adiantamentos) ----- */
 const contasScreen=document.getElementById('contasScreen');
 const contaScreen=document.getElementById('contaScreen');
 const pagModal=document.getElementById('pagModal');
+const novaContaModal=document.getElementById('novaContaModal');
 
 function abrirContas(){ renderContas(); contasScreen.classList.add('open'); }
 function renderContas(){
   const box=document.getElementById('contasBody');
-  const lista=bandeiras.map(b=>({b,c:contaDe(b.id)}))
-    .filter(x=>x.c.movs.length>0)
-    .sort((x,y)=>{
-      const qx=quase0(x.c.saldo)?1:0, qy=quase0(y.c.saldo)?1:0;
-      return (qx-qy)||(y.c.saldo-x.c.saldo);
+  const todas=bandeiras.map(b=>({b,c:contaDe(b.id)}))
+    .filter(x=>x.c.movs.length>0 || x.b.conta);
+  const ordenar=(x,y)=>{
+    const fx=x.b.foraTotal?1:0, fy=y.b.foraTotal?1:0;
+    const qx=quase0(x.c.saldo)?1:0, qy=quase0(y.c.saldo)?1:0;
+    return (fx-fy)||(qx-qy)||(y.c.saldo-x.c.saldo);
+  };
+  let h='';
+  [['clientes','Clientes'],['adiantamentos','Adiantamentos']].forEach(([g,rot])=>{
+    const lista=todas.filter(x=>grupoDe(x.b)===g).sort(ordenar);
+    const aReceber=lista.filter(x=>!x.b.foraTotal).reduce((a,x)=>a+Math.max(x.c.saldo,0),0);
+    h+=`<div class="grupo-hdr">
+      <div><div class="rc-lbl">${rot}</div>
+        <div class="grupo-tot ${quase0(aReceber)?'ok':'deve'}">${quase0(aReceber)?'✅ Nada a receber':fmtDin(aReceber)+' a receber'}</div></div>
+      <button class="pag-fill nova-conta" data-g="${g}">+ Nova</button>
+    </div>`;
+    if(lista.length===0){
+      h+=`<div class="grupo-vazio">${g==='clientes'
+        ? 'Nenhum cliente. Abra uma nota, toque em ⋯ → Lançar na conta.'
+        : 'Ninguém ainda. Toque em + Nova pra cadastrar uma pessoa.'}</div>`;
+    }
+    lista.forEach(({b,c})=>{
+      const s=saldoTxt(c.saldo);
+      const qtd = g==='clientes'
+        ? `${c.cargas.length} nota(s) · ${c.pags.length} pagamento(s)`
+        : `${c.debitos.length} adiantamento(s) · ${c.pags.length} pagamento(s)`;
+      h+=`<button class="conta-card${b.foraTotal?' fora':''}" data-b="${b.id}" style="border-left-color:${b.cor}">
+        <div class="ci">
+          <div class="cn" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}${b.foraTotal?' 🔕':''}</div>
+          <div class="cs">${qtd}${b.foraTotal?' · fora do total':''}</div>
+        </div>
+        <div class="cv ${s.cls}">${s.txt}</div>
+      </button>`;
     });
-  if(lista.length===0){
-    box.innerHTML=`<div class="conta-vazia">Nenhuma conta ainda.<br><br>Abra uma nota com valores, toque em <b>⋯</b> e depois em <b style="color:var(--accent)">Lançar na conta</b>. O total vai pra conta da bandeira (cliente) e aqui você lança os pagamentos.</div>`;
-    return;
-  }
-  const aReceber=lista.reduce((a,x)=>a+Math.max(x.c.saldo,0),0);
-  let h=`<div class="resumo-conta">
-    <div class="rc-lbl">Total a receber</div>
-    <div class="rc-saldo ${quase0(aReceber)?'ok':'deve'}">${quase0(aReceber)?'✅ Tudo quitado':fmtDin(aReceber)}</div>
-  </div>`;
-  lista.forEach(({b,c})=>{
-    const s=saldoTxt(c.saldo);
-    h+=`<button class="conta-card" data-b="${b.id}" style="border-left-color:${b.cor}">
-      <div class="ci">
-        <div class="cn" style="color:${b.cor}">⚑ ${escapeHtml(b.nome)}</div>
-        <div class="cs">${c.cargas.length} nota(s) · ${c.pags.length} pagamento(s)</div>
-      </div>
-      <div class="cv ${s.cls}">${s.txt}</div>
-    </button>`;
   });
   box.innerHTML=h;
   box.querySelectorAll('.conta-card').forEach(el=>el.onclick=()=>abrirConta(el.dataset.b));
+  box.querySelectorAll('.nova-conta').forEach(el=>el.onclick=()=>abrirNovaConta(el.dataset.g));
 }
+
+/* ----- nova conta (pessoa/cliente) direto na carteira ----- */
+function abrirNovaConta(g){
+  novaContaGrupo=g;
+  document.getElementById('novaContaTit').textContent = g==='adiantamentos' ? 'Nova pessoa (adiantamentos)' : 'Novo cliente';
+  document.getElementById('novaContaNome').value='';
+  novaContaModal.classList.remove('hidden');
+  setTimeout(()=>document.getElementById('novaContaNome').focus(),150);
+}
+function criarNovaConta(){
+  const nome=document.getElementById('novaContaNome').value.trim();
+  if(!nome){ toast('Digite o nome'); return; }
+  let b=bandeiras.find(x=>x.nome.toLowerCase()===nome.toLowerCase());
+  if(b){ b.conta=true; b.grupo=novaContaGrupo; }
+  else{ b={id:'b'+Date.now(),nome,cor:corLivre(),grupo:novaContaGrupo,conta:true}; bandeiras.push(b); }
+  saveBandeiras();
+  novaContaModal.classList.add('hidden');
+  renderList();
+  abrirConta(b.id);
+}
+document.getElementById('novaContaOk').onclick=criarNovaConta;
+document.getElementById('novaContaNome').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); criarNovaConta(); } });
+document.getElementById('novaContaCancel').onclick=()=>novaContaModal.classList.add('hidden');
+novaContaModal.onclick=(e)=>{ if(e.target===novaContaModal) novaContaModal.classList.add('hidden'); };
 
 /* ----- tela: extrato de uma conta ----- */
 function abrirConta(bid){
@@ -2079,33 +2159,48 @@ function renderConta(){
   const b=bandeiras.find(x=>x.id===contaAberta);
   if(!b){ fecharConta(); return; }
   document.getElementById('contaTitulo').textContent=b.nome;
+  const g=grupoDe(b);
   const c=contaDe(b.id);
   const s=saldoTxt(c.saldo);
   let h=`<div class="resumo-conta" style="border-left:5px solid ${b.cor}">
     <div class="rc-lbl">${c.saldo>0.005?'Saldo a receber':'Saldo'}</div>
     <div class="rc-saldo ${s.cls}">${s.txt}</div>
-    <div class="rc-linha"><span>Vendido</span><b>${fmtDin(c.vendido)}</b></div>
+    <div class="rc-linha"><span>${g==='clientes'?'Vendido':'Adiantado'}</span><b>${fmtDin(c.vendido)}</b></div>
     <div class="rc-linha"><span>Pago</span><b class="ok">${fmtDin(c.pago)}</b></div>
+  </div>
+  <div class="conta-opts">
+    <button class="pag-fill" id="optGrupo">${g==='clientes'?'👤 Grupo: Clientes':'💸 Grupo: Adiantamentos'}</button>
+    <button class="pag-fill${b.foraTotal?' on':''}" id="optFora">${b.foraTotal?'🔕 Fora do total':'🔔 No total'}</button>
   </div>`;
   if(c.movs.length===0){
-    h+='<div class="conta-vazia">Sem lançamentos.</div>';
+    h+='<div class="conta-vazia">Sem lançamentos.<br>Use os botões abaixo.</div>';
   }else{
     h+='<div class="extrato-tit">Extrato</div>';
     // mais recente em cima
     [...c.movs].reverse().forEach(m=>{
-      const carga=m.tipo==='carga';
+      const ico = m.tipo==='carga'?'📦 ':(m.tipo==='adiant'?'💸 ':'💵 ');
+      const pag = m.tipo==='pag';
       h+=`<div class="mov" data-t="${m.tipo}" data-id="${m.id}">
         <div class="md">${dataCurta(m.data)}</div>
         <div class="mi">
-          <div class="mt">${carga?'📦 ':'💵 '}${escapeHtml(m.titulo)}</div>
+          <div class="mt">${ico}${escapeHtml(m.titulo)}</div>
           <div class="ms">saldo ${fmtDin(m.saldo)}</div>
         </div>
-        <div class="mv ${carga?'':'ok'}">${carga?'+ ':'− '}${fmtDin(m.valor)}</div>
+        <div class="mv ${pag?'ok':''}">${pag?'− ':'+ '}${fmtDin(m.valor)}</div>
       </div>`;
     });
   }
   const box=document.getElementById('contaBody');
   box.innerHTML=h;
+  document.getElementById('optGrupo').onclick=()=>{
+    b.grupo = g==='clientes' ? 'adiantamentos' : 'clientes';
+    saveBandeiras(); renderConta();
+    toast(b.grupo==='clientes' ? 'Movido para Clientes' : 'Movido para Adiantamentos');
+  };
+  document.getElementById('optFora').onclick=()=>{
+    b.foraTotal=!b.foraTotal; saveBandeiras(); renderConta();
+    toast(b.foraTotal ? '🔕 Não soma no total a receber' : '🔔 Volta a somar no total');
+  };
   box.querySelectorAll('.mov').forEach(el=>{
     el.onclick=()=>{
       if(el.dataset.t==='carga'){
@@ -2120,16 +2215,21 @@ function renderConta(){
   });
 }
 
-/* ----- modal de pagamento ----- */
-function abrirPag(id){
+/* ----- modal de pagamento / adiantamento ----- */
+function abrirPag(id, tipoNovo){
   pagEditId=id||null;
   const p=id?pagamentos.find(x=>x.id===id):null;
+  pagTipoNovo = p ? tipoMov(p) : (tipoNovo||'pag');
+  const ad = pagTipoNovo==='adiant';
   const c=contaDe(contaAberta);
-  document.getElementById('pagTitulo').textContent=p?'Editar pagamento':'Novo pagamento';
+  document.getElementById('pagTitulo').textContent=(p?'Editar ':'Novo ')+(ad?'adiantamento':'pagamento');
   document.getElementById('pagSub').textContent='Saldo atual: '+saldoTxt(c.saldo).txt.replace('✅ ','');
   document.getElementById('pagValor').value=p?fmt(p.valor):'';
   document.getElementById('pagData').value=isoDia(p?p.data:Date.now());
   document.getElementById('pagObs').value=p?(p.obs||''):'';
+  document.getElementById('pagObs').placeholder = ad ? 'Descrição (pix, gasolina, vale...)' : 'Observação (pix, dinheiro...)';
+  document.getElementById('pagFill').classList.toggle('hidden', ad);
+  document.getElementById('pagExcluir').textContent = ad ? 'Excluir adiantamento' : 'Excluir pagamento';
   document.getElementById('pagExcluir').classList.toggle('hidden',!p);
   pagModal.classList.remove('hidden');
   if(!p) setTimeout(()=>document.getElementById('pagValor').focus(),150);
@@ -2144,49 +2244,197 @@ document.getElementById('pagFill').onclick=()=>{
 };
 document.getElementById('pagSalvar').onclick=()=>{
   const v=parseBrNum(document.getElementById('pagValor').value);
-  if(!(v>0)){ toast('Digite o valor do pagamento'); return; }
+  if(!(v>0)){ toast('Digite o valor'); return; }
   const data=tsDeIso(document.getElementById('pagData').value);
   const obs=document.getElementById('pagObs').value.trim();
   if(pagEditId){
     const p=pagamentos.find(x=>x.id===pagEditId);
     if(p){ p.valor=v; p.data=data; p.obs=obs; }
   }else{
-    pagamentos.push({id:'p'+Date.now(),bandeira:contaAberta,valor:v,data,obs});
+    pagamentos.push({id:'p'+Date.now(),bandeira:contaAberta,tipo:pagTipoNovo,valor:v,data,obs});
   }
+  const ad = pagTipoNovo==='adiant';
   savePag();
   fecharPag();
   renderConta();
   const c=contaDe(contaAberta);
-  toast(quase0(c.saldo)?'✅ Conta quitada!':'Pagamento salvo · saldo '+fmtDin(c.saldo));
+  toast(quase0(c.saldo)?'✅ Conta quitada!':(ad?'Adiantamento salvo':'Pagamento salvo')+' · saldo '+fmtDin(c.saldo));
 };
 document.getElementById('pagExcluir').onclick=()=>{
   if(!pagEditId) return;
-  if(!confirm('Excluir este pagamento?')) return;
+  if(!confirm('Excluir este lançamento?')) return;
   pagamentos=pagamentos.filter(x=>x.id!==pagEditId);
   savePag(); fecharPag(); renderConta();
-  toast('Pagamento excluído');
+  toast('Lançamento excluído');
 };
 document.getElementById('pagCancelar').onclick=fecharPag;
 pagModal.onclick=(e)=>{ if(e.target===pagModal) fecharPag(); };
 
-/* ----- extrato no WhatsApp ----- */
+/* ----- extrato no WhatsApp (texto) ----- */
 document.getElementById('contaShare').onclick=()=>{
   const b=bandeiras.find(x=>x.id===contaAberta);
   if(!b) return;
   const c=contaDe(b.id);
   if(c.movs.length===0){ toast('Conta sem lançamentos'); return; }
-  const linhas=c.movs.map(m=> m.tipo==='carga'
-    ? `📦 ${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`
-    : `💵 ${dataCurta(m.data)} ${m.titulo}: −${fmtDin(m.valor)}`);
+  const linhas=c.movs.map(m=> m.tipo==='pag'
+    ? `💵 ${dataCurta(m.data)} ${m.titulo}: −${fmtDin(m.valor)}`
+    : `${m.tipo==='carga'?'📦':'💸'} ${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
   const s=saldoTxt(c.saldo);
-  const txt=`*Conta — ${b.nome}*\n\n${linhas.join('\n')}\n\nVendido: ${fmtDin(c.vendido)}\nPago: ${fmtDin(c.pago)}\n*Saldo: ${s.txt.replace('✅ ','')}*\n\n_${dataLonga(Date.now())}_`;
+  const rot = grupoDe(b)==='clientes' ? 'Vendido' : 'Adiantado';
+  const txt=`*Conta — ${b.nome}*\n\n${linhas.join('\n')}\n\n${rot}: ${fmtDin(c.vendido)}\nPago: ${fmtDin(c.pago)}\n*Saldo: ${s.txt.replace('✅ ','')}*\n\n_${dataLonga(Date.now())}_`;
   window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 };
+
+/* ----- extrato em imagem (estilo folha, usa o tema da imagem das notas) ----- */
+function semEmoji(s){
+  return String(s||'').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim();
+}
+function cortaTexto(x,t,maxW){
+  if(x.measureText(t).width<=maxW) return t;
+  while(t.length>1 && x.measureText(t+'…').width>maxW) t=t.slice(0,-1);
+  return t+'…';
+}
+function makeExtratoImg(b){
+  const c=contaDe(b.id);
+  const P=PNG_THEMES[pngTheme]||PNG_THEMES.escuro;
+  const W=1080, PADX=60, ROWH=78, TOP=70;
+  const movs=c.movs;
+  const H=Math.max(1440, TOP+70+40+movs.length*ROWH+60+3*70+80);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const x=cv.getContext('2d');
+  x.fillStyle=P.paper; x.fillRect(0,0,W,H);
+  if(P.rule){
+    x.strokeStyle=P.rule; x.lineWidth=1;
+    for(let ry=TOP+120; ry<H-20; ry+=ROWH){ x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke(); }
+    if(P.margin){ x.strokeStyle=P.margin; x.lineWidth=2; x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke(); }
+  }
+  let y=TOP;
+  // cabeçalho
+  x.fillStyle=P.ink; x.font=`700 34px ${PNG_FONT}`; x.textAlign='right';
+  const dt=new Date().toLocaleDateString('pt-BR');
+  x.fillText(dt,W-PADX,y+40);
+  const wDt=x.measureText(dt).width;
+  x.textAlign='left'; x.font=`800 52px ${PNG_FONT}`;
+  x.fillText(cortaTexto(x,semEmoji(b.nome),W-2*PADX-wDt-30),PADX,y+44);
+  y+=76;
+  x.fillStyle=P.muted; x.font=`600 28px ${PNG_FONT}`;
+  x.fillText('Extrato da conta',PADX,y);
+  y+=26;
+  x.strokeStyle=P.line; x.lineWidth=2; x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
+  y+=14;
+  // linhas
+  movs.forEach(m=>{
+    const ny=y+ROWH/2+12;
+    const pag=m.tipo==='pag';
+    x.textAlign='left'; x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
+    x.fillText(dataCurta(m.data),PADX,ny);
+    const val=(pag?'− ':'+ ')+fmtDin(m.valor);
+    x.font=`800 36px ${PNG_FONT}`;
+    const wVal=x.measureText(val).width;
+    x.textAlign='right'; x.fillStyle=pag?'#16a34a':P.num;
+    x.fillText(val,W-PADX,ny);
+    x.textAlign='left'; x.fillStyle=P.ink; x.font=`600 36px ${PNG_FONT}`;
+    const tx=PADX+110;
+    x.fillText(cortaTexto(x,semEmoji(m.titulo)||(pag?'Pagamento':'Lançamento'),W-PADX-wVal-30-tx),tx,ny);
+    y+=ROWH;
+  });
+  if(!movs.length){ x.fillStyle=P.muted; x.font=`600 34px ${PNG_FONT}`; x.fillText('Sem lançamentos',PADX,y+50); y+=ROWH; }
+  y+=20;
+  x.strokeStyle=P.line; x.lineWidth=2; x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
+  // totais
+  const linhaTot=(rot,val,cor,grande)=>{
+    y+= grande?78:62;
+    x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 ${grande?34:30}px ${PNG_FONT}`;
+    x.fillText(rot,PADX,y);
+    x.textAlign='right'; x.fillStyle=cor; x.font=`${grande?900:800} ${grande?52:38}px ${PNG_FONT}`;
+    x.fillText(val,W-PADX,y+(grande?6:2));
+  };
+  linhaTot(grupoDe(b)==='clientes'?'VENDIDO':'ADIANTADO', fmtDin(c.vendido), P.num, false);
+  linhaTot('PAGO', fmtDin(c.pago), '#16a34a', false);
+  const s=saldoTxt(c.saldo);
+  linhaTot('SALDO', quase0(c.saldo)?'Quitado':(c.saldo<0?'Crédito '+fmtDin(-c.saldo):fmtDin(c.saldo)),
+           c.saldo>0.005?(P.neg||'#d32f2f'):'#16a34a', true);
+  x.textAlign='left';
+  // recorta a altura que sobrou (mantém no mínimo formato de folha 3:4)
+  const hFinal=Math.max(1440, Math.ceil(y+70));
+  if(hFinal<H){
+    const c2=document.createElement('canvas'); c2.width=W; c2.height=hFinal;
+    c2.getContext('2d').drawImage(cv,0,0);
+    return c2;
+  }
+  return cv;
+}
+document.getElementById('contaImg').onclick=async()=>{
+  const b=bandeiras.find(x=>x.id===contaAberta);
+  if(!b) return;
+  const cv=makeExtratoImg(b);
+  const blob=await canvasBlob(cv,'image/jpeg',0.9);
+  if(!blob){ toast('Erro ao gerar imagem'); return; }
+  const nome=(semEmoji(b.nome)||'conta').replace(/[^\wÀ-ſ]+/g,'_')+'_extrato.jpg';
+  const file=new File([blob],nome,{type:'image/jpeg'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'Extrato '+b.nome}); }catch(e){}
+  }else{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(file); a.download=nome; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    toast('Imagem baixada — envie pelo WhatsApp');
+  }
+};
+
+/* ----- lembrete de backup ----- */
+function marcarBackup(){ localStorage.setItem(BKP_KEY,String(Date.now())); renderAvisoBackup(); }
+function renderAvisoBackup(){
+  const el=document.getElementById('avisoBackup');
+  if(!el) return;
+  const temDados = notes.length>0 || pagamentos.length>0;
+  const ult=+localStorage.getItem(BKP_KEY)||0;
+  const dias = ult ? Math.floor((Date.now()-ult)/86400000) : null;
+  const atrasado = temDados && (dias===null || dias>=7);
+  el.classList.toggle('hidden',!atrasado);
+  if(atrasado) el.innerHTML = `⚠️ ${dias===null?'Nenhum backup feito ainda':'Último backup há '+dias+' dias'} — <b>toque pra fazer</b>`;
+}
+document.getElementById('avisoBackup').onclick=()=>backupModal.classList.remove('hidden');
+
+/* ----- importar backup do app Adiantamentos ----- */
+function dataAdiant(l){
+  const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(l.data||'');
+  if(m) return new Date(+m[3],+m[2]-1,+m[1],12).getTime();
+  return l.ts||Date.now();
+}
+function importarAdiantamentos(data){
+  const pessoas=data.pessoas.filter(p=>p&&p.nome);
+  const totL=pessoas.reduce((a,p)=>a+((p.lancamentos||[]).length),0);
+  if(!confirm(`Backup do app Adiantamentos:\n${pessoas.length} pessoa(s) e ${totL} lançamento(s).\n\nCada pessoa vira uma conta no grupo Adiantamentos. Nada do que já existe aqui é apagado. Importar?`)) return;
+  const pids=new Set(pagamentos.map(p=>p.id));
+  let novos=0, contas=0;
+  pessoas.forEach((p,i)=>{
+    let b=bandeiras.find(x=>x.nome.toLowerCase()===String(p.nome).trim().toLowerCase());
+    if(!b){
+      b={id:'b'+Date.now()+'_'+i,nome:String(p.nome).trim(),cor:corLivre(),grupo:'adiantamentos',conta:true};
+      bandeiras.push(b); contas++;
+    }else{ b.conta=true; if(!b.grupo) b.grupo='adiantamentos'; }
+    if(p.silencioso) b.foraTotal=true;
+    (p.lancamentos||[]).forEach(l=>{
+      const id='ad_'+p.id+'_'+l.id;
+      if(pids.has(id)) return;
+      const v=Number(l.valor);
+      if(!(v>0)) return;
+      pagamentos.push({id,bandeira:b.id,tipo:l.tipo==='pagamento'?'pag':'adiant',valor:v,data:dataAdiant(l),obs:String(l.descricao||'').trim()});
+      pids.add(id); novos++;
+    });
+  });
+  saveBandeiras(); savePag(); renderList();
+  backupModal.classList.add('hidden');
+  toast(`Importado: ${contas} conta(s) nova(s), ${novos} lançamento(s)`);
+  abrirContas();
+}
 
 document.getElementById('contasBtn').onclick=abrirContas;
 document.getElementById('contasBack').onclick=()=>contasScreen.classList.remove('open');
 document.getElementById('contaBack').onclick=fecharConta;
-document.getElementById('addPagBtn').onclick=()=>abrirPag(null);
+document.getElementById('addPagBtn').onclick=()=>abrirPag(null,'pag');
+document.getElementById('addAdiantBtn').onclick=()=>abrirPag(null,'adiant');
 
 const backupModal=document.getElementById('backupModal');
 document.getElementById('backupBtn').onclick=()=>backupModal.classList.remove('hidden');
@@ -2203,21 +2451,22 @@ function backupFileName(){
 }
 
 document.getElementById('exportBtn').onclick=()=>{
-  if(notes.length===0){toast('Nenhuma nota pra exportar');return;}
+  if(notes.length===0&&pagamentos.length===0){toast('Nenhuma nota pra exportar');return;}
   const blob=new Blob([backupData()],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=backupFileName();
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  marcarBackup();
   toast('Backup salvo — guarde no Drive ou WhatsApp');
 };
 
 document.getElementById('exportWaBtn').onclick=async()=>{
-  if(notes.length===0){toast('Nenhuma nota pra enviar');return;}
+  if(notes.length===0&&pagamentos.length===0){toast('Nenhuma nota pra enviar');return;}
   const file=new File([backupData()],backupFileName(),{type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({files:[file],title:'Backup Somar Notas'}); }catch(e){}
+    try{ await navigator.share({files:[file],title:'Backup Somar Notas'}); marcarBackup(); }catch(e){}
   }else{
     document.getElementById('exportBtn').click();
   }
@@ -2232,6 +2481,7 @@ importFile.onchange=()=>{
   reader.onload=()=>{
     try{
       const data=JSON.parse(reader.result);
+      if(data && Array.isArray(data.pessoas)){ importarAdiantamentos(data); importFile.value=''; return; }
       const lista=Array.isArray(data)?data:data.notas;
       if(!Array.isArray(lista)) throw new Error('formato');
       const ids=new Set(notes.map(n=>n.id));
@@ -2275,7 +2525,7 @@ if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().catch(()=>{});
 }
 
-load();loadBandeiras();loadTrash();loadPag();renderList();applyResumoState();
+load();loadBandeiras();loadTrash();loadPag();renderList();applyResumoState();renderAvisoBackup();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
