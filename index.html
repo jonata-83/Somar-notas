@@ -411,6 +411,10 @@
   .conta-fabs{position:absolute;left:16px;right:16px;bottom:20px;display:flex;gap:10px;}
   .conta-fabs .conta-fab{position:static;flex:1;padding:16px 8px;font-size:15px;}
   .conta-fab.sec{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
+  .contas-tabs{display:flex;gap:6px;flex-shrink:0;}
+  .ctab{background:var(--total-bg);border:1px solid var(--line);color:var(--muted);
+    font-family:var(--font);font-size:13px;font-weight:600;padding:8px 11px;border-radius:10px;cursor:pointer;}
+  .ctab.on{background:var(--accent);border-color:var(--accent);color:#000;}
   .grupo-hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:18px 2px 10px;}
   .grupo-hdr:first-child{margin-top:2px;}
   .grupo-tot{font-size:20px;font-weight:700;margin-top:3px;}
@@ -595,6 +599,10 @@
   <div class="side-header">
     <button class="back" id="contasBack" aria-label="Voltar">‹</button>
     <h2>Contas</h2>
+    <div class="contas-tabs">
+      <button class="ctab" data-g="clientes">Clientes</button>
+      <button class="ctab" data-g="adiantamentos">Adiantamentos</button>
+    </div>
   </div>
   <div class="side-body" id="contasBody"></div>
 </div>
@@ -2076,7 +2084,12 @@ const contaScreen=document.getElementById('contaScreen');
 const pagModal=document.getElementById('pagModal');
 const novaContaModal=document.getElementById('novaContaModal');
 
+let abaContas=localStorage.getItem('somar_aba_contas')==='adiantamentos'?'adiantamentos':'clientes';
 function abrirContas(){ renderContas(); contasScreen.classList.add('open'); }
+document.querySelectorAll('.ctab').forEach(t=>t.onclick=()=>{
+  abaContas=t.dataset.g; localStorage.setItem('somar_aba_contas',abaContas);
+  renderContas(); document.getElementById('contasBody').scrollTop=0;
+});
 function renderContas(){
   const box=document.getElementById('contasBody');
   const todas=bandeiras.map(b=>({b,c:contaDe(b.id)}))
@@ -2087,7 +2100,8 @@ function renderContas(){
     return (fx-fy)||(qx-qy)||(y.c.saldo-x.c.saldo);
   };
   let h='';
-  [['clientes','Clientes'],['adiantamentos','Adiantamentos']].forEach(([g,rot])=>{
+  document.querySelectorAll('.ctab').forEach(t=>t.classList.toggle('on',t.dataset.g===abaContas));
+  [['clientes','Clientes'],['adiantamentos','Adiantamentos']].filter(([g])=>g===abaContas).forEach(([g,rot])=>{
     const lista=todas.filter(x=>grupoDe(x.b)===g).sort(ordenar);
     const aReceber=lista.filter(x=>!x.b.foraTotal).reduce((a,x)=>a+Math.max(x.c.saldo,0),0);
     h+=`<div class="grupo-hdr">
@@ -2146,6 +2160,7 @@ novaContaModal.onclick=(e)=>{ if(e.target===novaContaModal) novaContaModal.class
 /* ----- tela: extrato de uma conta ----- */
 function abrirConta(bid){
   contaAberta=bid;
+  const bb=bandeiras.find(x=>x.id===bid); if(bb) abaContas=grupoDe(bb);
   renderConta();
   contasScreen.classList.add('open');
   contaScreen.classList.add('open');
@@ -2427,6 +2442,7 @@ function importarAdiantamentos(data){
   saveBandeiras(); savePag(); renderList();
   backupModal.classList.add('hidden');
   toast(`Importado: ${contas} conta(s) nova(s), ${novos} lançamento(s)`);
+  abaContas='adiantamentos';
   abrirContas();
 }
 
