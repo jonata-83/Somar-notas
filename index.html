@@ -1311,7 +1311,7 @@ function drawValor(x, v, xDir, ny, size, P, col){
   if(!v) return;
   x.save();
   x.font=`${v.tipo==='item'?600:800} ${size}px ${PNG_FONT}`;
-  x.fillStyle=v.valor<0 ? (P.neg||'#ff6b6b') : corVerde(P);
+  x.fillStyle=v.valor<0 ? (P.neg||'#ff6b6b') : (v.tipo==='total' ? corVerde(P) : P.ink);
   x.textAlign='right';
   x.fillText(fmtNum2(v.valor), xDir, ny);
   x.textAlign='left';
