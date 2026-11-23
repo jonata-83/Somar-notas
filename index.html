@@ -1298,11 +1298,20 @@ function drawItem(x, v, left, ny, P, C){
   x.restore();
 }
 // "R$" sempre na mesma coluna, dígitos encostados na direita
+// cores da imagem: nomes (portas) em azul, valores em verde — tom ajustado ao fundo
+function fundoClaro(P){
+  const h=String(P.paper||'#000').replace('#','');
+  if(h.length<6) return false;
+  const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  return (r*299+g*587+b*114)/1000>140;
+}
+function corAzul(P){ return fundoClaro(P)?'#1d4ed8':'#60a5fa'; }
+function corVerde(P){ return fundoClaro(P)?'#15803d':'#4ade80'; }
 function drawValor(x, v, xDir, ny, size, P, col){
   if(!v) return;
   x.save();
   x.font=`${v.tipo==='item'?600:800} ${size}px ${PNG_FONT}`;
-  x.fillStyle=v.valor<0 ? (P.neg||'#ff6b6b') : P.num;
+  x.fillStyle=v.valor<0 ? (P.neg||'#ff6b6b') : corVerde(P);
   x.textAlign='right';
   x.fillText(fmtNum2(v.valor), xDir, ny);
   x.textAlign='left';
@@ -1422,7 +1431,7 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H, primeira=true){
       if(p.medida) x.fillText(p.medida,L_PADX+numW,ny);
       if(p.nome) x.fillText(p.nome,L_PADX+N.colX,ny);
     }else{
-      x.fillStyle=P.ink;
+      x.fillStyle=N.vals[li] ? P.ink : corAzul(P);
       x.fillText(ln,L_PADX,ny);
     }
   });
@@ -1641,7 +1650,7 @@ function makePNGTira(){
       if(p.medida) x.fillText(p.medida,padX+numW,ny);
       if(p.nome) x.fillText(p.nome,padX+colX,ny);
     }else{
-      x.fillStyle=P.ink;
+      x.fillStyle=vals[i] ? P.ink : corAzul(P);
       x.fillText(ln,padX,ny);
     }
   });
