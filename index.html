@@ -644,6 +644,19 @@
   </div>
 </div>
 
+<!-- MODAL: carga (nota lançada na conta) -->
+<div class="modal-overlay hidden" id="cargaModal" style="z-index:75">
+  <div class="modal">
+    <h2 id="cargaTit">Carga</h2>
+    <p class="modal-sub" id="cargaSub"></p>
+    <label class="modal-sub" style="display:block;margin:0 0 6px">Data da carga (vale só na conta)</label>
+    <input type="date" class="band-input" id="cargaData">
+    <button class="modal-btn primary" id="cargaSalvar" style="margin-top:14px">Salvar data</button>
+    <button class="modal-btn" id="cargaAbrir">📝 Abrir a nota</button>
+    <button class="modal-btn ghost" id="cargaCancelar">Cancelar</button>
+  </div>
+</div>
+
 <!-- MODAL: nova conta -->
 <div class="modal-overlay hidden" id="novaContaModal" style="z-index:75">
   <div class="modal">
@@ -1763,6 +1776,7 @@ noteBody.addEventListener('scroll',()=>{gutter.scrollTop=noteBody.scrollTop;});
 
 window.addEventListener('popstate',()=>{
   if(!pagModal.classList.contains('hidden')){pagModal.classList.add('hidden');history.pushState(null,'');}
+  else if(!cargaModal.classList.contains('hidden')){cargaModal.classList.add('hidden');history.pushState(null,'');}
   else if(!novaContaModal.classList.contains('hidden')){novaContaModal.classList.add('hidden');history.pushState(null,'');}
   else if(contaScreen.classList.contains('open')){fecharConta();history.pushState(null,'');}
   else if(contasScreen.classList.contains('open')){contasScreen.classList.remove('open');history.pushState(null,'');}
@@ -2023,7 +2037,7 @@ function tsDeIso(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new
 
 function contaDe(bid){
   const cargas=notes.filter(n=>n.naConta && n.bandeira===bid)
-    .map(n=>({tipo:'carga',id:n.id,data:n.created||n.updated,titulo:n.title||'Sem título',valor:valorNota(n)}));
+    .map(n=>({tipo:'carga',id:n.id,data:n.contaData||n.created||n.updated,titulo:n.title||'Sem título',valor:valorNota(n)}));
   const movs2=pagamentos.filter(p=>p.bandeira===bid)
     .map(p=>({tipo:tipoMov(p),id:p.id,data:p.data,titulo:p.obs||(tipoMov(p)==='adiant'?'Adiantamento':'Pagamento'),valor:p.valor}));
   const debitos=[...cargas, ...movs2.filter(m=>m.tipo==='adiant')];
@@ -2225,16 +2239,40 @@ function renderConta(){
   box.querySelectorAll('.mov').forEach(el=>{
     el.onclick=()=>{
       if(el.dataset.t==='carga'){
-        voltarConta=contaAberta;
-        contaScreen.classList.remove('open');
-        contasScreen.classList.remove('open');
-        openNote(el.dataset.id);
+        abrirCarga(el.dataset.id);
       }else{
         abrirPag(el.dataset.id);
       }
     };
   });
 }
+
+/* ----- modal da carga (nota lançada): mudar data / abrir nota ----- */
+const cargaModal=document.getElementById('cargaModal');
+let cargaEditId=null;
+function abrirCarga(id){
+  const n=notes.find(x=>x.id===id); if(!n) return;
+  cargaEditId=id;
+  document.getElementById('cargaTit').textContent=n.title||'Sem título';
+  document.getElementById('cargaSub').textContent='Valor: '+fmtDin(valorNota(n))+' · nota criada em '+dataLonga(n.created||n.updated);
+  document.getElementById('cargaData').value=isoDia(n.contaData||n.created||n.updated);
+  cargaModal.classList.remove('hidden');
+}
+function fecharCarga(){ cargaModal.classList.add('hidden'); cargaEditId=null; }
+document.getElementById('cargaSalvar').onclick=()=>{
+  const n=notes.find(x=>x.id===cargaEditId);
+  if(n){ n.contaData=tsDeIso(document.getElementById('cargaData').value); save(); }
+  fecharCarga(); renderConta(); toast('Data da carga alterada');
+};
+document.getElementById('cargaAbrir').onclick=()=>{
+  const id=cargaEditId; fecharCarga();
+  voltarConta=contaAberta;
+  contaScreen.classList.remove('open');
+  contasScreen.classList.remove('open');
+  openNote(id);
+};
+document.getElementById('cargaCancelar').onclick=fecharCarga;
+cargaModal.onclick=(e)=>{ if(e.target===cargaModal) fecharCarga(); };
 
 /* ----- modal de pagamento / adiantamento ----- */
 function abrirPag(id, tipoNovo){

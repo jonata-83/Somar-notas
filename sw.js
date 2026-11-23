@@ -2,7 +2,7 @@
    Estratégia: rede primeiro, cache só como reserva pra quando estiver offline.
    Assim o app sempre pega a versão nova do GitHub assim que você sobe o index.html. */
 
-const CACHE = 'somar-notas-v16';
+const CACHE = 'somar-notas-v17';
 const CORE = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {
