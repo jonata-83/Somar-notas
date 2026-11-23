@@ -1222,7 +1222,11 @@ function splitValor(ln){
   m=ln.match(RX_MULT);
   if(m && m[6] && /\d/.test(m[6])){
     const esq=(m[1]+m[2]+m[3]+m[4]+m[5]+(m[7]||'')).replace(/\s+$/,'');
-    return {esq, valor:parseBrNum(m[6].replace(/^\s*=\s*/,'')), tipo:'item'};
+    // partes pra desenhar em colunas na imagem: "20/80  cm   x180"
+    const meio=(m[3]||'').replace(/\s+/g,' ').trim();
+    const mm=meio.match(/^([^A-Za-zÀ-ÿ]*)(.*)$/);
+    const partes={q:m[2].trim(), med:mm[1].trim(), uni:mm[2].trim(), preco:'x'+m[5].trim(), suf:(m[7]||'').trim()};
+    return {esq, valor:parseBrNum(m[6].replace(/^\s*=\s*/,'')), tipo:'item', partes};
   }
   return null;
 }
@@ -1260,6 +1264,38 @@ function medeValores(x, vals, size){
   const rs=x.measureText('R$ ').width;
   x.restore();
   return {num, rs, total: num ? num+rs : 0};
+}
+// Colunas das linhas "qtd/medida  unidade  xPREÇO": quantidade alinhada
+// à direita (as barras ficam uma embaixo da outra), unidade e preço em coluna.
+function colsItens(x, vals){
+  const it=vals.filter(v=>v&&v.tipo==='item'&&v.partes).map(v=>v.partes);
+  if(!it.length) return null;
+  const w=t=>t?x.measureText(t).width:0;
+  const gap=x.measureText('  ').width;
+  const wq=Math.max(...it.map(p=>w(p.q)));
+  const wm=Math.max(...it.map(p=>w(p.med)));
+  const wu=Math.max(...it.map(p=>w(p.uni)));
+  const wp=Math.max(...it.map(p=>w(p.preco)));
+  const ws=Math.max(...it.map(p=>w(p.suf)));
+  const qR=wq, medX=wq;
+  const uniX=medX+wm+(wm?gap:0);
+  const precoX=uniX+wu+(wu?gap:0);
+  const sufX=precoX+wp+(ws?gap:0);
+  return {qR,medX,uniX,precoX,sufX,total:sufX+ws};
+}
+function drawItem(x, v, left, ny, P, C){
+  const p=v.partes;
+  x.save();
+  x.textAlign='right';
+  x.fillStyle=/^-/.test(p.q)?(P.neg||'#ff6b6b'):P.num;
+  x.fillText(p.q,left+C.qR,ny);
+  x.textAlign='left';
+  x.fillStyle=P.ink;
+  if(p.med) x.fillText(p.med,left+C.medX,ny);
+  if(p.uni) x.fillText(p.uni,left+C.uniX,ny);
+  x.fillText(p.preco,left+C.precoX,ny);
+  if(p.suf) x.fillText(p.suf,left+C.sufX,ny);
+  x.restore();
 }
 // "R$" sempre na mesma coluna, dígitos encostados na direita
 function drawValor(x, v, xDir, ny, size, P, col){
@@ -1299,12 +1335,14 @@ function prepNota(){
   let colX=0;
   N.parsed.forEach(p=>{ if(p) colX=Math.max(colX, x.measureText(p.qty.padStart(maxQty,' ')+p.medida+'  ').width); });
   N.maxQty=maxQty; N.colX=colX;
+  N.itemCols=colsItens(x, N.vals);
   N.valCol=medeValores(x, N.vals, L_LINE);
   let need=0;
   lines.forEach((ln,i)=>{
     const p=N.parsed[i];
     let w;
-    if(p){
+    if(N.itemCols && N.vals[i] && N.vals[i].tipo==='item') w=N.itemCols.total;
+    else if(p){
       const qty=p.qty.padStart(maxQty,' ');
       w = p.nome ? colX + x.measureText(p.nome).width
                  : x.measureText(qty).width + x.measureText(p.medida).width;
@@ -1372,7 +1410,9 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H, primeira=true){
     const ln=N.disp[li], p=N.parsed[li];
     const ny=y+i*L_LINEH+L_LINE;
     drawValor(x, N.vals[li], W-L_PADX, ny, L_LINE, P, N.valCol);
-    if(p){
+    if(N.itemCols && N.vals[li] && N.vals[li].tipo==='item'){
+      drawItem(x, N.vals[li], L_PADX, ny, P, N.itemCols);
+    }else if(p){
       const qty=p.qty.padStart(N.maxQty,' ');
       const isNeg = /^-/.test(qty.trim());
       x.fillStyle=isNeg ? (P.neg || '#ff6b6b') : P.num;
@@ -1584,11 +1624,14 @@ function makePNGTira(){
   let colX=0;
   parsed.forEach(p=>{ if(p) colX=Math.max(colX, x.measureText(p.qty.padStart(maxQty,' ')+p.medida+'  ').width); });
   const valCol=medeValores(x, vals, lineSize);
+  const itemCols=colsItens(x, vals);
   disp.forEach((ln,i)=>{
     const ny=y+i*lineH+lineSize;
     const p=parsed[i];
     drawValor(x, vals[i], W-padX, ny, lineSize, P, valCol);
-    if(p){
+    if(itemCols && vals[i] && vals[i].tipo==='item'){
+      drawItem(x, vals[i], padX, ny, P, itemCols);
+    }else if(p){
       const qty=p.qty.padStart(maxQty,' ');
       const isNeg = /^-/.test(qty.trim());
       x.fillStyle=isNeg ? (P.neg || '#ff6b6b') : P.num;
