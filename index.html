@@ -2402,11 +2402,11 @@ function makeExtratoImg(b){
   x.strokeStyle=P.line; x.lineWidth=2; x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
   // totais
   const linhaTot=(rot,val,cor,grande)=>{
-    y+= grande?78:62;
-    x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 ${grande?34:30}px ${PNG_FONT}`;
+    y+= grande?68:62;
+    x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 ${grande?32:30}px ${PNG_FONT}`;
     x.fillText(rot,PADX,y);
-    x.textAlign='right'; x.fillStyle=cor; x.font=`${grande?900:800} ${grande?52:38}px ${PNG_FONT}`;
-    x.fillText(val,W-PADX,y+(grande?6:2));
+    x.textAlign='right'; x.fillStyle=cor; x.font=`${grande?900:800} ${grande?42:38}px ${PNG_FONT}`;
+    x.fillText(val,W-PADX,y+2);
   };
   linhaTot(grupoDe(b)==='clientes'?'VENDIDO':'ADIANTADO', fmtDin(c.vendido), P.num, false);
   linhaTot('PAGO', fmtDin(c.pago), '#16a34a', false);
