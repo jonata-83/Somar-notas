@@ -1307,6 +1307,16 @@ function fundoClaro(P){
 }
 function corAzul(P){ return fundoClaro(P)?'#1d4ed8':'#60a5fa'; }
 function corVerde(P){ return fundoClaro(P)?'#15803d':'#4ade80'; }
+// linha divisória acima do subtotal (só na coluna dos valores) e do TOTAL (largura toda)
+function drawDivisor(x, v, left, right, rowTop, P, col){
+  if(!v || (v.tipo!=='sub' && v.tipo!=='total')) return;
+  x.save();
+  x.strokeStyle=P.muted; x.globalAlpha=0.7;
+  x.lineWidth = v.tipo==='total' ? 3 : 2;
+  const x0 = v.tipo==='total' ? left : right-col.total;
+  x.beginPath(); x.moveTo(x0,rowTop-3); x.lineTo(right,rowTop-3); x.stroke();
+  x.restore();
+}
 function drawValor(x, v, xDir, ny, size, P, col){
   if(!v) return;
   x.save();
@@ -1418,6 +1428,7 @@ function drawFolha(N, idxs, isLast, pageLabel, W, H, primeira=true){
   idxs.forEach((li,i)=>{
     const ln=N.disp[li], p=N.parsed[li];
     const ny=y+i*L_LINEH+L_LINE;
+    drawDivisor(x, N.vals[li], L_PADX, W-L_PADX, y+i*L_LINEH, P, N.valCol);
     drawValor(x, N.vals[li], W-L_PADX, ny, L_LINE, P, N.valCol);
     if(N.itemCols && N.vals[li] && N.vals[li].tipo==='item'){
       drawItem(x, N.vals[li], L_PADX, ny, P, N.itemCols);
@@ -1636,6 +1647,7 @@ function makePNGTira(){
   const itemCols=colsItens(x, vals);
   disp.forEach((ln,i)=>{
     const ny=y+i*lineH+lineSize;
+    drawDivisor(x, vals[i], padX, W-padX, y+i*lineH, P, valCol);
     const p=parsed[i];
     drawValor(x, vals[i], W-padX, ny, lineSize, P, valCol);
     if(itemCols && vals[i] && vals[i].tipo==='item'){
