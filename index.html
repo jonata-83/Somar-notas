@@ -2439,7 +2439,7 @@ function makeExtratoImg(b){
   const wDt=x.measureText(dt).width;
   x.textAlign='left'; x.font=`800 52px ${PNG_FONT}`;
   x.fillText(cortaTexto(x,semEmoji(b.nome),W-2*PADX-wDt-30),PADX,y+44);
-  y+=76;
+  y+=90;
   x.fillStyle=P.muted; x.font=`600 28px ${PNG_FONT}`;
   x.fillText('Extrato da conta',PADX,y);
   y+=26;
@@ -2465,18 +2465,24 @@ function makeExtratoImg(b){
   y+=20;
   x.strokeStyle=P.line; x.lineWidth=2; x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
   // totais
-  const linhaTot=(rot,val,cor,grande)=>{
-    y+= grande?68:62;
-    x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 ${grande?32:30}px ${PNG_FONT}`;
+  const linhaTot=(rot,val,cor,corRot,grande)=>{
+    y+= grande?60:62;
+    x.textAlign='left'; x.fillStyle=corRot; x.font=`800 30px ${PNG_FONT}`;
     x.fillText(rot,PADX,y);
-    x.textAlign='right'; x.fillStyle=cor; x.font=`${grande?900:800} ${grande?42:38}px ${PNG_FONT}`;
+    x.textAlign='right'; x.fillStyle=cor; x.font=`${grande?900:800} 38px ${PNG_FONT}`;
     x.fillText(val,W-PADX,y+2);
   };
-  linhaTot(grupoDe(b)==='clientes'?'VENDIDO':'ADIANTADO', fmtDin(c.vendido), P.num, false);
-  linhaTot('PAGO', fmtDin(c.pago), '#16a34a', false);
-  const s=saldoTxt(c.saldo);
+  const azul=corAzul(P), verde=fundoClaro(P)?'#16a34a':'#4ade80';
+  linhaTot(grupoDe(b)==='clientes'?'VENDIDO':'ADIANTADO', fmtDin(c.vendido), P.ink, azul, false);
+  linhaTot('PAGO', fmtDin(c.pago), verde, azul, false);
+  // linha separando o saldo
+  y+=28;
+  x.strokeStyle=P.muted; x.globalAlpha=0.7; x.lineWidth=3;
+  x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
+  x.globalAlpha=1;
+  const corSaldo = c.saldo>0.005 ? (P.neg||'#d32f2f') : verde;
   linhaTot('SALDO', quase0(c.saldo)?'Quitado':(c.saldo<0?'Crédito '+fmtDin(-c.saldo):fmtDin(c.saldo)),
-           c.saldo>0.005?(P.neg||'#d32f2f'):'#16a34a', true);
+           corSaldo, corSaldo, true);
   x.textAlign='left';
   // recorta a altura que sobrou (mantém no mínimo formato de folha 3:4)
   const hFinal=Math.max(1440, Math.ceil(y+70));
