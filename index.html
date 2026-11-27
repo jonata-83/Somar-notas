@@ -2399,12 +2399,12 @@ document.getElementById('contaShare').onclick=()=>{
   if(!b) return;
   const c=contaDe(b.id);
   if(c.movs.length===0){ toast('Conta sem lançamentos'); return; }
-  const linhas=c.movs.map(m=> m.tipo==='pag'
-    ? `💵 ${dataCurta(m.data)} ${m.titulo}: −${fmtDin(m.valor)}`
-    : `${m.tipo==='carga'?'📦':'💸'} ${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
-  const s=saldoTxt(c.saldo);
-  const rot = grupoDe(b)==='clientes' ? 'Vendido' : 'Adiantado';
-  const txt=`*Conta — ${b.nome}*\n\n${linhas.join('\n')}\n\n${rot}: ${fmtDin(c.vendido)}\nPago: ${fmtDin(c.pago)}\n*Saldo: ${s.txt.replace('✅ ','')}*\n\n_${dataLonga(Date.now())}_`;
+  const R=rotulosExtrato(b);
+  const ord=(l)=>l.slice().sort((a,b)=>a.data-b.data);
+  const l1=ord(c.debitos).map(m=>`${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
+  const l2=ord(c.pags).map(m=>`${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
+  const F=caixaFinal(c);
+  const txt=`*${b.nome}*\n\n🧾 *${R.sec1}*\n${l1.length?l1.join('\n'):R.vazio1}\n\n✅ *${R.sec2}*\n${l2.length?l2.join('\n'):R.vazio2}\n\n${R.tot1}: ${fmtDin(c.vendido)}\n${R.tot2}: ${fmtDin(c.pago)}\n📌 *${F.rot}: ${F.val}*\n\n_${dataLonga(Date.now())}_`;
   window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 };
 
@@ -2417,20 +2417,32 @@ function cortaTexto(x,t,maxW){
   while(t.length>1 && x.measureText(t+'…').width>maxW) t=t.slice(0,-1);
   return t+'…';
 }
+function rotulosExtrato(b){
+  return grupoDe(b)==='clientes'
+    ? {sec1:'O que você comprou', sec2:'O que você já pagou', tot1:'Total comprado', tot2:'Total pago', vazio1:'Nenhuma compra', vazio2:'Nenhum pagamento ainda'}
+    : {sec1:'Adiantamentos', sec2:'Pagamentos', tot1:'Total adiantado', tot2:'Total pago', vazio1:'Nenhum adiantamento', vazio2:'Nenhum pagamento ainda'};
+}
+function caixaFinal(c){
+  if(quase0(c.saldo)) return {rot:'Conta quitada', val:'R$ 0,00', ok:true};
+  if(c.saldo<0) return {rot:'Crédito a seu favor', val:fmtDin(-c.saldo), ok:true};
+  return {rot:'Falta pagar', val:fmtDin(c.saldo), ok:false};
+}
 function makeExtratoImg(b){
   const c=contaDe(b.id);
+  const R=rotulosExtrato(b);
   const P=PNG_THEMES[pngTheme]||PNG_THEMES.escuro;
+  const claro=fundoClaro(P);
   const W=1080, PADX=60, ROWH=78, TOP=70;
-  const movs=c.movs;
-  const H=Math.max(1440, TOP+70+40+movs.length*ROWH+60+3*70+80);
+  const compras=c.debitos.slice().sort((a,b)=>a.data-b.data);
+  const pags=c.pags.slice().sort((a,b)=>a.data-b.data);
+  const n1=Math.max(compras.length,1), n2=Math.max(pags.length,1);
+  const H=Math.max(1440, TOP+160+2*(80+20)+(n1+n2)*ROWH+2*62+60+150+80);
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
   const x=cv.getContext('2d');
   x.fillStyle=P.paper; x.fillRect(0,0,W,H);
-  if(P.rule){
-    x.strokeStyle=P.rule; x.lineWidth=1;
-    for(let ry=TOP+120; ry<H-20; ry+=ROWH){ x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke(); }
-    if(P.margin){ x.strokeStyle=P.margin; x.lineWidth=2; x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke(); }
-  }
+  if(P.margin){ x.strokeStyle=P.margin; x.lineWidth=2; x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke(); }
+  const verde=claro?'#16a34a':'#4ade80';
+  const linhaH=(yy,cor,lw)=>{ x.strokeStyle=cor; x.lineWidth=lw; x.beginPath(); x.moveTo(PADX,yy); x.lineTo(W-PADX,yy); x.stroke(); };
   let y=TOP;
   // cabeçalho
   x.fillStyle=P.ink; x.font=`700 34px ${PNG_FONT}`; x.textAlign='right';
@@ -2441,48 +2453,64 @@ function makeExtratoImg(b){
   x.fillText(cortaTexto(x,semEmoji(b.nome),W-2*PADX-wDt-30),PADX,y+44);
   y+=90;
   x.fillStyle=P.muted; x.font=`600 28px ${PNG_FONT}`;
-  x.fillText('Extrato da conta',PADX,y);
-  y+=26;
-  x.strokeStyle=P.line; x.lineWidth=2; x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
-  y+=14;
-  // linhas
-  movs.forEach(m=>{
-    const ny=y+ROWH/2+12;
-    const pag=m.tipo==='pag';
-    x.textAlign='left'; x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
-    x.fillText(dataCurta(m.data),PADX,ny);
-    const val=(pag?'− ':'+ ')+fmtDin(m.valor);
-    x.font=`800 36px ${PNG_FONT}`;
-    const wVal=x.measureText(val).width;
-    x.textAlign='right'; x.fillStyle=pag?'#16a34a':P.num;
-    x.fillText(val,W-PADX,ny);
-    x.textAlign='left'; x.fillStyle=P.ink; x.font=`600 36px ${PNG_FONT}`;
-    const tx=PADX+110;
-    x.fillText(cortaTexto(x,semEmoji(m.titulo)||(pag?'Pagamento':'Lançamento'),W-PADX-wVal-30-tx),tx,ny);
-    y+=ROWH;
-  });
-  if(!movs.length){ x.fillStyle=P.muted; x.font=`600 34px ${PNG_FONT}`; x.fillText('Sem lançamentos',PADX,y+50); y+=ROWH; }
-  y+=20;
-  x.strokeStyle=P.line; x.lineWidth=2; x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
-  // totais
-  const linhaTot=(rot,val,cor,corRot,grande)=>{
-    y+= grande?60:62;
-    x.textAlign='left'; x.fillStyle=corRot; x.font=`800 30px ${PNG_FONT}`;
-    x.fillText(rot,PADX,y);
-    x.textAlign='right'; x.fillStyle=cor; x.font=`${grande?900:800} 38px ${PNG_FONT}`;
-    x.fillText(val,W-PADX,y+2);
+  x.fillText(grupoDe(b)==='clientes'?'Extrato de compras':'Extrato da conta',PADX,y);
+  y+=30;
+  // seção com título + linhas
+  const secao=(tit,lista,corVal,vazio)=>{
+    y+=56;
+    x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 28px ${PNG_FONT}`;
+    x.fillText(tit.toUpperCase(),PADX,y);
+    y+=18; linhaH(y,P.line,2);
+    if(!lista.length){
+      x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
+      x.fillText(vazio,PADX,y+ROWH/2+12); y+=ROWH; return;
+    }
+    lista.forEach(m=>{
+      const ny=y+ROWH/2+12;
+      x.textAlign='left'; x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
+      x.fillText(dataCurta(m.data),PADX,ny);
+      const val=fmtDin(m.valor);
+      x.font=`800 36px ${PNG_FONT}`;
+      const wVal=x.measureText(val).width;
+      x.textAlign='right'; x.fillStyle=corVal;
+      x.fillText(val,W-PADX,ny);
+      x.textAlign='left'; x.fillStyle=P.ink; x.font=`600 36px ${PNG_FONT}`;
+      const tx=PADX+110;
+      const padrao=m.tipo==='pag'?'Pagamento':(m.tipo==='adiant'?'Adiantamento':'Compra');
+      x.fillText(cortaTexto(x,semEmoji(m.titulo)||padrao,W-PADX-wVal-30-tx),tx,ny);
+      y+=ROWH;
+      linhaH(y,P.line,1);
+    });
   };
-  const azul=corAzul(P), verde=fundoClaro(P)?'#16a34a':'#4ade80';
-  linhaTot(grupoDe(b)==='clientes'?'VENDIDO':'ADIANTADO', fmtDin(c.vendido), P.ink, azul, false);
-  linhaTot('PAGO', fmtDin(c.pago), verde, azul, false);
-  // linha separando o saldo
-  y+=28;
-  x.strokeStyle=P.muted; x.globalAlpha=0.7; x.lineWidth=3;
-  x.beginPath(); x.moveTo(PADX,y); x.lineTo(W-PADX,y); x.stroke();
-  x.globalAlpha=1;
-  const corSaldo = c.saldo>0.005 ? (P.neg||'#d32f2f') : verde;
-  linhaTot('SALDO', quase0(c.saldo)?'Quitado':(c.saldo<0?'Crédito '+fmtDin(-c.saldo):fmtDin(c.saldo)),
-           corSaldo, corSaldo, true);
+  secao(R.sec1,compras,P.num,R.vazio1);
+  secao(R.sec2,pags,verde,R.vazio2);
+  // totais
+  y+=30;
+  const linhaTot=(rot,val,cor)=>{
+    y+=58;
+    x.textAlign='left'; x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
+    x.fillText(rot,PADX,y);
+    x.textAlign='right'; x.fillStyle=cor; x.font=`800 36px ${PNG_FONT}`;
+    x.fillText(val,W-PADX,y);
+  };
+  linhaTot(R.tot1, fmtDin(c.vendido), P.ink);
+  linhaTot(R.tot2, fmtDin(c.pago), verde);
+  // caixa de destaque: falta pagar / quitado / crédito
+  y+=40;
+  const F=caixaFinal(c);
+  const BH=120;
+  const fundo = F.ok ? (claro?'#e7f6ec':'#0f2e1b') : (claro?'#fdecec':'#3a1414');
+  const corTxt = F.ok ? verde : (claro?'#b3261e':'#ff6b6b');
+  x.fillStyle=fundo;
+  x.beginPath();
+  if(x.roundRect) x.roundRect(PADX-10,y,W-2*PADX+20,BH,22); else x.rect(PADX-10,y,W-2*PADX+20,BH);
+  x.fill();
+  const cy=y+BH/2+15;
+  x.textAlign='left'; x.fillStyle=corTxt; x.font=`800 40px ${PNG_FONT}`;
+  x.fillText(F.rot,PADX+20,cy);
+  x.textAlign='right'; x.font=`900 50px ${PNG_FONT}`;
+  x.fillText(F.val,W-PADX-20,cy+2);
+  y+=BH;
   x.textAlign='left';
   // recorta a altura que sobrou (mantém no mínimo formato de folha 3:4)
   const hFinal=Math.max(1440, Math.ceil(y+70));
