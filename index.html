@@ -2401,7 +2401,7 @@ document.getElementById('contaShare').onclick=()=>{
   if(c.movs.length===0){ toast('Conta sem lançamentos'); return; }
   const R=rotulosExtrato(b);
   const ord=(l)=>l.slice().sort((a,b)=>a.data-b.data);
-  const l1=ord(c.debitos).map(m=>`${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
+  const l1=comprasDetalhadas(c).map(m=>`${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
   const l2=ord(c.pags).map(m=>`${dataCurta(m.data)} ${m.titulo}: ${fmtDin(m.valor)}`);
   const F=caixaFinal(c);
   const txt=`*${b.nome}*\n\n🧾 *${R.sec1}*\n${l1.length?l1.join('\n'):R.vazio1}\n\n✅ *${R.sec2}*\n${l2.length?l2.join('\n'):R.vazio2}\n\n${R.tot1}: ${fmtDin(c.vendido)}\n${R.tot2}: ${fmtDin(c.pago)}\n📌 *${F.rot}: ${F.val}*\n\n_${dataLonga(Date.now())}_`;
@@ -2416,6 +2416,33 @@ function cortaTexto(x,t,maxW){
   if(x.measureText(t).width<=maxW) return t;
   while(t.length>1 && x.measureText(t+'…').width>maxW) t=t.slice(0,-1);
   return t+'…';
+}
+// Nota com várias linhas "qtd ... x preço" vira um item por linha no extrato.
+// Linha sem nome (só "20/80 x180") ganha o título do grupo acima dela.
+function itensDaNota(m){
+  const n=notes.find(x=>x.id===m.id);
+  if(!n) return [m];
+  const itens=[]; let cab='';
+  aplicaMultTexto(n.body||'').split('\n').forEach(l=>{
+    const t=l.trim();
+    if(!t){ cab=''; return; }
+    if(ehLinhaGerada(l)) return;
+    const sv=splitValor(l);
+    if(sv && sv.tipo==='item'){
+      let desc=sv.esq.replace(/\s+/g,' ').trim();
+      if(!sv.partes.uni && cab) desc=cab+' '+desc;
+      itens.push({tipo:'carga',id:m.id,data:m.data,titulo:desc,valor:sv.valor});
+      return;
+    }
+    if(!RX_QTD.test(l)) cab=semEmoji(t).replace(/[:\-–]+$/,'').trim();
+  });
+  if(!itens.length) return [m];
+  const soma=itens.reduce((a,i)=>a+i.valor,0);
+  return Math.abs(soma-m.valor)<0.01 ? itens : [m];
+}
+function comprasDetalhadas(c){
+  return c.debitos.slice().sort((a,b)=>a.data-b.data)
+    .flatMap(m=> m.tipo==='carga' ? itensDaNota(m) : [m]);
 }
 function rotulosExtrato(b){
   return grupoDe(b)==='clientes'
@@ -2433,7 +2460,7 @@ function makeExtratoImg(b){
   const P=PNG_THEMES[pngTheme]||PNG_THEMES.escuro;
   const claro=fundoClaro(P);
   const W=1080, PADX=60, ROWH=78, TOP=70;
-  const compras=c.debitos.slice().sort((a,b)=>a.data-b.data);
+  const compras=comprasDetalhadas(c);
   const pags=c.pags.slice().sort((a,b)=>a.data-b.data);
   const n1=Math.max(compras.length,1), n2=Math.max(pags.length,1);
   const H=Math.max(1440, TOP+160+2*(80+20)+(n1+n2)*ROWH+2*62+60+150+80);
