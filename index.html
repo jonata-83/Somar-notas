@@ -616,6 +616,9 @@
     <button class="icon-btn" id="contaImg" aria-label="Enviar extrato em imagem">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
     </button>
+    <button class="icon-btn" id="contaImgFolha" aria-label="Enviar extrato em imagem estilo folha (conta à mão)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 12h7M9 16h7M9 19h4"/></svg>
+    </button>
     <button class="icon-btn wa-ico" id="contaShare" aria-label="Enviar extrato no WhatsApp">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.7-1.2-4.5-4-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.4 1.7 1 .8 1.7 1.1 2 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z"/></svg>
     </button>
@@ -2548,6 +2551,122 @@ function makeExtratoImg(b){
   }
   return cv;
 }
+/* ----- extrato estilo FOLHA: a conta como se faz à mão no papel -----
+       22.500
+   +      300
+   ───────────
+   TOTAL 22.800
+   -    1.500   06/11
+   -      300   19/11
+   -    1.500   28/11 Frete
+   ───────────
+   TOTAL 17.600
+   Começa pelo lado maior (o que se deve) e desconta o outro lado. */
+function fmtFolha(n){
+  const r=Math.round(n*100)/100;
+  const inteiro=Math.abs(r-Math.round(r))<0.005;
+  return r.toLocaleString('pt-BR',{minimumFractionDigits:inteiro?0:2,maximumFractionDigits:inteiro?0:2});
+}
+function makeExtratoFolha(b){
+  const c=contaDe(b.id);
+  const P=PNG_THEMES[pngTheme]||PNG_THEMES.escuro;
+  const ord=(l)=>l.slice().sort((a,b)=>a.data-b.data);
+  const compras=comprasDetalhadas(c);
+  const pags=ord(c.pags);
+  // lado de cima = o maior; embaixo desconta o outro
+  const pagosPrimeiro = c.pago > c.vendido + 0.005;
+  const cima  = pagosPrimeiro ? pags : compras;
+  const baixo = pagosPrimeiro ? compras : pags;
+  const totCima = pagosPrimeiro ? c.pago : c.vendido;
+  const resto = Math.abs(c.saldo);
+  const genericos=['adiantamento','pagamento','compra','sem título'];
+  const rotulo=(m)=>{
+    const t=semEmoji(m.titulo);
+    const d=dataCurta(m.data);
+    return (!t || genericos.includes(t.toLowerCase())) ? d : d+'  '+t;
+  };
+  const W=1080, PADX=60, ROWH=96, NUM=64, LBL=40;
+  const colSinal=PADX+70, colNum=600, colLbl=colNum+40;
+  const linhasTot = cima.length + 2 + baixo.length + 2;
+  const H=Math.max(1440, 200 + linhasTot*ROWH + 260);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const x=cv.getContext('2d');
+  x.fillStyle=P.paper; x.fillRect(0,0,W,H);
+  if(P.rule){ x.strokeStyle=P.rule; x.lineWidth=1.5; for(let ry=200; ry<H; ry+=ROWH/2){ x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke(); } }
+  if(P.margin){ x.strokeStyle=P.margin; x.lineWidth=2; x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke(); }
+  const tinta=P.num, neg=P.num;
+  let y=70;
+  // cabeçalho: nome e data
+  x.fillStyle=P.ink; x.font=`700 34px ${PNG_FONT}`; x.textAlign='right';
+  const dt=new Date().toLocaleDateString('pt-BR');
+  x.fillText(dt,W-PADX,y+40);
+  const wDt=x.measureText(dt).width;
+  x.textAlign='left'; x.font=`800 50px ${PNG_FONT}`;
+  x.fillText(cortaTexto(x,semEmoji(b.nome),W-2*PADX-wDt-30),PADX,y+44);
+  y+=110;
+  const linha=(sinal,valor,lbl,cor,negrito)=>{
+    y+=ROWH;
+    x.fillStyle=cor;
+    x.font=`${negrito?800:600} ${NUM}px ${PNG_FONT}`;
+    if(sinal){ x.textAlign='center'; x.fillText(sinal,colSinal,y); }
+    x.textAlign='right'; x.fillText(fmtFolha(valor),colNum,y);
+    if(lbl){
+      x.textAlign='left'; x.fillStyle=P.ink; x.font=`600 ${LBL}px ${PNG_FONT}`;
+      x.fillText(cortaTexto(x,lbl,W-PADX-colLbl),colLbl,y-6);
+    }
+  };
+  const traco=()=>{
+    y+=34;
+    x.strokeStyle=tinta; x.lineWidth=4;
+    x.beginPath(); x.moveTo(PADX+20,y); x.lineTo(colNum+30,y); x.stroke();
+  };
+  const total=(valor)=>{
+    y+=ROWH;
+    x.fillStyle=tinta; x.textAlign='left'; x.font=`800 ${NUM-8}px ${PNG_FONT}`;
+    x.fillText('TOTAL',PADX,y);
+    x.textAlign='right'; x.font=`800 ${NUM}px ${PNG_FONT}`;
+    x.fillText(fmtFolha(valor),colNum,y);
+  };
+  // bloco de cima (soma)
+  if(!cima.length) linha('',0,'',tinta,false);
+  cima.forEach((m,i)=>linha(i>0?'+':'',m.valor,rotulo(m),tinta,false));
+  if(cima.length>1){ traco(); total(totCima); }
+  // bloco de baixo (desconta)
+  baixo.forEach(m=>linha('−',m.valor,rotulo(m),neg,false));
+  if(baixo.length){ traco(); total(resto); }
+  // situação final, pequeno embaixo
+  const F=caixaFinal(c);
+  y+=70;
+  x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 38px ${PNG_FONT}`;
+  x.fillText(F.rot+': '+F.val,PADX,y);
+  const hFinal=Math.max(1440, Math.ceil(y+80));
+  if(hFinal<H){
+    const c2=document.createElement('canvas'); c2.width=W; c2.height=hFinal;
+    c2.getContext('2d').drawImage(cv,0,0);
+    return c2;
+  }
+  return cv;
+}
+async function enviarExtratoImg(cv,b,suf){
+  const blob=await canvasBlob(cv,'image/jpeg',0.9);
+  if(!blob){ toast('Erro ao gerar imagem'); return; }
+  const nome=(semEmoji(b.nome)||'conta').replace(/[^\wÀ-ſ]+/g,'_')+suf+'.jpg';
+  const file=new File([blob],nome,{type:'image/jpeg'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'Extrato '+b.nome}); }catch(e){}
+  }else{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(file); a.download=nome; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    toast('Imagem baixada — envie pelo WhatsApp');
+  }
+}
+document.getElementById('contaImgFolha').onclick=()=>{
+  const b=bandeiras.find(x=>x.id===contaAberta);
+  if(!b) return;
+  if(contaDe(b.id).movs.length===0){ toast('Conta sem lançamentos'); return; }
+  enviarExtratoImg(makeExtratoFolha(b),b,'_conta');
+};
 document.getElementById('contaImg').onclick=async()=>{
   const b=bandeiras.find(x=>x.id===contaAberta);
   if(!b) return;
