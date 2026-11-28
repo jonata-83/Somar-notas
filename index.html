@@ -2585,17 +2585,17 @@ function makeExtratoFolha(b){
     const d=dataCurta(m.data);
     return (!t || genericos.includes(t.toLowerCase())) ? d : d+'  '+t;
   };
-  const W=1080, PADX=60, ROWH=96, NUM=64, LBL=40;
+  const W=1080, PADX=60, ROWH=82, NUM=52, LBL=38, TOTF=38;
   // números encostados à esquerda: a coluna tem só a largura do maior número,
   // assim sobra o resto da folha para a descrição
   const mx=document.createElement('canvas').getContext('2d');
   mx.font=`800 ${NUM}px ${PNG_FONT}`;
   const wNum=Math.max(...[...cima,...baixo].map(m=>mx.measureText(fmtFolha(m.valor)).width), mx.measureText(fmtFolha(totCima)).width, mx.measureText(fmtFolha(resto)).width);
-  mx.font=`800 ${NUM-8}px ${PNG_FONT}`;
+  mx.font=`800 ${TOTF}px ${PNG_FONT}`;
   const wTot=mx.measureText('TOTAL').width;
-  const colSinal=PADX+22;
-  const colNum=Math.ceil(PADX+Math.max(70, wTot+30)+wNum);
-  const colLbl=colNum+36;
+  const colSinal=PADX+14;
+  const colNum=Math.ceil(PADX+Math.max(44, wTot+16)+wNum);
+  const colLbl=colNum+30;
   const linhasTot = cima.length + 2 + baixo.length + 2;
   const H=Math.max(1440, 200 + linhasTot*ROWH + 260);
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
@@ -2629,13 +2629,13 @@ function makeExtratoFolha(b){
     }
   };
   const traco=()=>{
-    y+=34;
+    y+=28;
     x.strokeStyle=tinta; x.lineWidth=4;
-    x.beginPath(); x.moveTo(PADX+20,y); x.lineTo(colNum+30,y); x.stroke();
+    x.beginPath(); x.moveTo(PADX,y); x.lineTo(colNum+30,y); x.stroke();
   };
   const total=(valor)=>{
     y+=ROWH;
-    x.fillStyle=tinta; x.textAlign='left'; x.font=`800 ${NUM-8}px ${PNG_FONT}`;
+    x.fillStyle=tinta; x.textAlign='left'; x.font=`800 ${TOTF}px ${PNG_FONT}`;
     x.fillText('TOTAL',PADX,y);
     x.textAlign='right'; x.font=`800 ${NUM}px ${PNG_FONT}`;
     x.fillText(fmtFolha(valor),colNum,y);
