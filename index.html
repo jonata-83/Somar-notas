@@ -2466,7 +2466,7 @@ function makeExtratoImg(b){
   const compras=comprasDetalhadas(c);
   const pags=c.pags.slice().sort((a,b)=>a.data-b.data);
   const n1=Math.max(compras.length,1), n2=Math.max(pags.length,1);
-  const H=Math.max(1440, TOP+160+2*(80+20)+(n1+n2)*ROWH+2*62+60+150+80);
+  const H=Math.max(1440, TOP+160+2*(80+20)+(n1+n2)*ROWH+2*62+60+150+80+80);
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
   const x=cv.getContext('2d');
   x.fillStyle=P.paper; x.fillRect(0,0,W,H);
@@ -2486,10 +2486,9 @@ function makeExtratoImg(b){
   x.fillText(grupoDe(b)==='clientes'?'Extrato de compras':'Extrato da conta',PADX,y);
   y+=30;
   // seção com título + linhas
+  // seção: só as linhas (sem título em cima)
   const secao=(tit,lista,corVal,vazio)=>{
-    y+=56;
-    x.textAlign='left'; x.fillStyle=P.muted; x.font=`700 28px ${PNG_FONT}`;
-    x.fillText(tit.toUpperCase(),PADX,y);
+    y+=20;
     y+=18; linhaH(y,P.line,2);
     if(!lista.length){
       x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
@@ -2513,32 +2512,30 @@ function makeExtratoImg(b){
     });
   };
   secao(R.sec1,compras,P.num,R.vazio1);
+  // total das compras logo abaixo delas
+  y+=56;
+  x.textAlign='left'; x.fillStyle=claro?'#1b4f9c':'#60a5fa'; x.font=`700 32px ${PNG_FONT}`;
+  x.fillText(R.tot1,PADX,y);
+  x.textAlign='right'; x.font=`900 38px ${PNG_FONT}`;
+  x.fillText(fmtDin(c.vendido),W-PADX,y);
+  y+=34;
   secao(R.sec2,pags,verde,R.vazio2);
-  // totais
-  y+=30;
-  const linhaTot=(rot,val,cor)=>{
-    y+=58;
-    x.textAlign='left'; x.fillStyle=P.muted; x.font=`600 32px ${PNG_FONT}`;
-    x.fillText(rot,PADX,y);
-    x.textAlign='right'; x.fillStyle=cor; x.font=`800 36px ${PNG_FONT}`;
-    x.fillText(val,W-PADX,y);
-  };
-  linhaTot(R.tot1, fmtDin(c.vendido), P.ink);
-  linhaTot(R.tot2, fmtDin(c.pago), verde);
+  // conta final: total comprado − total pago
+  y+=10;
   // caixa de destaque: falta pagar / quitado / crédito
   y+=40;
   const F=caixaFinal(c);
-  const BH=120;
+  const BH=88;
   const fundo = F.ok ? (claro?'#e7f6ec':'#0f2e1b') : (claro?'#fdecec':'#3a1414');
   const corTxt = F.ok ? verde : (claro?'#b3261e':'#ff6b6b');
   x.fillStyle=fundo;
   x.beginPath();
   if(x.roundRect) x.roundRect(PADX-10,y,W-2*PADX+20,BH,22); else x.rect(PADX-10,y,W-2*PADX+20,BH);
   x.fill();
-  const cy=y+BH/2+15;
-  x.textAlign='left'; x.fillStyle=corTxt; x.font=`800 40px ${PNG_FONT}`;
+  const cy=y+BH/2+12;
+  x.textAlign='left'; x.fillStyle=corTxt; x.font=`800 32px ${PNG_FONT}`;
   x.fillText(F.rot,PADX+20,cy);
-  x.textAlign='right'; x.font=`900 50px ${PNG_FONT}`;
+  x.textAlign='right'; x.font=`900 36px ${PNG_FONT}`;
   x.fillText(F.val,W-PADX-20,cy+2);
   y+=BH;
   x.textAlign='left';
