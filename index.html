@@ -2585,14 +2585,14 @@ function makeExtratoFolha(b){
     const d=dataCurta(m.data);
     return (!t || genericos.includes(t.toLowerCase())) ? d : d+'  '+t;
   };
-  const W=1080, PADX=60, ROWH=82, NUM=52, LBL=38, TOTF=38;
+  const W=1080, PADX=60, ROWH=72, NUM=44, LBL=36, TOTF=36;
   // números encostados à esquerda: a coluna tem só a largura do maior número,
   // assim sobra o resto da folha para a descrição
   const mx=document.createElement('canvas').getContext('2d');
   mx.font=`800 ${NUM}px ${PNG_FONT}`;
   const wNum=Math.max(...[...cima,...baixo].map(m=>mx.measureText(fmtFolha(m.valor)).width), mx.measureText(fmtFolha(totCima)).width, mx.measureText(fmtFolha(resto)).width);
   const colSinal=PADX+14;
-  const colNum=Math.ceil(PADX+44+wNum);
+  const colNum=Math.ceil(PADX+38+wNum);
   const colLbl=colNum+30;
   const linhasTot = cima.length + 2 + baixo.length + 2;
   const H=Math.max(1440, 200 + linhasTot*ROWH + 260);
@@ -2601,7 +2601,10 @@ function makeExtratoFolha(b){
   x.fillStyle=P.paper; x.fillRect(0,0,W,H);
   if(P.rule){ x.strokeStyle=P.rule; x.lineWidth=1.5; for(let ry=200; ry<H; ry+=ROWH/2){ x.beginPath(); x.moveTo(0,ry); x.lineTo(W,ry); x.stroke(); } }
   if(P.margin){ x.strokeStyle=P.margin; x.lineWidth=2; x.beginPath(); x.moveTo(40,0); x.lineTo(40,H); x.stroke(); }
-  const tinta=P.num, neg=P.num;
+  // números dos lançamentos em preto; só os totais (e os traços) em azul
+  const claroF=fundoClaro(P);
+  const tinta=claroF?'#1b4f9c':'#60a5fa';
+  const preto=claroF?'#111111':P.ink, neg=preto;
   let y=70;
   // cabeçalho: nome e data
   x.fillStyle=P.ink; x.font=`700 34px ${PNG_FONT}`; x.textAlign='right';
@@ -2640,8 +2643,8 @@ function makeExtratoFolha(b){
     x.fillText('TOTAL',colLbl,y-4);
   };
   // bloco de cima (soma)
-  if(!cima.length) linha('',0,'',tinta,false);
-  cima.forEach((m,i)=>linha(i>0?'+':'',m.valor,rotulo(m),tinta,false));
+  if(!cima.length) linha('',0,'',preto,false);
+  cima.forEach((m,i)=>linha(i>0?'+':'',m.valor,rotulo(m),preto,false));
   if(cima.length>1){ traco(); total(totCima); }
   // bloco de baixo (desconta)
   baixo.forEach(m=>linha('−',m.valor,rotulo(m),neg,false));
