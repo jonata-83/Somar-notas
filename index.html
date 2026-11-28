@@ -2586,7 +2586,16 @@ function makeExtratoFolha(b){
     return (!t || genericos.includes(t.toLowerCase())) ? d : d+'  '+t;
   };
   const W=1080, PADX=60, ROWH=96, NUM=64, LBL=40;
-  const colSinal=PADX+70, colNum=600, colLbl=colNum+40;
+  // números encostados à esquerda: a coluna tem só a largura do maior número,
+  // assim sobra o resto da folha para a descrição
+  const mx=document.createElement('canvas').getContext('2d');
+  mx.font=`800 ${NUM}px ${PNG_FONT}`;
+  const wNum=Math.max(...[...cima,...baixo].map(m=>mx.measureText(fmtFolha(m.valor)).width), mx.measureText(fmtFolha(totCima)).width, mx.measureText(fmtFolha(resto)).width);
+  mx.font=`800 ${NUM-8}px ${PNG_FONT}`;
+  const wTot=mx.measureText('TOTAL').width;
+  const colSinal=PADX+22;
+  const colNum=Math.ceil(PADX+Math.max(70, wTot+30)+wNum);
+  const colLbl=colNum+36;
   const linhasTot = cima.length + 2 + baixo.length + 2;
   const H=Math.max(1440, 200 + linhasTot*ROWH + 260);
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
@@ -2612,7 +2621,11 @@ function makeExtratoFolha(b){
     x.textAlign='right'; x.fillText(fmtFolha(valor),colNum,y);
     if(lbl){
       x.textAlign='left'; x.fillStyle=P.ink; x.font=`600 ${LBL}px ${PNG_FONT}`;
-      x.fillText(cortaTexto(x,lbl,W-PADX-colLbl),colLbl,y-6);
+      // descrição comprida: diminui a letra antes de cortar com "…"
+      const maxW=W-PADX-colLbl;
+      let fs=LBL;
+      while(fs>28 && x.measureText(lbl).width>maxW){ fs-=2; x.font=`600 ${fs}px ${PNG_FONT}`; }
+      x.fillText(cortaTexto(x,lbl,maxW),colLbl,y-6);
     }
   };
   const traco=()=>{
