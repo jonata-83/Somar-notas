@@ -62,6 +62,21 @@
     }catch(e){ say('Erro ao compartilhar'); }
   };
 
+  // Extrato estilo FOLHA (conta à mão) -> compartilhar
+  var bFolha = document.getElementById('contaImgFolha');
+  if (bFolha) bFolha.onclick = async function(){
+    try{
+      var b = bandeiras.find(function(x){ return x.id === contaAberta; });
+      if(!b) return;
+      if(contaDe(b.id).movs.length === 0){ say('Conta sem lançamentos'); return; }
+      var cv = makeExtratoFolha(b);
+      var base64 = cv.toDataURL('image/jpeg', 0.9).split(',')[1];
+      var nome = (semEmoji(b.nome)||'conta').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'_') + '_conta_' + Date.now() + '.jpg';
+      var uri = await writeCache(nome, base64);
+      await Share.share({ files:[uri], title:'Conta ' + b.nome });
+    }catch(e){ say('Erro ao compartilhar'); }
+  };
+
   var bWa = document.getElementById('exportWaBtn');  if (bWa) bWa.onclick = shareBackup;
   var bExp = document.getElementById('exportBtn');   if (bExp) bExp.onclick = shareBackup;
 })();
